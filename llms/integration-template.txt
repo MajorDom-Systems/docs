@@ -1,0 +1,975 @@
+# integration-template — full source
+# repo: https://github.com/MajorDom-Systems/integration-template  branch: master  commit: 504e5c7dc79fcea4cbf3aa167e7e2152f1209e00
+# generated: 2026-08-01 — AUTO-GENERATED, do not edit by hand
+
+## File tree
+  .gitignore
+  LICENSE
+  README.md
+  integration_template/__init__.py
+  integration_template/controller.py
+  pyproject.toml
+  tests/conftest.py
+  tests/test_controller.py
+  tests/test_smoke.py
+
+
+================================================================================
+# FILE: .gitignore
+================================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+.hypothesis/
+
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+
+# Poetry
+# poetry.lock  # uncomment for applications, keep commented for libraries
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# Tools
+.ruff_cache/
+.ropeproject
+
+# mkdocs (only relevant if you kept mkdocs.yml + docs/)
+/site
+.cache/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+================================================================================
+# FILE: LICENSE
+================================================================================
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+
+================================================================================
+# FILE: README.md
+================================================================================
+<!-- MajorDom Project Banner -->
+<a href="https://majordom.io" target="_blank">
+  <picture>
+    <source
+      media="(prefers-color-scheme: dark)"
+      srcset="https://markparker.me/banners/majordom-dark.webp"
+    />
+    <img
+      alt="Part of MajorDom — the next-gen smart home"
+      src="https://markparker.me/banners/majordom-light.webp"
+    />
+  </picture>
+</a>
+
+<!-- ┌───────────────────────────────────────────────────────────────────────────┐
+     │ USING THIS TEMPLATE — delete everything down to the "DELETE ABOVE" line      │
+     │ once your integration repo is set up. What's left below is your own README.  │
+     └───────────────────────────────────────────────────────────────────────────┘ -->
+
+# Creating a new MajorDom integration from this template
+
+Click **Use this template → Create a new repository** (name it `integration-<protocol>`,
+e.g. `integration-hue`), then:
+
+**1. Rename the placeholders** (find & replace across the repo)
+- `integration-template` → your distribution name, by convention `majordom-<protocol>`
+  (hyphens): in `pyproject.toml` (`[project].name`) and `.github/workflows/release.yml`
+  (`pypi-package-name`).
+- `integration_template` → your import name `majordom_<protocol>` (underscores): the
+  `integration_template/` directory, plus the `--cov=` and `packages` references in
+  `pyproject.toml`.
+- Rename `ExampleController` and fill in `integration_template/controller.py` with real
+  protocol logic. `tests/test_controller.py` is prefilled to fail until you do — work the
+  **Progress** checklist below and tick items off as your CI goes green.
+- In `.github/workflows/test.yml`, delete the `template-selfcheck` job and the `if:` guard
+  on the `test` job — they exist only to keep the *template* repo green and aren't wanted in
+  a real integration.
+- Fill in the **About this integration** section below (it doubles as your PR summary — a
+  reviewer reads the checklist to see what's actually implemented).
+
+**2. Install + pre-commit hook**
+```sh
+pip install poetry poethepoet && poe install
+```
+
+**3. Create the `develop` branch**
+```sh
+git checkout -b develop && git push origin develop
+```
+
+**4. GitHub repo settings** — same as any package repo built on the shared workflows:
+
+- **General** → enable **Allow auto-merge**;  
+- **Branches** → protect `master` (require the `test / check` status, restrict push to `github-actions[bot]`) and `develop` (require `test / check`);  
+- **Environments** → create `release` (deployment branch `develop` only, required reviewer). Then configure PyPI trusted publishing for your package (Owner = the GitHub user or org that owns **this** repo, Repository = this repo, Workflow `release.yml`, Environment `release`).  
+
+The reusable CI/CD lives in [ParkerIndustries/workflows](https://github.com/ParkerIndustries/workflows).
+
+<!-- ─────────────────────────────── DELETE ABOVE ─────────────────────────────── -->
+
+# integration-template
+
+A [MajorDom](https://majordom.io) integration — bridges the Example protocol into the
+MajorDom language.
+
+Built for the **MajorDom Hub**, but it doesn't need it: this is a standalone, standardized
+library for the Example protocol that you can use on its own (see **Run it standalone** below).
+Built on the [MajorDom Integration SDK](https://github.com/MajorDom-Systems/integration-sdk).
+The integration's entry point is a `Controller` (`integration_template/controller.py`) that the
+Hub — or the SDK's dev runner — instantiates and drives through its lifecycle: discovery →
+pairing → commands → teardown.
+
+- **Other protocols:** browse the [MajorDom integrations](https://github.com/orgs/MajorDom-Systems/repositories?q=integration-).
+- **Create your own:** start from the [integration template](https://github.com/MajorDom-Systems/integration-template).
+
+## Documentation
+
+Full integration-author docs — the controller lifecycle, data models, storing data,
+discovery, and a worked example — live at **[docs.majordom.io](https://docs.majordom.io/device-integration)**.
+
+## Development
+
+```sh
+poetry install && poetry run poe install
+```
+
+| Task | Description |
+|------|-------------|
+| `poe check` | Full quality pipeline (ruff, ty, pytest, poetry build/check) |
+| `poe check --ci` | Same, plus `git diff --exit-code` |
+
+Work lands on `develop`; `master` is protected and released via **Actions → Release**.
+Tests drive the controller with the SDK's test doubles (`majordom_integration_sdk.testing`)
+against a virtual/simulated device — see `tests/`.
+
+## Run it standalone (without the Hub)
+
+Your integration is a standalone library — import it into another app, or run **just this
+integration** interactively (discover, pair, control, and inspect devices from a prompt) with no Hub.
+Note here whatever prerequisites your protocol needs to run on its own (a broker, a radio, a local
+server, …).
+
+See **[Standalone mode](https://docs.majordom.io/device-integration/standalone)** for the interactive
+CLI, watch mode, and the programmatic API.
+
+## About this integration
+
+<!-- Fill this in. It's your PR summary — keep the checklist current so a reviewer sees at
+     a glance what works. -->
+
+- **Protocol / platform:** _e.g. Philips Hue (Zigbee via a bridge)_
+- **Transport(s):** _wifi / ble / zigbee / …_
+- **Supported devices:** _…_
+- **Credentials needed to pair:** _none / code / secret / qr_
+
+### Required harness
+
+<!-- EXAMPLE — replace with your integration's real requirements (delete rows that don't
+     apply). External things this integration needs to run, beyond `pip install`, so a
+     deployment knows what to provide. -->
+
+- **Hardware adapters:** _e.g. an 802.15.4 radio (SkyConnect / a Thread or Zigbee dongle), a
+  USB serial gateway …_ — the Hub assigns OS device paths through
+  `dependencies.hardware_interfaces` (e.g. `/dev/ttyACM0`).
+- **Third-party software services:** _e.g. an OpenThread Border Router (OTBR), a vendor
+  bridge/hub, an MQTT broker, a matter-server instance …_ — what must be running and reachable.
+- **OS / permissions:** _e.g. Bluetooth access, host networking, mDNS/SSDP on the LAN …_
+
+### Protocol stack
+
+Every integration is two things stacked: the **MajorDom integration layer** — mapping the
+protocol to MajorDom's domain model — sitting on top of the **protocol stack** it bridges. The
+top layer is *always this repo*. How much of the stack *below* it is also this repo's code
+varies: some integrations only map an existing application-level protocol (a vendor library / the
+OS / the harness provides everything under them), while others implement the protocol themselves,
+down to raw UDP or even a custom radio.
+
+<!-- EXAMPLE — the table below is a Matter-over-Thread illustration; replace every row with your
+     own stack. Mark which layers are THIS repo's code vs. a library, the OS, or the harness —
+     it sets the scope of what the integration owns. Keep only the rows that apply. -->
+
+| Layer | Protocol | Implemented by |
+|-------|----------|----------------|
+| **MajorDom integration** | maps the protocol ↔ MajorDom domain model | **this repo, always** |
+| Application (7) | _Matter clusters / data model_ | this integration (via `chip` lib) |
+| Session (5) | _CASE / PASE secure session_ | library |
+| Transport (4) | _UDP_ | OS |
+| Network (3) | _IPv6 · 6LoWPAN_ | OS · OTBR (harness) |
+| Data link / Physical (1–2) | _Thread · IEEE 802.15.4_ | radio adapter (harness) |
+
+If your integration implements the protocol itself (no vendor library), more of the lower rows
+become **this integration** — a custom-radio integration can own everything from the application
+layer down to the physical.
+
+### Progress
+
+Two checklists — this README is where you track them (tick items as you implement them and the
+matching test in `tests/` goes green). The docs explain the *why* behind each item:
+[Implementation Checklist](https://docs.majordom.io/device-integration) (gets it working) and
+[Quality Checklist](https://docs.majordom.io/device-integration/quality) (gets it releasable).
+
+**Implementation** — makes the integration functional:
+
+- [ ] Discovery services registered via `self.dependencies.zeroconf_discovery_service`, `ssdp_discovery_service`, and/or `ble_discovery_service` as appropriate; cancel closures saved and called in `stop`
+- [ ] Discovery service listeners fire when devices are found, and the controller calls `self.dependencies.output.controller_did_receive_discovery`
+- [ ] Discovery of devices already paired to the Hub on reconnect, e.g. after a reboot (`self.dependencies.output.controller_did_connect_device` is called)
+- [ ] `start_pairing_window` is implemented but only if the protocol requires an explicit scan (like zigbee)
+- [ ] Device pairing 
+- [ ] Device schema is properly mapped: device info, parameter list, and each parameter's metadata are translated to MajorDom's domain model
+- [ ] Hub → Device control (`send_command` is implemented)
+- [ ] Device → Hub event subscription (`self.dependencies.output.controller_did_receive_events` is called on incoming events)
+- [ ] `identify` is implemented
+- [ ] `unpair` is implemented
+- [ ] `fetch` is implemented
+- [ ] Paired devices going offline/coming back online *while the Hub is running* (not just on reboot) — set `device.available` accordingly (report `controller_did_lose_device`), and clear/set `last_error` to match
+- [ ] Graceful shutdown in `stop`, cancelling any running tasks, discovery stopped, all connections closed
+- [ ] Tests pass against a virtual/simulated device (`tests/test_controller.py`)
+- [ ] README fully filled in: delete the template-setup section above, complete **About this integration**, **Required harness**, **Protocol stack**, and **Notes** with real content
+
+**Quality** — makes it reliable and maintainable (the bar for release):
+
+- [ ] **Recovers automatically** from connection loss / offline device / restarted backend — retried with backoff, no manual restart
+- [ ] **No exception escapes the controller** — every background task, subscription loop, and callback catches its own errors; nothing raised into `self.dependencies.output.*`
+- [ ] **Failures are surfaced, not raised** — logged once (no spam) and reflected on the device (`available` / `last_error`), cleared on recovery
+- [ ] **Re-authenticates automatically** when credentials expire/are rejected (if the protocol uses credentials)
+- [ ] **Fully asynchronous** — no blocking I/O on the event loop; heavy/blocking work runs off-loop
+- [ ] **Stable identity** — device and parameter UUIDs derived through the SDK helpers, identical across restarts/re-pairs
+- [ ] **End-to-end tests** drive pair → command → fetch → events → `unpair` against a virtual device (`majordom_integration_sdk.testing`)
+- [ ] **Failure paths tested** — offline device, transport error, rejected credentials degrade gracefully (no raise)
+- [ ] **Broad device coverage** where the protocol has many device/parameter types (a virtual-device catalogue in CI is ideal)
+- [ ] **Fully typed** (`ty`, no package-wide ignores) and **clean** (`poe check`) with no warnings
+- [ ] **Readable & structured** — conversion logic in a mapper, models separated, comments where intent isn't obvious
+- [ ] **Efficient** — subscriptions over polling; batch/chunk reads; no redundant work
+- [ ] **Diagnosable** — logging at the right levels to debug a device problem from logs alone
+- [ ] **Rich parameter metadata** — correct `visibility` per parameter and a sensible `main_parameter`, so the app presents a clean control-center action and a tidy parameter list ([Parameter UX](https://docs.majordom.io/device-integration/parameter-ux))
+- [ ] **Owned** — a listed maintainer who keeps it working as the protocol/library evolve
+- [ ] _nice-to-have:_ localizable naming · firmware/software updates (where supported) · user-facing supported-device docs
+
+### Notes
+
+<!-- EXAMPLE / optional — free text. Anything a reader should know that the checklist can't
+     capture. Delete this comment and write your own, or remove the section if unused. -->
+
+_e.g. "Hobby project, maintained best-effort." · "IP transport works; BLE pairing is not
+implemented yet." · "Help wanted: reliable re-pair after a bridge reboot." · known quirks,
+firmware versions tested against, limitations._
+
+## License
+
+See [LICENSE](LICENSE). Your integration code is yours to license as you choose. For
+commercial licensing or partnership inquiries regarding MajorDom, contact us via
+[parker-industries.org/partnership](https://parker-industries.org/partnership).
+
+
+================================================================================
+# FILE: integration_template/__init__.py
+================================================================================
+"""integration_template — rename this package to majordom_<protocol> (see README).
+
+Exposes the integration's Controller, the entry point the Hub (or the SDK's standalone
+dev runner) instantiates and drives.
+"""
+
+from integration_template.controller import ExampleController
+
+__all__ = ["ExampleController"]
+
+
+================================================================================
+# FILE: integration_template/controller.py
+================================================================================
+"""A minimal MajorDom integration controller.
+
+This is a worked skeleton — replace the TODO bodies with real protocol calls. It shows the
+full lifecycle the Hub drives: discovery -> pairing -> commands -> teardown.
+
+See the full guide at https://docs.majordom.io/device-integration.
+
+A Controller bridges one external protocol/platform into the MajorDom language. The Hub
+instantiates it with injected `Dependencies` and calls the methods below; the controller
+reports back to the Hub through `dependencies.output` (a `ControllerOutput`).
+"""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from majordom_integration_sdk.controller import AbstractController
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import Device, Discovery, Parameter, ProvidedCredentials
+
+# Output methods to call (see the docs):
+# async def controller_did_receive_discovery(self, controller: AbstractController, discovery: Discovery): ...
+# async def controller_did_update_discovery(self, controller: AbstractController, discovery: Discovery): ...
+# async def controller_did_lose_discovery(self, controller: AbstractController, discovery_id: UUID): ...
+# async def controller_did_connect_device(self, controller: AbstractController, device_id: UUID): ...
+# async def controller_did_lose_device(self, controller: AbstractController, device_id: UUID): ...
+# async def controller_did_receive_events(self, controller: AbstractController, events: Iterable[Event]): ...
+
+
+class ExampleController(AbstractController[Device, Parameter]):
+    """Bridges the Example protocol into MajorDom."""
+
+    def __init__(self, dependencies: AbstractController.Dependencies):
+        super().__init__(dependencies)
+        self._discoveries: dict[UUID, Discovery] = {}
+
+    name = "Example"
+
+    @property
+    def discoveries(self) -> dict[UUID, Discovery]:
+        # Return the cached snapshot only — never scan here.
+        return self._discoveries
+
+    # Lifecycle -------------------------------------------------------------
+
+    async def start(self) -> None:
+        # Register discovery services, subscribe to protocol events, and reconcile the
+        # state of already-paired devices here.
+        # e.g. self.dependencies.zeroconf_discovery_service.add_listener("_example._tcp.local.", self)
+        ...
+
+    async def stop(self) -> None:
+        # Cancel tasks and release every held resource.
+        ...
+
+    # Hub -> device ---------------------------------------------------------
+
+    async def pair_device(self, discovery: Discovery, credentials: ProvidedCredentials | None) -> None:
+        # Establish a session with the device, then report success to the Hub:
+        # await self.dependencies.output.controller_did_connect_device(self, self.device_uuid(...))
+        raise NotImplementedError
+
+    async def unpair(self, device: Device) -> None:
+        raise NotImplementedError
+
+    async def identify(self, device: Device) -> None:
+        # Ask the device to blink/beep so the user can locate it.
+        raise NotImplementedError
+
+    async def fetch(self, device: Device) -> None:
+        # Refresh the device and its parameters, reporting changes via
+        # self.dependencies.output.controller_did_receive_events(self, [...]).
+        raise NotImplementedError
+
+    async def send_command(self, command: DeviceCommand, device: Device, parameter: Parameter) -> None:
+        # Translate the MajorDom command into a protocol-level write.
+        raise NotImplementedError
+
+
+================================================================================
+# FILE: pyproject.toml
+================================================================================
+# Rename `integration-template` (PyPI/distribution name, hyphens) and the
+# `integration_template/` package directory (import name, underscores) to your own — by
+# convention `majordom-<protocol>` / `majordom_<protocol>` (e.g. majordom-homekit /
+# majordom_homekit). Keep them matching so poetry-core auto-detects the package, and update
+# `pypi-package-name` in the release stub + `--cov=` below to match.
+[project]
+name = "integration-template"
+version = "0.1.0"
+description = "A MajorDom integration."
+authors = [{ name = "Mark Parker", email = "mark@parker-programs.com" }]
+readme = "README.md"
+# The template scaffold is Apache-2.0. Relicense your integration as you see fit — note
+# that linking a copyleft (GPL/AGPL) protocol library may constrain your choice.
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+keywords = ["majordom", "smart-home", "home-automation", "iot", "integration", "template", "scaffold"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Home Automation",
+    "Programming Language :: Python :: 3",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "majordom-integration-sdk (>=0.1.5,<1.0)",
+]
+
+[project.urls]
+Homepage = "https://majordom.io"
+Documentation = "https://docs.majordom.io/device-integration"
+Repository = "https://github.com/MajorDom-Systems/integration-template"
+
+[dependency-groups]
+dev = [
+    "poethepoet (>=0.36.0,<1.0.0)",
+    "ty",             # type checker; swap for mypy/pyright by editing the `check` task below
+    "ruff",
+    "pip-audit",      # dependency vuln scan — gates release (not everyday CI); run locally with `poetry run pip-audit`
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-timeout",
+    "pytest-repeat",
+    "pytest-benchmark",
+    "pytest-profiling",
+    "pytest-resource-usage",
+    "coverage",
+    "pympler",        # object memory introspection, leak hunting
+    "psutil",         # process/system resource usage
+    "faker",          # realistic fake data for tests
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+packages = [{ include = "integration_template" }]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+filterwarnings = ["once"]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I",   # isort
+]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = true
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["E402"]
+
+[tool.poe.tasks.install]
+shell = """
+poetry install
+echo '#!/bin/sh\npoetry run poe check' > .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+echo "Pre-commit hook installed."
+"""
+
+[tool.poe.tasks.check]
+shell = """
+code=0
+
+echo "\nRunning ruff lint:"
+poetry run ruff check --fix || code=1
+
+echo "\nRunning ruff format:"
+poetry run ruff format || code=1
+
+echo "\nRunning ty:"
+poetry run ty check || code=1
+
+echo "\nRunning pytest:"
+poetry run pytest --cov=integration_template --cov-report=xml || code=1
+
+echo "\nRunning poetry build:"
+poetry build || code=1
+
+echo "\nRunning poetry check:"
+poetry check || code=1
+
+${ci:+git diff --exit-code}
+
+exit $code
+"""
+args = [{ name = "ci", type = "boolean" }]
+
+
+================================================================================
+# FILE: tests/conftest.py
+================================================================================
+"""Shared pytest fixtures for the whole suite live here.
+
+conftest.py is auto-discovered by pytest — no import needed.
+
+The fixtures wire the integration's Controller with the SDK's test doubles (a recording
+`ControllerOutput`, an in-memory device repository, and fake discovery services) and build
+sample `Discovery`/`DeviceState` objects, so tests can drive the controller exactly as the
+Hub would — without a running Hub.
+
+**Device persistence is the Hub's core business logic, not the integration's.** The Hub
+creates and stores device rows (name/room mapping, id assignment, the provisional→final id
+reconciliation on pairing); an integration only reads through the injected repository and
+writes parameter *state*. These fixtures therefore seed the repository the way the Hub
+would, so the controller sees realistic state — the tests never make the integration
+persist a device itself.
+"""
+
+from uuid import uuid4
+
+import pytest
+from majordom_integration_sdk.controller import AbstractController
+from majordom_integration_sdk.schemas.device import CredentialsType, Device, DeviceState, Discovery
+from majordom_integration_sdk.schemas.parameter import (
+    ParameterDataType,
+    ParameterRole,
+    ParameterState,
+    ParameterVisibility,
+)
+from majordom_integration_sdk.testing import build_test_dependencies
+
+from integration_template import ExampleController
+
+INTEGRATION = "example"
+
+
+@pytest.fixture
+def deps() -> AbstractController.Dependencies:
+    """SDK-provided test dependencies (recording output + in-memory repo + fake discovery)."""
+    return build_test_dependencies(integration=INTEGRATION)
+
+
+@pytest.fixture
+def controller(deps: AbstractController.Dependencies) -> ExampleController:
+    return ExampleController(deps)
+
+
+# A virtual / simulated device — a fake endpoint that speaks your protocol in-process (no
+# hardware, no network) so tests are deterministic and can assert what actually reached the
+# device. Stand one up here and have the controller talk to it (e.g. via a base URL / mock
+# transport injected through the controller). Tests then assert on both the controller's
+# reports (deps.output) and this object's observed state.
+#
+# @pytest.fixture
+# def virtual_device():
+#     dev = VirtualExampleDevice()  # your in-process fake
+#     dev.start()
+#     yield dev
+#     dev.stop()
+
+
+async def _seed(deps: AbstractController.Dependencies, device: DeviceState) -> None:
+    """Persist a device the way the Hub would, before handing control to the integration."""
+    async with deps.make_device_repository() as repo:
+        await repo.save(device)
+
+
+@pytest.fixture
+def discovery() -> Discovery:
+    """A sample discovered-but-unpaired device (the controller surfaced this)."""
+    return Discovery(
+        id=uuid4(),
+        integration=INTEGRATION,
+        expected_credentials_options=[CredentialsType.none],
+        transport="wifi",
+        device_manufacturer="ACME",
+        device_name="Example Lamp",
+        device_category=None,
+        device_icon=None,
+    )
+
+
+@pytest.fixture
+async def provisional_device(deps: AbstractController.Dependencies, discovery: Discovery) -> DeviceState:
+    """The device as it exists when the Hub calls `pair_device`.
+
+    Before pairing, the Hub has already created the row from the user's input: name and room
+    mapped, and its id set to the discovery's (still provisional) id — but no parameters yet;
+    the controller discovers/maps those while pairing. After pairing the controller reports
+    the real device id and the Hub reconciles the row. We seed the repository to match.
+    """
+    device = DeviceState(
+        id=discovery.id,  # provisional id == discovery id, until pairing assigns the real one
+        name="Living Room Lamp",  # mapped by the Hub from the user's input
+        room_id=uuid4(),
+        transport=discovery.transport,
+        integration=INTEGRATION,
+        manufacturer=discovery.device_manufacturer,
+        parameters=[],
+    )
+    await _seed(deps, device)
+    return device
+
+
+@pytest.fixture
+async def device_state(deps: AbstractController.Dependencies) -> DeviceState:
+    """An already-paired device with one on/off parameter, as the Hub *stores* it (the full
+    state, with parameters). Seeded into the repository."""
+    power = ParameterState(
+        id=uuid4(),
+        name="Power",
+        data_type=ParameterDataType.bool,
+        role=ParameterRole.control,
+        visibility=ParameterVisibility.user,
+        integration_data=None,
+        value=True,
+    )
+    state = DeviceState(
+        id=uuid4(),
+        name="Living Room Lamp",
+        room_id=uuid4(),
+        transport="wifi",
+        integration=INTEGRATION,
+        manufacturer="ACME",
+        parameters=[power],
+    )
+    await _seed(deps, state)
+    return state
+
+
+@pytest.fixture
+def device(device_state: DeviceState) -> Device:
+    """The device as the Hub *passes* it to `fetch`/`identify`/`unpair`/`send_command` — a
+    `Device` (info + integration_data), without the parameter list."""
+    return Device.model_validate(device_state.model_dump())
+
+
+@pytest.fixture
+def parameter(device_state: DeviceState) -> ParameterState:
+    """The target parameter for `send_command`, paired with `device`."""
+    return device_state.parameters[0]
+
+
+================================================================================
+# FILE: tests/test_controller.py
+================================================================================
+"""Tests that drive the controller through its lifecycle.
+
+These are **prefilled to fail** against the unimplemented skeleton: every test below calls a
+method that still raises `NotImplementedError`, so CI stays red until you implement the
+controller.
+
+Run these against a **virtual / simulated device** — a fake endpoint that speaks your
+protocol in-process (no real hardware, no network), so CI is deterministic. Add a fixture
+for it in `conftest.py` and have the controller talk to it. Each test should then assert on
+**both sides**: what the controller reported back to the Hub (via `deps.output`) *and* what
+actually landed on the device (the virtual device observed the command / changed state) —
+don't just call the method and assume it worked.
+
+Persistence is the Hub's job (see `conftest.py`): the fixtures seed the repository the way
+the Hub would, so assert on the controller's protocol behaviour and reports — not that the
+integration created a device row.
+
+(The template's own CI excludes this file so the template repo stays green — see
+`.github/workflows/test.yml`. Your integration repo runs it in full, and it's red until you
+implement the controller.)
+"""
+
+from majordom_integration_sdk.controller import AbstractController
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import Device, Discovery
+from majordom_integration_sdk.schemas.parameter import ParameterState
+
+from integration_template import ExampleController
+
+
+async def test_pairs_a_discovered_device(
+    controller: ExampleController,
+    deps: AbstractController.Dependencies,
+    discovery: Discovery,
+    provisional_device: Device,  # creates a device with discovery.id and saves it to the db
+) -> None:
+    # The Hub has already stored `provisional_device` (id == discovery.id) before this call.
+    await controller.pair_device(discovery, credentials=None)
+    # TODO: verify pairing actually completed — the controller established the session and
+    #   reported back (it does not persist the device itself):
+    #   - Hub side: `discovery.id` is in `deps.output.connected_devices`.
+    #   - Device side: the virtual device accepted the credentials / opened a session.
+    #   - Parameters: if you map parameters during pairing, assert their initial states were
+    #     written via the repository (`repo.save_parameter_state`).
+
+
+async def test_fetches_state(
+    controller: ExampleController,
+    deps: AbstractController.Dependencies,
+    device: Device,
+) -> None:
+    await controller.fetch(device)
+    # TODO: verify the refresh reached the device and propagated back:
+    #   - Set a known state on the virtual device first, then assert `deps.output.events`
+    #     (or the repository's parameter states) now reflect exactly that state — not stale
+    #     or default values.
+
+
+async def test_sends_a_command(controller: ExampleController, device: Device, parameter: ParameterState) -> None:
+    command = DeviceCommand(device_id=device.id, parameter_id=parameter.id, value=False)
+    await controller.send_command(command, device, parameter)
+    # TODO: verify the command actually applied on the device, not just that the call
+    #   returned: assert the virtual device received this exact write and its state changed
+    #   to `value` (read it back). A no-op that silently succeeds must fail this test.
+
+
+async def test_identifies(controller: ExampleController, device: Device) -> None:
+    await controller.identify(device)
+    # TODO: assert the virtual device recorded an identify request (e.g. its identify counter
+    #   incremented / the identify command was received).
+
+
+async def test_unpairs(controller: ExampleController, device: Device) -> None:
+    await controller.unpair(device)
+    # TODO: verify removal took effect:
+    #   - Device side: the virtual device saw the session torn down / was de-registered.
+    #   - Controller: the device is gone — no more connections or commands should be accepted.
+
+
+================================================================================
+# FILE: tests/test_smoke.py
+================================================================================
+"""Basic tests that pass out of the box — they don't depend on protocol logic.
+
+Kept separate from ``test_controller.py`` so the template repo's own CI (which excludes the
+prefilled, expected-to-fail controller suite) still has tests to run and stays green.
+"""
+
+from integration_template import ExampleController
+
+
+async def test_starts_and_stops(controller: ExampleController) -> None:
+    await controller.start()
+    await controller.stop()
+
+
+async def test_name_and_slug(controller: ExampleController) -> None:
+    assert controller.name == "Example"
+    assert controller.name_slug == "example"
+

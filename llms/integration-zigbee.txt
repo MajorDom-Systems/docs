@@ -1,0 +1,3978 @@
+# integration-zigbee — full source
+# repo: https://github.com/MajorDom-Systems/integration-zigbee  branch: master  commit: 41753ceac79d93bebaa8f998d0a1cb15c342ca70
+# generated: 2026-08-01 — AUTO-GENERATED, do not edit by hand
+
+## File tree
+  .gitignore
+  LICENSE
+  README.md
+  majordom_zigbee/__init__.py
+  majordom_zigbee/_serial.py
+  majordom_zigbee/controller.py
+  majordom_zigbee/exceptions.py
+  majordom_zigbee/listener.py
+  majordom_zigbee/mapper.py
+  majordom_zigbee/model.py
+  majordom_zigbee/radio.py
+  majordom_zigbee/readme.md
+  majordom_zigbee/zigbee_spec.py
+  majordom_zigbee/zigbee_spec_zha.py
+  pyproject.toml
+  scripts/check_zha_drift.py
+  scripts/harvest_zha.py
+  scripts/param_ux_audit.py
+  tests/conftest.py
+  tests/test_controller.py
+  tests/test_param_ux.py
+  tests/test_radio.py
+
+
+================================================================================
+# FILE: .gitignore
+================================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+.hypothesis/
+
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+
+# Poetry
+# poetry.lock  # uncomment for applications, keep commented for libraries
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# Tools
+.ruff_cache/
+.ropeproject
+
+# mkdocs (only relevant if you kept mkdocs.yml + docs/)
+/site
+.cache/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+================================================================================
+# FILE: LICENSE
+================================================================================
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+                            Preamble
+
+  The GNU Affero General Public License is a free, copyleft license for
+software and other kinds of works, specifically designed to ensure
+cooperation with the community in the case of network server software.
+
+  The licenses for most software and other practical works are designed
+to take away your freedom to share and change the works.  By contrast,
+our General Public Licenses are intended to guarantee your freedom to
+share and change all versions of a program--to make sure it remains free
+software for all its users.
+
+  When we speak of free software, we are referring to freedom, not
+price.  Our General Public Licenses are designed to make sure that you
+have the freedom to distribute copies of free software (and charge for
+them if you wish), that you receive source code or can get it if you
+want it, that you can change the software or use pieces of it in new
+free programs, and that you know you can do these things.
+
+  Developers that use our General Public Licenses protect your rights
+with two steps: (1) assert copyright on the software, and (2) offer
+you this License which gives you legal permission to copy, distribute
+and/or modify the software.
+
+  A secondary benefit of defending all users' freedom is that
+improvements made in alternate versions of the program, if they
+receive widespread use, become available for other developers to
+incorporate.  Many developers of free software are heartened and
+encouraged by the resulting cooperation.  However, in the case of
+software used on network servers, this result may fail to come about.
+The GNU General Public License permits making a modified version and
+letting the public access it on a server without ever releasing its
+source code to the public.
+
+  The GNU Affero General Public License is designed specifically to
+ensure that, in such cases, the modified source code becomes available
+to the community.  It requires the operator of a network server to
+provide the source code of the modified version running there to the
+users of that server.  Therefore, public use of a modified version, on
+a publicly accessible server, gives the public access to the source
+code of the modified version.
+
+  An older license, called the Affero General Public License and
+published by Affero, was designed to accomplish similar goals.  This is
+a different license, not a version of the Affero GPL, but Affero has
+released a new version of the Affero GPL which permits relicensing under
+this license.
+
+  The precise terms and conditions for copying, distribution and
+modification follow.
+
+                       TERMS AND CONDITIONS
+
+  0. Definitions.
+
+  "This License" refers to version 3 of the GNU Affero General Public License.
+
+  "Copyright" also means copyright-like laws that apply to other kinds of
+works, such as semiconductor masks.
+
+  "The Program" refers to any copyrightable work licensed under this
+License.  Each licensee is addressed as "you".  "Licensees" and
+"recipients" may be individuals or organizations.
+
+  To "modify" a work means to copy from or adapt all or part of the work
+in a fashion requiring copyright permission, other than the making of an
+exact copy.  The resulting work is called a "modified version" of the
+earlier work or a work "based on" the earlier work.
+
+  A "covered work" means either the unmodified Program or a work based
+on the Program.
+
+  To "propagate" a work means to do anything with it that, without
+permission, would make you directly or secondarily liable for
+infringement under applicable copyright law, except executing it on a
+computer or modifying a private copy.  Propagation includes copying,
+distribution (with or without modification), making available to the
+public, and in some countries other activities as well.
+
+  To "convey" a work means any kind of propagation that enables other
+parties to make or receive copies.  Mere interaction with a user through
+a computer network, with no transfer of a copy, is not conveying.
+
+  An interactive user interface displays "Appropriate Legal Notices"
+to the extent that it includes a convenient and prominently visible
+feature that (1) displays an appropriate copyright notice, and (2)
+tells the user that there is no warranty for the work (except to the
+extent that warranties are provided), that licensees may convey the
+work under this License, and how to view a copy of this License.  If
+the interface presents a list of user commands or options, such as a
+menu, a prominent item in the list meets this criterion.
+
+  1. Source Code.
+
+  The "source code" for a work means the preferred form of the work
+for making modifications to it.  "Object code" means any non-source
+form of a work.
+
+  A "Standard Interface" means an interface that either is an official
+standard defined by a recognized standards body, or, in the case of
+interfaces specified for a particular programming language, one that
+is widely used among developers working in that language.
+
+  The "System Libraries" of an executable work include anything, other
+than the work as a whole, that (a) is included in the normal form of
+packaging a Major Component, but which is not part of that Major
+Component, and (b) serves only to enable use of the work with that
+Major Component, or to implement a Standard Interface for which an
+implementation is available to the public in source code form.  A
+"Major Component", in this context, means a major essential component
+(kernel, window system, and so on) of the specific operating system
+(if any) on which the executable work runs, or a compiler used to
+produce the work, or an object code interpreter used to run it.
+
+  The "Corresponding Source" for a work in object code form means all
+the source code needed to generate, install, and (for an executable
+work) run the object code and to modify the work, including scripts to
+control those activities.  However, it does not include the work's
+System Libraries, or general-purpose tools or generally available free
+programs which are used unmodified in performing those activities but
+which are not part of the work.  For example, Corresponding Source
+includes interface definition files associated with source files for
+the work, and the source code for shared libraries and dynamically
+linked subprograms that the work is specifically designed to require,
+such as by intimate data communication or control flow between those
+subprograms and other parts of the work.
+
+  The Corresponding Source need not include anything that users
+can regenerate automatically from other parts of the Corresponding
+Source.
+
+  The Corresponding Source for a work in source code form is that
+same work.
+
+  2. Basic Permissions.
+
+  All rights granted under this License are granted for the term of
+copyright on the Program, and are irrevocable provided the stated
+conditions are met.  This License explicitly affirms your unlimited
+permission to run the unmodified Program.  The output from running a
+covered work is covered by this License only if the output, given its
+content, constitutes a covered work.  This License acknowledges your
+rights of fair use or other equivalent, as provided by copyright law.
+
+  You may make, run and propagate covered works that you do not
+convey, without conditions so long as your license otherwise remains
+in force.  You may convey covered works to others for the sole purpose
+of having them make modifications exclusively for you, or provide you
+with facilities for running those works, provided that you comply with
+the terms of this License in conveying all material for which you do
+not control copyright.  Those thus making or running the covered works
+for you must do so exclusively on your behalf, under your direction
+and control, on terms that prohibit them from making any copies of
+your copyrighted material outside their relationship with you.
+
+  Conveying under any other circumstances is permitted solely under
+the conditions stated below.  Sublicensing is not allowed; section 10
+makes it unnecessary.
+
+  3. Protecting Users' Legal Rights From Anti-Circumvention Law.
+
+  No covered work shall be deemed part of an effective technological
+measure under any applicable law fulfilling obligations under article
+11 of the WIPO copyright treaty adopted on 20 December 1996, or
+similar laws prohibiting or restricting circumvention of such
+measures.
+
+  When you convey a covered work, you waive any legal power to forbid
+circumvention of technological measures to the extent such circumvention
+is effected by exercising rights under this License with respect to
+the covered work, and you disclaim any intention to limit operation or
+modification of the work as a means of enforcing, against the work's
+users, your or third parties' legal rights to forbid circumvention of
+technological measures.
+
+  4. Conveying Verbatim Copies.
+
+  You may convey verbatim copies of the Program's source code as you
+receive it, in any medium, provided that you conspicuously and
+appropriately publish on each copy an appropriate copyright notice;
+keep intact all notices stating that this License and any
+non-permissive terms added in accord with section 7 apply to the code;
+keep intact all notices of the absence of any warranty; and give all
+recipients a copy of this License along with the Program.
+
+  You may charge any price or no price for each copy that you convey,
+and you may offer support or warranty protection for a fee.
+
+  5. Conveying Modified Source Versions.
+
+  You may convey a work based on the Program, or the modifications to
+produce it from the Program, in the form of source code under the
+terms of section 4, provided that you also meet all of these conditions:
+
+    a) The work must carry prominent notices stating that you modified
+    it, and giving a relevant date.
+
+    b) The work must carry prominent notices stating that it is
+    released under this License and any conditions added under section
+    7.  This requirement modifies the requirement in section 4 to
+    "keep intact all notices".
+
+    c) You must license the entire work, as a whole, under this
+    License to anyone who comes into possession of a copy.  This
+    License will therefore apply, along with any applicable section 7
+    additional terms, to the whole of the work, and all its parts,
+    regardless of how they are packaged.  This License gives no
+    permission to license the work in any other way, but it does not
+    invalidate such permission if you have separately received it.
+
+    d) If the work has interactive user interfaces, each must display
+    Appropriate Legal Notices; however, if the Program has interactive
+    interfaces that do not display Appropriate Legal Notices, your
+    work need not make them do so.
+
+  A compilation of a covered work with other separate and independent
+works, which are not by their nature extensions of the covered work,
+and which are not combined with it such as to form a larger program,
+in or on a volume of a storage or distribution medium, is called an
+"aggregate" if the compilation and its resulting copyright are not
+used to limit the access or legal rights of the compilation's users
+beyond what the individual works permit.  Inclusion of a covered work
+in an aggregate does not cause this License to apply to the other
+parts of the aggregate.
+
+  6. Conveying Non-Source Forms.
+
+  You may convey a covered work in object code form under the terms
+of sections 4 and 5, provided that you also convey the
+machine-readable Corresponding Source under the terms of this License,
+in one of these ways:
+
+    a) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by the
+    Corresponding Source fixed on a durable physical medium
+    customarily used for software interchange.
+
+    b) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by a
+    written offer, valid for at least three years and valid for as
+    long as you offer spare parts or customer support for that product
+    model, to give anyone who possesses the object code either (1) a
+    copy of the Corresponding Source for all the software in the
+    product that is covered by this License, on a durable physical
+    medium customarily used for software interchange, for a price no
+    more than your reasonable cost of physically performing this
+    conveying of source, or (2) access to copy the
+    Corresponding Source from a network server at no charge.
+
+    c) Convey individual copies of the object code with a copy of the
+    written offer to provide the Corresponding Source.  This
+    alternative is allowed only occasionally and noncommercially, and
+    only if you received the object code with such an offer, in accord
+    with subsection 6b.
+
+    d) Convey the object code by offering access from a designated
+    place (gratis or for a charge), and offer equivalent access to the
+    Corresponding Source in the same way through the same place at no
+    further charge.  You need not require recipients to copy the
+    Corresponding Source along with the object code.  If the place to
+    copy the object code is a network server, the Corresponding Source
+    may be on a different server (operated by you or a third party)
+    that supports equivalent copying facilities, provided you maintain
+    clear directions next to the object code saying where to find the
+    Corresponding Source.  Regardless of what server hosts the
+    Corresponding Source, you remain obligated to ensure that it is
+    available for as long as needed to satisfy these requirements.
+
+    e) Convey the object code using peer-to-peer transmission, provided
+    you inform other peers where the object code and Corresponding
+    Source of the work are being offered to the general public at no
+    charge under subsection 6d.
+
+  A separable portion of the object code, whose source code is excluded
+from the Corresponding Source as a System Library, need not be
+included in conveying the object code work.
+
+  A "User Product" is either (1) a "consumer product", which means any
+tangible personal property which is normally used for personal, family,
+or household purposes, or (2) anything designed or sold for incorporation
+into a dwelling.  In determining whether a product is a consumer product,
+doubtful cases shall be resolved in favor of coverage.  For a particular
+product received by a particular user, "normally used" refers to a
+typical or common use of that class of product, regardless of the status
+of the particular user or of the way in which the particular user
+actually uses, or expects or is expected to use, the product.  A product
+is a consumer product regardless of whether the product has substantial
+commercial, industrial or non-consumer uses, unless such uses represent
+the only significant mode of use of the product.
+
+  "Installation Information" for a User Product means any methods,
+procedures, authorization keys, or other information required to install
+and execute modified versions of a covered work in that User Product from
+a modified version of its Corresponding Source.  The information must
+suffice to ensure that the continued functioning of the modified object
+code is in no case prevented or interfered with solely because
+modification has been made.
+
+  If you convey an object code work under this section in, or with, or
+specifically for use in, a User Product, and the conveying occurs as
+part of a transaction in which the right of possession and use of the
+User Product is transferred to the recipient in perpetuity or for a
+fixed term (regardless of how the transaction is characterized), the
+Corresponding Source conveyed under this section must be accompanied
+by the Installation Information.  But this requirement does not apply
+if neither you nor any third party retains the ability to install
+modified object code on the User Product (for example, the work has
+been installed in ROM).
+
+  The requirement to provide Installation Information does not include a
+requirement to continue to provide support service, warranty, or updates
+for a work that has been modified or installed by the recipient, or for
+the User Product in which it has been modified or installed.  Access to a
+network may be denied when the modification itself materially and
+adversely affects the operation of the network or violates the rules and
+protocols for communication across the network.
+
+  Corresponding Source conveyed, and Installation Information provided,
+in accord with this section must be in a format that is publicly
+documented (and with an implementation available to the public in
+source code form), and must require no special password or key for
+unpacking, reading or copying.
+
+  7. Additional Terms.
+
+  "Additional permissions" are terms that supplement the terms of this
+License by making exceptions from one or more of its conditions.
+Additional permissions that are applicable to the entire Program shall
+be treated as though they were included in this License, to the extent
+that they are valid under applicable law.  If additional permissions
+apply only to part of the Program, that part may be used separately
+under those permissions, but the entire Program remains governed by
+this License without regard to the additional permissions.
+
+  When you convey a copy of a covered work, you may at your option
+remove any additional permissions from that copy, or from any part of
+it.  (Additional permissions may be written to require their own
+removal in certain cases when you modify the work.)  You may place
+additional permissions on material, added by you to a covered work,
+for which you have or can give appropriate copyright permission.
+
+  Notwithstanding any other provision of this License, for material you
+add to a covered work, you may (if authorized by the copyright holders of
+that material) supplement the terms of this License with terms:
+
+    a) Disclaiming warranty or limiting liability differently from the
+    terms of sections 15 and 16 of this License; or
+
+    b) Requiring preservation of specified reasonable legal notices or
+    author attributions in that material or in the Appropriate Legal
+    Notices displayed by works containing it; or
+
+    c) Prohibiting misrepresentation of the origin of that material, or
+    requiring that modified versions of such material be marked in
+    reasonable ways as different from the original version; or
+
+    d) Limiting the use for publicity purposes of names of licensors or
+    authors of the material; or
+
+    e) Declining to grant rights under trademark law for use of some
+    trade names, trademarks, or service marks; or
+
+    f) Requiring indemnification of licensors and authors of that
+    material by anyone who conveys the material (or modified versions of
+    it) with contractual assumptions of liability to the recipient, for
+    any liability that these contractual assumptions directly impose on
+    those licensors and authors.
+
+  All other non-permissive additional terms are considered "further
+restrictions" within the meaning of section 10.  If the Program as you
+received it, or any part of it, contains a notice stating that it is
+governed by this License along with a term that is a further
+restriction, you may remove that term.  If a license document contains
+a further restriction but permits relicensing or conveying under this
+License, you may add to a covered work material governed by the terms
+of that license document, provided that the further restriction does
+not survive such relicensing or conveying.
+
+  If you add terms to a covered work in accord with this section, you
+must place, in the relevant source files, a statement of the
+additional terms that apply to those files, or a notice indicating
+where to find the applicable terms.
+
+  Additional terms, permissive or non-permissive, may be stated in the
+form of a separately written license, or stated as exceptions;
+the above requirements apply either way.
+
+  8. Termination.
+
+  You may not propagate or modify a covered work except as expressly
+provided under this License.  Any attempt otherwise to propagate or
+modify it is void, and will automatically terminate your rights under
+this License (including any patent licenses granted under the third
+paragraph of section 11).
+
+  However, if you cease all violation of this License, then your
+license from a particular copyright holder is reinstated (a)
+provisionally, unless and until the copyright holder explicitly and
+finally terminates your license, and (b) permanently, if the copyright
+holder fails to notify you of the violation by some reasonable means
+prior to 60 days after the cessation.
+
+  Moreover, your license from a particular copyright holder is
+reinstated permanently if the copyright holder notifies you of the
+violation by some reasonable means, this is the first time you have
+received notice of violation of this License (for any work) from that
+copyright holder, and you cure the violation prior to 30 days after
+your receipt of the notice.
+
+  Termination of your rights under this section does not terminate the
+licenses of parties who have received copies or rights from you under
+this License.  If your rights have been terminated and not permanently
+reinstated, you do not qualify to receive new licenses for the same
+material under section 10.
+
+  9. Acceptance Not Required for Having Copies.
+
+  You are not required to accept this License in order to receive or
+run a copy of the Program.  Ancillary propagation of a covered work
+occurring solely as a consequence of using peer-to-peer transmission
+to receive a copy likewise does not require acceptance.  However,
+nothing other than this License grants you permission to propagate or
+modify any covered work.  These actions infringe copyright if you do
+not accept this License.  Therefore, by modifying or propagating a
+covered work, you indicate your acceptance of this License to do so.
+
+  10. Automatic Licensing of Downstream Recipients.
+
+  Each time you convey a covered work, the recipient automatically
+receives a license from the original licensors, to run, modify and
+propagate that work, subject to this License.  You are not responsible
+for enforcing compliance by third parties with this License.
+
+  An "entity transaction" is a transaction transferring control of an
+organization, or substantially all assets of one, or subdividing an
+organization, or merging organizations.  If propagation of a covered
+work results from an entity transaction, each party to that
+transaction who receives a copy of the work also receives whatever
+licenses to the work the party's predecessor in interest had or could
+give under the previous paragraph, plus a right to possession of the
+Corresponding Source of the work from the predecessor in interest, if
+the predecessor has it or can get it with reasonable efforts.
+
+  You may not impose any further restrictions on the exercise of the
+rights granted or affirmed under this License.  For example, you may
+not impose a license fee, royalty, or other charge for exercise of
+rights granted under this License, and you may not initiate litigation
+(including a cross-claim or counterclaim in a lawsuit) alleging that
+any patent claim is infringed by making, using, selling, offering for
+sale, or importing the Program or any portion of it.
+
+  11. Patents.
+
+  A "contributor" is a copyright holder who authorizes use under this
+License of the Program or a work on which the Program is based.  The
+work thus licensed is called the contributor's "contributor version".
+
+  A contributor's "essential patent claims" are all patent claims
+owned or controlled by the contributor, whether already acquired or
+hereafter acquired, that would be infringed by some manner, permitted
+by this License, of making, using, or selling its contributor version,
+but do not include claims that would be infringed only as a
+consequence of further modification of the contributor version.  For
+purposes of this definition, "control" includes the right to grant
+patent sublicenses in a manner consistent with the requirements of
+this License.
+
+  Each contributor grants you a non-exclusive, worldwide, royalty-free
+patent license under the contributor's essential patent claims, to
+make, use, sell, offer for sale, import and otherwise run, modify and
+propagate the contents of its contributor version.
+
+  In the following three paragraphs, a "patent license" is any express
+agreement or commitment, however denominated, not to enforce a patent
+(such as an express permission to practice a patent or covenant not to
+sue for patent infringement).  To "grant" such a patent license to a
+party means to make such an agreement or commitment not to enforce a
+patent against the party.
+
+  If you convey a covered work, knowingly relying on a patent license,
+and the Corresponding Source of the work is not available for anyone
+to copy, free of charge and under the terms of this License, through a
+publicly available network server or other readily accessible means,
+then you must either (1) cause the Corresponding Source to be so
+available, or (2) arrange to deprive yourself of the benefit of the
+patent license for this particular work, or (3) arrange, in a manner
+consistent with the requirements of this License, to extend the patent
+license to downstream recipients.  "Knowingly relying" means you have
+actual knowledge that, but for the patent license, your conveying the
+covered work in a country, or your recipient's use of the covered work
+in a country, would infringe one or more identifiable patents in that
+country that you have reason to believe are valid.
+
+  If, pursuant to or in connection with a single transaction or
+arrangement, you convey, or propagate by procuring conveyance of, a
+covered work, and grant a patent license to some of the parties
+receiving the covered work authorizing them to use, propagate, modify
+or convey a specific copy of the covered work, then the patent license
+you grant is automatically extended to all recipients of the covered
+work and works based on it.
+
+  A patent license is "discriminatory" if it does not include within
+the scope of its coverage, prohibits the exercise of, or is
+conditioned on the non-exercise of one or more of the rights that are
+specifically granted under this License.  You may not convey a covered
+work if you are a party to an arrangement with a third party that is
+in the business of distributing software, under which you make payment
+to the third party based on the extent of your activity of conveying
+the work, and under which the third party grants, to any of the
+parties who would receive the covered work from you, a discriminatory
+patent license (a) in connection with copies of the covered work
+conveyed by you (or copies made from those copies), or (b) primarily
+for and in connection with specific products or compilations that
+contain the covered work, unless you entered into that arrangement,
+or that patent license was granted, prior to 28 March 2007.
+
+  Nothing in this License shall be construed as excluding or limiting
+any implied license or other defenses to infringement that may
+otherwise be available to you under applicable patent law.
+
+  12. No Surrender of Others' Freedom.
+
+  If conditions are imposed on you (whether by court order, agreement or
+otherwise) that contradict the conditions of this License, they do not
+excuse you from the conditions of this License.  If you cannot convey a
+covered work so as to satisfy simultaneously your obligations under this
+License and any other pertinent obligations, then as a consequence you may
+not convey it at all.  For example, if you agree to terms that obligate you
+to collect a royalty for further conveying from those to whom you convey
+the Program, the only way you could satisfy both those terms and this
+License would be to refrain entirely from conveying the Program.
+
+  13. Remote Network Interaction; Use with the GNU General Public License.
+
+  Notwithstanding any other provision of this License, if you modify the
+Program, your modified version must prominently offer all users
+interacting with it remotely through a computer network (if your version
+supports such interaction) an opportunity to receive the Corresponding
+Source of your version by providing access to the Corresponding Source
+from a network server at no charge, through some standard or customary
+means of facilitating copying of software.  This Corresponding Source
+shall include the Corresponding Source for any work covered by version 3
+of the GNU General Public License that is incorporated pursuant to the
+following paragraph.
+
+  Notwithstanding any other provision of this License, you have
+permission to link or combine any covered work with a work licensed
+under version 3 of the GNU General Public License into a single
+combined work, and to convey the resulting work.  The terms of this
+License will continue to apply to the part which is the covered work,
+but the work with which it is combined will remain governed by version
+3 of the GNU General Public License.
+
+  14. Revised Versions of this License.
+
+  The Free Software Foundation may publish revised and/or new versions of
+the GNU Affero General Public License from time to time.  Such new versions
+will be similar in spirit to the present version, but may differ in detail to
+address new problems or concerns.
+
+  Each version is given a distinguishing version number.  If the
+Program specifies that a certain numbered version of the GNU Affero General
+Public License "or any later version" applies to it, you have the
+option of following the terms and conditions either of that numbered
+version or of any later version published by the Free Software
+Foundation.  If the Program does not specify a version number of the
+GNU Affero General Public License, you may choose any version ever published
+by the Free Software Foundation.
+
+  If the Program specifies that a proxy can decide which future
+versions of the GNU Affero General Public License can be used, that proxy's
+public statement of acceptance of a version permanently authorizes you
+to choose that version for the Program.
+
+  Later license versions may give you additional or different
+permissions.  However, no additional obligations are imposed on any
+author or copyright holder as a result of your choosing to follow a
+later version.
+
+  15. Disclaimer of Warranty.
+
+  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
+OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
+IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
+ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+
+  16. Limitation of Liability.
+
+  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
+THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
+GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
+USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
+DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
+PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
+EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+  17. Interpretation of Sections 15 and 16.
+
+  If the disclaimer of warranty and limitation of liability provided
+above cannot be given local legal effect according to their terms,
+reviewing courts shall apply local law that most closely approximates
+an absolute waiver of all civil liability in connection with the
+Program, unless a warranty or assumption of liability accompanies a
+copy of the Program in return for a fee.
+
+                     END OF TERMS AND CONDITIONS
+
+            How to Apply These Terms to Your New Programs
+
+  If you develop a new program, and you want it to be of the greatest
+possible use to the public, the best way to achieve this is to make it
+free software which everyone can redistribute and change under these terms.
+
+  To do so, attach the following notices to the program.  It is safest
+to attach them to the start of each source file to most effectively
+state the exclusion of warranty; and each file should have at least
+the "copyright" line and a pointer to where the full notice is found.
+
+    <one line to give the program's name and a brief idea of what it does.>
+    Copyright (C) <year>  <name of author>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Also add information on how to contact you by electronic and paper mail.
+
+  If your software can interact with users remotely through a computer
+network, you should also make sure that it provides a way for users to
+get its source.  For example, if your program is a web application, its
+interface could display a "Source" link that leads users to an archive
+of the code.  There are many ways you could offer source, and different
+solutions will be better for different programs; see section 13 for the
+specific requirements.
+
+  You should also get your employer (if you work as a programmer) or school,
+if any, to sign a "copyright disclaimer" for the program, if necessary.
+For more information on this, and how to apply and follow the GNU AGPL, see
+<https://www.gnu.org/licenses/>.
+
+
+================================================================================
+# FILE: README.md
+================================================================================
+# integration-zigbee
+
+A [MajorDom](https://majordom.io) integration — bridges **Zigbee** devices into the MajorDom
+language.
+
+Built for the **MajorDom Hub**, but it doesn't need it: this is a standalone, standardized
+library for Zigbee that you can use on its own (see **Run it standalone** below). Built on the
+[MajorDom Integration SDK](https://github.com/MajorDom-Systems/integration-sdk). The entry point
+is `ZigBeeController` (`majordom_zigbee/controller.py`), which the Hub — or the SDK's dev runner —
+instantiates and drives through its lifecycle: pairing → commands → teardown.
+
+- **Other protocols:** browse the [MajorDom integrations](https://github.com/orgs/MajorDom-Systems/repositories?q=integration-).
+- **Create your own:** start from the [integration template](https://github.com/MajorDom-Systems/integration-template).
+
+## Documentation
+
+Full integration-author docs — the controller lifecycle, data models, storing data, discovery,
+and a worked example — live at **[docs.majordom.io](https://docs.majordom.io/device-integration)**.
+
+## Development
+
+```sh
+poetry install && poetry run poe install
+```
+
+| Task | Description |
+|------|-------------|
+| `poe check` | Full quality pipeline (ruff, ty, pytest, poetry build/check) |
+| `poe check --ci` | Same, plus `git diff --exit-code` |
+
+Work lands on `develop`; `master` is protected and released via **Actions → Release**. Tests drive
+the controller with the SDK's test doubles against a simulated `zigpy` device — no radio required
+(see `tests/`).
+
+## Run it standalone (without the Hub)
+
+`majordom-zigbee` is a standalone library — import it into your own app, or run **just this
+integration** interactively (discover, pair, control, and inspect devices from a prompt) with no Hub.
+It needs a Zigbee coordinator radio (a SkyConnect, ConBee, or a zigpy-znp/bellows-supported dongle)
+at a serial path.
+
+See **[Standalone mode](https://docs.majordom.io/device-integration/standalone)** for the interactive
+CLI, watch mode, and the programmatic API.
+
+## Coordinator radios (backend-agnostic)
+
+The integration is radio-backend-agnostic: it picks the right `zigpy` radio library for the
+attached coordinator, so swapping dongles needs **no source change**.
+
+- **Bundled by default:** Silicon Labs EmberZNet/EZSP (`bellows` — SkyConnect, Sonoff ZBDongle-E)
+  and TI Z-Stack/ZNP (`zigpy-znp` — CC2652, Sonoff ZBDongle-P).
+- **Optional extras:** `pip install 'majordom-zigbee[deconz]'` (ConBee/RaspBee), `[xbee]` (Digi
+  XBee), `[zigate]` (ZiGate), or `[all-radios]`.
+- **Selecting the backend:** by default the attached dongle is **auto-probed**. Pin one explicitly
+  with the `MAJORDOM_ZIGBEE_RADIO` env var (`ezsp` / `znp` / `deconz` / `xbee` / `zigate`) or the
+  `ZigBeeController.radio` attribute. See `majordom_zigbee/radio.py`.
+
+## About this integration
+
+- **Protocol / platform:** Zigbee via `zigpy` (with `bellows` / `zigpy-znp` radio libraries).
+- **Transport(s):** Zigbee (IEEE 802.15.4).
+- **Supported devices:** Zigbee Home Automation devices — lights, plugs, switches, sensors.
+- **Credentials needed to pair:** none — devices join during an explicit pairing window.
+
+### Required harness
+
+- **Hardware adapters:** a Zigbee coordinator radio (SkyConnect / ConBee / a `zigpy`-supported
+  dongle) — the Hub assigns its OS device path via `dependencies.hardware_interfaces`
+  (e.g. `/dev/ttyACM0`).
+- **Third-party software services:** none — `zigpy` speaks to the radio directly.
+- **OS / permissions:** serial-port access to the radio.
+
+### Protocol stack (OSI)
+
+| OSI layer | Protocol | Implemented by |
+|-----------|----------|----------------|
+| Application (7) | Zigbee Cluster Library (ZCL) | **this integration** (via `zigpy`) |
+| Network (3) | Zigbee NWK / APS | library (`zigpy` · radio firmware) |
+| Data link / Physical (1–2) | IEEE 802.15.4 | radio adapter (harness) |
+
+### Progress
+
+- [x] `start_pairing_window` implemented (Zigbee requires an explicit join window)
+- [x] Discovery of joining devices; `controller_did_receive_discovery` called
+- [x] Re-discovery of already-paired devices on reconnect (`controller_did_connect_device`)
+- [x] Device pairing
+- [x] Device schema mapped: endpoints/clusters → parameter list with per-parameter metadata
+- [x] Hub → Device control (`send_command` — commands and attribute writes)
+- [x] Device → Hub event subscription (`controller_did_receive_events`)
+- [x] `identify`
+- [x] `unpair`
+- [x] `fetch`
+- [x] Availability tracking while running (`controller_did_lose_device` / `last_error`)
+- [x] Graceful shutdown in `stop`
+- [x] Tests pass against a simulated `zigpy` device (`tests/`)
+
+### Parameter metadata sources & priority
+
+Every parameter's UX metadata is resolved from several sources. Two independent axes, each with its
+own priority ladder (first match wins). See also the
+[parameter-ux recipe](https://docs.majordom.io/device-integration/parameter-ux).
+
+**Visibility / role / unit** — resolved by `classify_attribute()` in `zigbee_spec.py`:
+
+| # | Source | What it is |
+|---|--------|-----------|
+| 1 | `OUR_ATTRIBUTE_UX` (`VISIBILITY_OVERRIDES`, `USER_READINGS`, `EVERYDAY_CONTROL_ATTRIBUTES`) | our hand curation — a human's call wins over everything |
+| — | metadata / manufacturer-on-system-cluster | forced **system** (safety; scaling constants & bounds stay hidden) |
+| 2 | **v2 quirk entity metadata** | per-device judgment from a loaded `zhaquirks` `QuirkBuilder` (`quirk_ux_map()`), runtime |
+| 3 | `ZHA_ATTRIBUTE_UX` | standard-cluster judgment **harvested** from `zha` (`scripts/harvest_zha.py`, vendored — `zha` is not a runtime dep) |
+| 4 | **fallback policy** | heuristic (reportable → user, writable → setting); **logs a warning** so uncurated attrs surface. Flip `_FALLBACK_HIDE_UNCURATED` to hide-by-default once coverage is validated on real devices. |
+
+**Bounds (`min`/`max`/`step`)** — a separate ladder (`resolve_metadata_bounds()`):
+
+1. the device's own limit attributes' **runtime values** (`METADATA_SOURCES`) — ground truth for *this* device;
+2. spec tables (`ATTRIBUTE_MIN_STEP`, wire-type range);
+3. wire-type default. A missing expected limit is logged (quirk detection).
+
+**Quirks.** `zhaquirks.setup()` runs once at controller startup so joined devices are presented in
+quirked form (manufacturer clusters decoded into named/typed attributes; v2 entity metadata
+attached). This requires the `zigpy` 2.x stack.
+
+**Drift.** `scripts/check_zha_drift.py` re-harvests `zha` and diffs against the vendored artifact via
+the SDK's `diff_specs`, tiering changes ADD / REMOVE / **RECLASSIFY** (high-risk — changes what
+current users already see). CI opens a Dependabot-style refresh PR on drift.
+
+### Notes
+
+The device/parameter ids are derived from the device's IEEE address via the SDK's UUID helpers, so
+they're stable across restarts and namespaced per integration.
+
+## License
+
+See [LICENSE](LICENSE). For commercial licensing or partnership inquiries regarding MajorDom,
+contact us via [parker-industries.org/partnership](https://parker-industries.org/partnership).
+
+
+================================================================================
+# FILE: majordom_zigbee/__init__.py
+================================================================================
+"""Zigbee integration for MajorDom.
+
+Bridges Zigbee devices into the MajorDom language via zigpy. `ZigBeeController` is the entry
+point the Hub (or the SDK's standalone dev runner) instantiates and drives.
+"""
+
+from majordom_zigbee.controller import ZigBeeController
+
+__all__ = ["ZigBeeController"]
+
+
+================================================================================
+# FILE: majordom_zigbee/_serial.py
+================================================================================
+import subprocess
+
+
+def port_holder(port: str) -> str:
+    """Return human-readable description of which process holds the port, or empty string."""
+    try:
+        # fuser prints the device name to stderr, PIDs to stdout — capture separately
+        result = subprocess.run(["fuser", port], capture_output=True, text=True)
+        out = result.stdout.strip()
+        pids = [p for p in out.split() if p.isdigit()]
+        names = []
+        for pid in pids:
+            try:
+                comm = subprocess.check_output(["cat", f"/proc/{pid}/comm"], text=True).strip()
+                names.append(f"pid={pid} ({comm})")
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                names.append(f"pid={pid}")
+        return ", ".join(names)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return ""
+
+
+================================================================================
+# FILE: majordom_zigbee/controller.py
+================================================================================
+import asyncio
+import contextlib
+import json
+import logging
+from enum import Enum
+from typing import Any, cast, override
+from uuid import UUID
+
+import zigpy.endpoint
+import zigpy.zcl
+from majordom_integration_sdk.controller import AbstractController
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import CredentialsType, Discovery, NonEmptyStr, ProvidedCredentials
+from majordom_integration_sdk.schemas.event import DeviceParameterChange
+from majordom_integration_sdk.schemas.parameter import (
+    ParameterDataType,
+    ParameterRole,
+    ParameterUnit,
+    ParameterVisibility,
+)
+from zigpy.config import CONF_DATABASE, CONF_DEVICE, CONF_DEVICE_PATH
+from zigpy.device import Device as ZPDevice  # ZP - ZigPy
+from zigpy.types import EUI64
+from zigpy.zcl.clusters.general import Identify
+from zigpy.zcl.foundation import Status as ZCLStatus
+from zigpy.zcl.foundation import ZCLAttributeAccess, ZCLAttributeDef
+
+from majordom_zigbee._serial import port_holder
+
+from .exceptions import ZBConnectionError, ZBOperationError, ZBUnexpectedError
+from .listener import ZBAttributeUpdatedListener
+from .mapper import ZigBeeMapper
+from .model import (
+    Parameter,
+    ZBDevice,
+    ZBDeviceIntegrationData,
+    ZBDeviceState,
+    ZBParameter,
+    ZBParameterIntegrationData,
+    ZBParameterState,
+    ZBParameterType,
+)
+from .radio import resolve_application
+from .zigbee_spec import (
+    EVERYDAY_COMMANDS,
+    MAIN_PARAMETER_BY_CLUSTER,
+    SYSTEM_CLUSTERS,
+    MainParameterSpec,
+    UxSpec,
+    classify_attribute,
+    get_min_step,
+    get_unit,
+    resolve_metadata_bounds,
+    unit_from_zha,
+)
+
+log = logging.getLogger(__name__)
+
+# ZCL read_attributes request max payload: 254 bytes (EZSP LVBytes limit)
+# Header=3 bytes + 2 bytes/attr → theoretical max 125 attr IDs per request.
+# In practice, reading too many attributes at once keeps the serial line busy
+# long enough to trigger NCP ACK timeouts.
+_MAX_ATTRS_PER_REQUEST = 25
+# Delay between attribute read chunks to let bellows send ASH ACKs.
+_INTER_CHUNK_DELAY = 0.05
+
+_quirks_loaded = False
+
+
+_SETTING_ENTITY_TYPES = frozenset({"config", "diagnostic"})
+_SENSOR_PLATFORMS = frozenset({"sensor", "binary_sensor"})
+
+
+def quirk_ux_map(zbdevice: ZPDevice) -> dict[tuple[int, int, str], UxSpec]:
+    """Per-attribute UX judgment carried by a v2 QuirkBuilder, keyed (endpoint_id, cluster_id,
+    attribute_name). This is the runtime, device-specific tier of the classification ladder (above
+    harvested zha, below our hand overrides). Empty for non-quirked / v1-only devices.
+
+    entity_type (standard/config/diagnostic) -> visibility; entity_platform -> role; unit/
+    device_class -> ParameterUnit. Only metadata entries that target a single attribute are used.
+    """
+    quirk_def = getattr(zbdevice, "_quirk_definition", None)
+    if quirk_def is None:
+        return {}
+    out: dict[tuple[int, int, str], UxSpec] = {}
+    for meta in getattr(quirk_def, "entity_metadata", ()):
+        attr_name = getattr(meta, "attribute_name", None)
+        if not attr_name:
+            continue  # command buttons / composite entities carry no single attribute
+        entity_type = getattr(getattr(meta, "entity_type", None), "value", None)
+        platform = getattr(getattr(meta, "entity_platform", None), "value", None)
+        visibility = ParameterVisibility.setting if entity_type in _SETTING_ENTITY_TYPES else ParameterVisibility.user
+        role = ParameterRole.sensor if platform in _SENSOR_PLATFORMS else ParameterRole.control
+        unit = unit_from_zha(
+            getattr(getattr(meta, "device_class", None), "value", getattr(meta, "device_class", None)),
+            getattr(meta, "unit", None),
+        )
+        out[(meta.endpoint_id, meta.cluster_id, attr_name)] = UxSpec(visibility, role, unit)
+    return out
+
+
+def _ensure_quirks_loaded() -> None:
+    """Register zhaquirks into zigpy's process-global registry, once. Must run before the
+    radio interviews devices so a joined device is presented in its quirked form —
+    manufacturer clusters decoded into named/typed attributes and v2 entity metadata
+    attached. setup() imports every zhaquirks module, so guard against repeat cost."""
+    global _quirks_loaded
+    if _quirks_loaded:
+        return
+    import zhaquirks
+
+    zhaquirks.setup()
+    _quirks_loaded = True
+    log.debug("[QUIRKS] zhaquirks registered into zigpy registry")
+
+
+def _zb_path(
+    device: ZBDevice | None = None,
+    zbdevice: ZPDevice | None = None,
+    endpoint: zigpy.endpoint.Endpoint | None = None,
+    cluster: zigpy.zcl.Cluster | None = None,
+    attr_id: int | None = None,
+    attr_ids: list[int] | None = None,
+    error: Exception | None = None,
+    attr_only: bool = False,
+) -> str:
+    parts: list[str] = []
+    if device is not None:
+        model = zbdevice.model if zbdevice is not None else None
+        parts.append(f"device={device.id}" + (f"({model})" if model else ""))
+    if endpoint is not None:
+        ep_type = getattr(endpoint.device_type, "name", None)
+        parts.append(f"endpoint={endpoint.endpoint_id}" + (f"({ep_type})" if ep_type else ""))
+    if cluster is not None and not attr_only:
+        parts.append(f"cluster={cluster.cluster_id}({cluster.name})")
+    if attr_id is not None:
+        attr_name = getattr(cluster.attributes.get(attr_id) if cluster else None, "name", None)
+        parts.append(f"attr={attr_id}" + (f"({attr_name})" if attr_name else ""))
+    if error is not None:
+        parts.append(f"error={type(error).__name__}{' details=' + str(error) if str(error) else ''}")
+    if attr_ids is not None:
+        attr_ids = sorted(attr_ids)
+        names = [getattr(cluster.attributes.get(a) if cluster else None, "name", None) for a in attr_ids]
+        long = len(names) > 1
+        glue = ",\n\t" if long else " "
+        parts.append(
+            f"attrs={'\n\t' if long else ''}"
+            f"{glue.join(f'{a}({n})' if n else str(a) for a, n in zip(attr_ids, names, strict=False))}"
+        )
+    return " ".join(parts)
+
+
+def _check_zcl_failures(
+    failures: dict[int | None, ZCLStatus],
+    cluster: zigpy.zcl.Cluster,
+    log_prefix: str,
+    *,
+    device: "ZBDevice | None" = None,
+    zbdevice: "ZPDevice | None" = None,
+    endpoint: "zigpy.endpoint.Endpoint | None" = None,
+    raise_errors: bool = True,
+) -> None:
+    """Handle ZCL-level failures from read_attributes or write_attributes.
+
+    Registers unsupported attributes on the cluster and logs them at DEBUG.
+    Raises ZBOperationError for any other non-SUCCESS status.
+
+    Pass failures as {attr_id: status} (read_attributes) or
+    {record.attrid: record.status for record in result[0]} (write_attributes).
+    A None key means a global device-level status (write_attributes global failure).
+    """
+    cluster_path = _zb_path(device, zbdevice, endpoint, cluster)
+    unsupported = [
+        attr_id
+        for attr_id, status in failures.items()
+        if attr_id is not None and status == ZCLStatus.UNSUPPORTED_ATTRIBUTE
+    ]
+    errors = {
+        attr_id: status
+        for attr_id, status in failures.items()
+        if status != ZCLStatus.SUCCESS and status != ZCLStatus.UNSUPPORTED_ATTRIBUTE
+    }
+
+    for attr_id in unsupported:
+        # zigpy 2.0 resolves the id via find_attribute, which raises for ids the cluster
+        # definition doesn't know (a device can report unsupported for a nonstandard id).
+        with contextlib.suppress(KeyError, ValueError):
+            cluster.add_unsupported_attribute(attr_id)
+    if unsupported:
+        names = [_zb_path(cluster=cluster, attr_id=a, attr_only=True) for a in unsupported]
+        long = len(names) > 1
+        log.debug(
+            f"{log_prefix} unsupported attributes {cluster_path}: {'\n\t' if long else ''}{(',\n\t').join(names)}"
+        )
+
+    if not errors:
+        return
+    details = ",\n\t".join(
+        f"{_zb_path(cluster=cluster, attr_id=attr_id, attr_only=True) if attr_id is not None else 'global'}"
+        f"={getattr(status, 'name', status)}"  # ZCLStatus enum, or a raw int for unknown codes
+        for attr_id, status in errors.items()
+    )
+    if raise_errors:
+        raise ZBOperationError(f"{log_prefix} ZCL failures:\n\t{details}")
+    else:
+        log.error(f"{log_prefix} ZCL failures:\n\t{details}")
+
+
+class ZigBeeController(AbstractController):
+    """Bridges the Hub to Zigbee devices through a USB coordinator radio via zigpy.
+
+    zigpy owns the Zigbee network, the ZCL, and device interviews; this controller adapts it
+    to the Hub's AbstractController contract. Zigbee has no separate discovery step — a device
+    is on the network the moment it joins the permit-join window. See readme.md.
+    """
+
+    #: Pin a specific radio backend (see majordom_zigbee.radio: "ezsp"/"znp"/"deconz"/...). Left
+    #: None, the MAJORDOM_ZIGBEE_RADIO env var is consulted, and failing that the attached dongle
+    #: is auto-probed — so swapping coordinators needs no source change, only the matching library.
+    radio: str | None = None
+
+    _zigbee_device_path: str
+    _zigbe_db: str
+    _majordom_discoveries: dict[UUID, Discovery]  # discovery metadata surfaced to the Hub
+    _awaiting_zb_discoveries: dict[UUID, ZPDevice]  # on the network, discovered, not yet paired in majordom
+    _connected_devices: dict[UUID, ZPDevice]  # paired in majordom
+    # (the ZPDevice values could be shrunk to just the IEEE address to save memory, if needed.)
+
+    _mapper: ZigBeeMapper
+    _tasks: set[asyncio.Task]
+
+    def __init__(self, dependencies: AbstractController.Dependencies):
+        super().__init__(dependencies)
+        # Mapper is wired with the framework's UUID generators so every Zigbee id is namespaced
+        # consistently under the integration and device (see ZigBeeMapper).
+        self._mapper = ZigBeeMapper(self.device_uuid, self.parameter_uuid)
+        self._majordom_discoveries: dict[UUID, Discovery] = {}
+        self._awaiting_zb_discoveries: dict[UUID, ZPDevice] = {}
+        self._connected_devices: dict[UUID, ZPDevice] = {}
+        self._availability: dict[UUID, bool] = {}  # device_id -> last signalled availability
+        self._tasks: set[asyncio.Task] = set()
+
+    # -------------------------------------------------------------------------
+    # AbstractController interface
+    # -------------------------------------------------------------------------
+
+    name = "ZigBee"
+
+    @property
+    def discoveries(self) -> dict[UUID, Discovery]:
+        return self._majordom_discoveries
+
+    @property
+    @override
+    def device_type(self) -> type[ZBDevice]:
+        return ZBDevice
+
+    @property
+    @override
+    def parameter_type(self) -> type[ZBParameter]:
+        return ZBParameter
+
+    # -------------------------------------------------------------------------
+    # Lifecycle
+    # -------------------------------------------------------------------------
+
+    async def start(self):
+        self._zigbee_device_path = self.dependencies.hardware_interfaces[0]
+        self._zigbe_db = str(self.documents_folder / "zigbee.db")
+        log.debug("[START] port=%s  db=%s", self._zigbee_device_path, self._zigbe_db)
+        config: dict[str, Any] = {
+            CONF_DEVICE: {CONF_DEVICE_PATH: self._zigbee_device_path},
+            CONF_DATABASE: self._zigbe_db,
+        }
+
+        # Register per-device quirks before the radio starts interviewing devices.
+        _ensure_quirks_loaded()
+
+        # Resolve the radio backend for the attached coordinator (pinned, env, or auto-probed)
+        # and start its zigpy application. Backend-agnostic: no source change to swap dongles.
+        application_cls = await resolve_application(config[CONF_DEVICE], requested=self.radio)
+        try:
+            self._application = await application_cls.new(config=config, auto_form=True)
+        except Exception as e:
+            if "locked" in str(e).lower() or "permission" in str(e).lower():
+                holder = port_holder(self._zigbee_device_path)
+                msg = f"{self._zigbee_device_path} is locked"
+                if holder:
+                    msg += f" by: {holder}"
+                raise PermissionError(msg) from e
+            raise
+        self._application.add_listener(self)
+        log.debug("[READY] connected to %s", self._zigbee_device_path)
+
+        async with self.dependencies.make_device_repository() as device_repo:
+            # Subscribe to attribute updates and add the device to _connected_devices
+            # if the Zigbee device is in the majordom database, otherwise start a discovery cycle.
+            for zbdevice in self._application.devices.values():
+                if zbdevice.nwk == 0x0000:
+                    continue
+                device_id = self._mapper.device_uuid_from_ieee(self._mapper.convert_eui64_to_str(zbdevice.ieee))
+                if await device_repo.get(device_id, ZBDevice):
+                    self._connected_devices[device_id] = zbdevice
+                    self._availability[device_id] = True  # baseline for mid-session transitions
+                    await self._subscribe(device_id, zbdevice)
+                    log.debug("[KNOWN] ieee=%s  nwk=0x%04X", zbdevice.ieee, zbdevice.nwk)
+                else:
+                    self._create_task(self._disconnect_unpaired_discovery(device_id, zbdevice.ieee))
+                    log.debug(
+                        "[UNKNOWN] ieee=%s  nwk=0x%04X — not in DB, starting disconnect timer",
+                        zbdevice.ieee,
+                        zbdevice.nwk,
+                    )
+                    try:
+                        await zbdevice.initialize()
+                    except Exception:
+                        log.exception("[UNKNOWN] initialize failed for ieee=%s", zbdevice.ieee)
+
+            # Any device in our DB that isn't on the network anymore is marked unavailable on boot.
+            for device in await device_repo.get_all(as_=ZBDevice):
+                ieee = self._mapper.convert_str_to_eui64(device.integration_data.ieee)
+                if self._application.get_device(ieee):
+                    continue
+                device.available = False
+                device.last_error = f"Device {device.name} is no longer connected to the ZigBee network"
+                self._availability[device.id] = False  # baseline for mid-session transitions
+                await device_repo.save(device, device.id)
+
+    async def stop(self):
+        log.debug("[STOP] shutting down")
+        for task in self._tasks:
+            task.cancel()
+        if self._tasks:
+            await asyncio.gather(*self._tasks, return_exceptions=True)
+        self._tasks.clear()
+        if self._application:
+            await self._application.shutdown()
+        self._majordom_discoveries.clear()
+        self._awaiting_zb_discoveries.clear()
+        self._connected_devices.clear()
+
+    # -------------------------------------------------------------------------
+    # Hub -> device operations
+    # -------------------------------------------------------------------------
+
+    async def start_pairing_window(self, duration_sec: int) -> None:
+        if not self._application:
+            raise ZBConnectionError("ZigBee application is not started")
+        log.debug("[PERMIT-JOIN] opening for %ds", duration_sec)
+        await self._application.permit(duration_sec)
+
+    async def pair_device(
+        self, discovery: Discovery, credentials: ProvidedCredentials | None
+    ):  # Break down into submethods
+        async with self.dependencies.make_device_repository() as device_repository:
+            device = await device_repository.state(discovery.id, ZBDeviceState)
+            self._majordom_discoveries.pop(discovery.id)
+            zbdevice = self._awaiting_zb_discoveries.pop(discovery.id)
+            self._connected_devices[discovery.id] = zbdevice
+
+            assert device
+            assert zbdevice
+
+            if not device.integration_data.ieee:
+                device.integration_data = ZBDeviceIntegrationData(ieee=self._mapper.convert_eui64_to_str(zbdevice.ieee))
+            # Manufacturer-provided, read-only description — the ZCL model string.
+            device.description = zbdevice.model or None
+            parameters: list[ZBParameterState] = list()
+            # v2 QuirkBuilder entity judgment for this device (empty for non-quirked devices).
+            quirk_ux = quirk_ux_map(zbdevice)
+            for endpoint in zbdevice.non_zdo_endpoints:
+                for cluster in endpoint.clusters:
+                    for attribute_id, attribute in cluster.attributes.items():
+                        if cluster.is_attribute_unsupported(attribute_id):
+                            continue
+
+                        value = None
+
+                        # Classification via the priority ladder (see the zigbee README): our hand
+                        # overrides > v2 quirk metadata > harvested zha judgment > fallback heuristic
+                        # (which warns). Metadata and manufacturer-on-system-cluster attrs are hidden.
+                        spec, source = classify_attribute(
+                            cluster.cluster_id,
+                            attribute_id,
+                            attribute.name,
+                            writable=bool(attribute.access & ZCLAttributeAccess.Write),
+                            reportable=bool(attribute.access & ZCLAttributeAccess.Report),
+                            quirk_ux=quirk_ux.get((endpoint.endpoint_id, cluster.cluster_id, attribute.name)),
+                        )
+                        visibility = spec.visibility
+                        role = (
+                            spec.role
+                            if spec.role is not None
+                            else self._mapper.parse_zigbee_attribute_access(attribute.access)
+                        )
+                        if source.startswith("fallback"):
+                            log.warning(
+                                "[PAIR] uncurated attribute %s -> %s (%s); add to OUR_ATTRIBUTE_UX "
+                                "or refresh the zha harvest",
+                                _zb_path(cluster=cluster, attr_id=attribute_id, attr_only=True),
+                                visibility.value,
+                                source,
+                            )
+
+                        data_type = self._mapper.parse_zigbee_data_type(attribute.zcl_type)
+                        min_value = None
+                        max_value = None
+                        # Annotated so the untyped-enum comprehension below (member.name is Unknown)
+                        # matches Parameter.valid_values' declared type.
+                        valid_values: dict[int | float | str, str] | None = None
+                        min_step = get_min_step(cluster.cluster_id, attribute_id)
+                        # Our spec tables win; the harvested/quirk unit fills gaps get_unit() leaves plain.
+                        unit = get_unit(cluster.cluster_id, attribute_id)
+                        if unit is ParameterUnit.plain and spec.unit is not None:
+                            unit = spec.unit
+
+                        if hasattr(attribute.type, "min_value"):
+                            min_value = attribute.type.min_value
+                        if hasattr(attribute.type, "max_value"):
+                            max_value = attribute.type.max_value
+
+                        # Metadata priority 1: the device's own limit attributes (runtime values) win
+                        # over the wire-type default. cluster.get returns the cached sibling value.
+                        min_value, max_value, missing_bounds = resolve_metadata_bounds(
+                            cluster.cluster_id, attribute_id, cluster.get, min_value, max_value
+                        )
+                        for missing_attr in missing_bounds:
+                            log.debug(
+                                "[PAIR] metadata source %s not reported for %s — quirk or unsupported; "
+                                "using wire-type default",
+                                _zb_path(cluster=cluster, attr_id=missing_attr, attr_only=True),
+                                _zb_path(cluster=cluster, attr_id=attribute_id, attr_only=True),
+                            )
+
+                        if issubclass(attribute.type, Enum) and data_type != ParameterDataType.bool:
+                            valid_values = {member.name: str(member.value) for member in attribute.type}
+
+                        parameters.append(
+                            ZBParameterState(
+                                id=self._mapper.attribute_parameter_uuid(
+                                    device.id, endpoint.endpoint_id, cluster.cluster_id, attribute_id
+                                ),
+                                name=attribute.name,
+                                data_type=data_type,
+                                visibility=visibility,
+                                min_value=min_value,
+                                max_value=max_value,
+                                min_step=min_step,
+                                unit=unit,
+                                valid_values=valid_values,
+                                role=role,
+                                integration_data=ZBParameterIntegrationData(
+                                    endpoint_id=endpoint.endpoint_id,
+                                    cluster_id=cluster.cluster_id,
+                                    attribute_id=attribute_id,
+                                    type=ZBParameterType.attribute,
+                                ),
+                                value=value,
+                            )
+                        )
+                    for command in cluster.commands:
+                        fields: list[Parameter] = []
+
+                        # Command visibility: system-cluster commands hidden; everyday one-tap
+                        # actions -> user; every other command (schedule/credential/log
+                        # management) -> setting.
+                        if cluster.cluster_id in SYSTEM_CLUSTERS:
+                            visibility = ParameterVisibility.system
+                        elif (cluster.cluster_id, command.id) in EVERYDAY_COMMANDS:
+                            visibility = ParameterVisibility.user
+                        else:
+                            visibility = ParameterVisibility.setting
+
+                        for i, field in enumerate(command.schema.fields):
+                            min_value = None
+                            max_value = None
+                            valid_values: dict[int | float | str, str] | None = None
+
+                            if hasattr(field.type, "min_value"):
+                                min_value = field.type.min_value
+                            if hasattr(field.type, "max_value"):
+                                max_value = field.type.max_value
+                            if isinstance(field.type, type) and issubclass(field.type, Enum):
+                                valid_values = {member.name: str(member.value) for member in field.type}
+
+                            fields.append(
+                                Parameter(
+                                    id=self._mapper.command_field_uuid(
+                                        device.id, endpoint.endpoint_id, cluster.cluster_id, command.id, i
+                                    ),
+                                    name=field.name,
+                                    data_type=self._mapper.parse_zigbee_data_type(field.type),
+                                    role=ParameterRole.control,
+                                    visibility=ParameterVisibility.setting,
+                                    min_value=min_value,
+                                    max_value=max_value,
+                                    valid_values=valid_values,
+                                    integration_data=None,
+                                )
+                            )
+                        parameters.append(
+                            ZBParameterState(
+                                id=self._mapper.command_parameter_uuid(
+                                    device.id, endpoint.endpoint_id, cluster.cluster_id, command.id
+                                ),
+                                name=command.name,
+                                data_type=ParameterDataType.none,
+                                role=ParameterRole.control,
+                                fields=json.loads(json.dumps([f.model_dump(mode="json") for f in fields]))
+                                if fields
+                                else None,
+                                visibility=visibility,
+                                integration_data=ZBParameterIntegrationData(
+                                    endpoint_id=endpoint.endpoint_id,
+                                    cluster_id=cluster.cluster_id,
+                                    command_id=command.id,
+                                    type=ZBParameterType.command,
+                                ),
+                                value=None,
+                            )
+                        )
+            device.parameters = parameters
+            main_parameter_id, main_spec = self._get_device_main_parameter(device.id, zbdevice)
+            device.main_parameter = main_parameter_id
+            if main_parameter_id and main_spec is not None:
+                # Attach the one-tap send info to the chosen main parameter; drop the main parameter
+                # if the target command/attribute wasn't actually exposed.
+                main_parameter = next((p for p in parameters if p.id == main_parameter_id), None)
+                if main_parameter is None:
+                    device.main_parameter = None
+                elif main_spec.is_attribute and main_spec.cycle:
+                    # Attribute main (e.g. fan_mode): a tap cycles through a value subset. Store it
+                    # as the parameter's default_value — the generic, relay-readable cycle source
+                    # (the relay derives the next value via Parameter.main_cycle). A spec with no
+                    # explicit subset leaves the param to cycle its full valid_values, which the
+                    # relay already derives, so there's nothing to set here.
+                    main_parameter.default_value = set(main_spec.cycle)
+                elif main_spec.default_arguments is not None:
+                    main_parameter.integration_data.default_arguments = main_spec.default_arguments
+            log.debug(
+                f"[PAIR] mapped schema {_zb_path(device, zbdevice)}\n\t"
+                + "\n\t".join(
+                    f"  {p.role.value:8} {p.visibility.value:8} {p.data_type.value:10} {p.name}  id={p.id}"
+                    for p in parameters
+                ),
+            )
+            await device_repository.save(device, discovery.id)
+            # fetch runs in background; controller_did_connect_device fires after fetch completes
+            self._create_task(self._fetch_after_pair(device, zbdevice))
+
+    async def unpair(self, device: ZBDevice):
+        if not self._application:
+            raise ZBConnectionError("ZigBee application is not started")
+        log.debug("[UNPAIR] ieee=%s", device.integration_data.ieee)
+        await self._application.remove(self._mapper.convert_str_to_eui64(device.integration_data.ieee))
+        self._connected_devices.pop(self._mapper.device_uuid_from_ieee(device.integration_data.ieee))
+
+    async def identify(self, device: ZBDevice):
+        if not self._application:
+            raise ZBConnectionError("ZigBee application is not started")
+
+        ieee = self._mapper.convert_str_to_eui64(device.integration_data.ieee)
+
+        if not (zbdevice := self._application.devices.get(ieee)):
+            raise ZBUnexpectedError(f"Device {ieee} not found in ZigBee network")
+        if not zbdevice.is_initialized:
+            raise ZBUnexpectedError(f"Device {ieee} is not initialized")
+
+        for endpoint in zbdevice.non_zdo_endpoints:
+            cluster = endpoint.in_clusters.get(Identify.cluster_id)
+            if not cluster:
+                continue
+            await cluster.identify(10)  # 10 - identification time
+
+    async def fetch(self, device: ZBDevice) -> None:
+        if not self._application:
+            raise ZBConnectionError("ZigBee application is not started")
+
+        ieee = self._mapper.convert_str_to_eui64(device.integration_data.ieee)
+
+        if not (zbdevice := self._application.devices.get(ieee)):
+            raise ZBUnexpectedError(f"Device {ieee} not found in ZigBee network")
+        if not zbdevice.is_initialized:
+            raise ZBUnexpectedError(f"Device {ieee} is not initialized")
+        events: list[DeviceParameterChange] = list()
+        log.debug("[FETCH] start device=%s(%s)", device.id, zbdevice.model)
+        t0 = asyncio.get_event_loop().time()
+        for endpoint in zbdevice.non_zdo_endpoints:
+            for cluster_id, cluster in endpoint.in_clusters.items():
+                readable_ids = [
+                    attr_id for attr_id in cluster.attributes if not cluster.is_attribute_unsupported(attr_id)
+                ]
+                attr_values = await self._read_cluster_attributes(
+                    device, zbdevice, endpoint, cluster, readable_ids, log_prefix="[FETCH]", timeout=2
+                )
+
+                for attribute_id in cluster.attributes:
+                    if cluster.is_attribute_unsupported(attribute_id):
+                        continue
+                    events.append(
+                        DeviceParameterChange(
+                            device_id=device.id,
+                            parameter_id=self._mapper.attribute_parameter_uuid(
+                                device.id, endpoint.endpoint_id, cluster_id, attribute_id
+                            ),
+                            value=self._mapper.normalize_zigbee_value(attr_values.get(attribute_id)),
+                        )
+                    )
+                for command in cluster.commands:
+                    events.append(
+                        DeviceParameterChange(
+                            device_id=device.id,
+                            parameter_id=self._mapper.command_parameter_uuid(
+                                device.id, endpoint.endpoint_id, cluster_id, command.id
+                            ),
+                            value=None,
+                        )
+                    )
+
+        log.debug(
+            "[FETCH] done device=%s(%s) duration=%.2fs", device.id, zbdevice.model, asyncio.get_event_loop().time() - t0
+        )
+        await self.dependencies.output.controller_did_receive_events(self, events)
+
+    async def send_command(self, command: DeviceCommand, device: ZBDevice, parameter: ZBParameter):
+        if not self._application:
+            raise ZBConnectionError("ZigBee application is not started")
+
+        ieee = self._mapper.convert_str_to_eui64(device.integration_data.ieee)
+
+        if not (zbdevice := self._application.devices.get(ieee)):
+            raise ZBUnexpectedError(f"Device {ieee} not found in ZigBee network")
+        if not (endpoint := zbdevice.endpoints.get(parameter.integration_data.endpoint_id)):
+            raise ZBUnexpectedError(f"Endpoint {parameter.integration_data.endpoint_id} not found")
+        # endpoints[0] is the device's ZDO; a real parameter always lives on a numbered Endpoint.
+        # Narrowing here fixes it for every downstream use (in_clusters, _zb_path, _check_zcl_failures).
+        if not isinstance(endpoint, zigpy.endpoint.Endpoint):
+            raise ZBUnexpectedError(
+                f"Endpoint {parameter.integration_data.endpoint_id} is the ZDO, not a device endpoint"
+            )
+        if not (cluster := endpoint.in_clusters.get(parameter.integration_data.cluster_id)):
+            raise ZBUnexpectedError(f"Cluster {parameter.integration_data.cluster_id} not found")
+
+        if parameter.integration_data.type is ZBParameterType.attribute:
+            if parameter.role != ParameterRole.control:
+                raise ZBUnexpectedError(f"Parameter '{parameter.name}' is not a control parameter")
+            attr_id = parameter.integration_data.attribute_id
+            # The relay pre-derives a main-tap's value (bool / cycle / button) before dispatch, so
+            # an attribute write just sends it — the cycle logic lives in the relay, not here.
+            value = command.value
+            if value is None:
+                raise ZBUnexpectedError(f"No value to send for '{parameter.name}'")
+            try:
+                result = await cluster.write_attributes({attr_id: value})
+            except Exception as e:
+                raise ZBConnectionError(
+                    f"[CMD] write_attributes transport error "
+                    f"{_zb_path(device, zbdevice, endpoint, cluster, attr_id, error=e)}"
+                ) from None
+            _check_zcl_failures(
+                {r.attrid: r.status for r in result[0]},
+                cluster,
+                "[CMD]",
+                device=device,
+                zbdevice=zbdevice,
+                endpoint=endpoint,
+            )
+            log.info(f"[CMD] write_attributes {_zb_path(device, zbdevice, endpoint, cluster, attr_id)}")
+        else:
+            zbcommand = cluster.commands_by_name.get(parameter.name)
+            if not zbcommand:
+                raise ZBUnexpectedError(f"Command {parameter.name} not found in cluster")
+            # A value-less send (e.g. tapping the main parameter) falls back to the arguments this
+            # command was set up with as a main parameter — see integration_data.default_arguments.
+            arguments = command.value if command.value is not None else parameter.integration_data.default_arguments
+            try:
+                if isinstance(arguments, dict):
+                    result = await cluster.command(zbcommand.id, **arguments)
+                elif arguments is not None:
+                    result = await cluster.command(zbcommand.id, arguments)
+                else:
+                    result = await cluster.command(zbcommand.id)
+            except Exception as e:
+                raise ZBConnectionError(
+                    f"[CMD] command error {_zb_path(device, zbdevice, endpoint, cluster, error=e)}"
+                ) from None
+            # cluster.command returns the DefaultResponse or cluster-specific response;
+            # check status field if present (DefaultResponse carries it)
+            if hasattr(result, "status") and result.status != ZCLStatus.SUCCESS:
+                raise ZBOperationError(
+                    f"[CMD] command failure {_zb_path(device, zbdevice, endpoint, cluster)}: "
+                    f"status={result.status.name}"
+                )
+
+    # -------------------------------------------------------------------------
+    # Device -> Hub: Zigbee network events (zigpy listener) & availability
+    # -------------------------------------------------------------------------
+
+    def device_joined(self, device: ZPDevice):
+        """A device joined the Zigbee network (only happens while the permit-join window is open)."""
+        log.debug("[JOIN] ieee=%s  nwk=0x%04X", device.ieee, device.nwk)
+        device_id = self._mapper.device_uuid_from_ieee(self._mapper.convert_eui64_to_str(device.ieee))
+        # Zigbee has no separate "discovery": a device is on the network as soon as it joins.
+        # We hold it in the awaiting list and disconnect it if it isn't paired in majordom within
+        # the window (see _disconnect_unpaired_discovery). An already-paired device that merely
+        # rejoined is handled in device_initialized, not here.
+        self._create_task(self._disconnect_unpaired_discovery(device_id, device.ieee))
+
+    def device_initialized(self, device: ZPDevice):
+        """A device finished interviewing and is ready to talk. Fires both for a brand-new join
+        and when an already-paired device rejoins the network after being offline."""
+        log.debug(
+            "[INIT] ieee=%s  nwk=0x%04X  model=%r  manufacturer=%r",
+            device.ieee,
+            device.nwk,
+            device.model,
+            device.manufacturer,
+        )
+        device_id = self._mapper.device_uuid_from_ieee(self._mapper.convert_eui64_to_str(device.ieee))
+
+        # Already paired in majordom -> a mid-session reconnect: re-subscribe and mark it back
+        # online instead of surfacing it as a fresh discovery.
+        if device_id in self._connected_devices:
+            self._connected_devices[device_id] = device
+            self._create_task(self._subscribe(device_id, device))
+            self._create_task(self._set_availability(device_id, True))
+            return
+
+        # Awaiting pairing and re-initialized -> just (re)subscribe.
+        if device_id in self.discoveries:
+            self._create_task(self._subscribe(device_id, device))
+            return
+
+        # Otherwise it's a new, not-yet-paired device -> surface it as a discovery.
+        discovery = Discovery(
+            id=device_id,
+            integration=NonEmptyStr(self.name),
+            expected_credentials_options=[CredentialsType.none],
+            expiration=None,
+            transport=NonEmptyStr("ZIGBEE"),
+            device_manufacturer=None,
+            device_name=NonEmptyStr(device.name),
+            device_category=None,
+            device_icon=None,
+        )
+        self._majordom_discoveries[device_id] = discovery
+        self._awaiting_zb_discoveries[device_id] = device
+        log.debug("[DISCOVERY] ieee=%s  discovery_id=%s", device.ieee, device_id)
+        self._create_task(self.dependencies.output.controller_did_receive_discovery(self, discovery))
+
+    def device_left(self, device: ZPDevice):
+        """A device left the Zigbee network. If it's one of ours, mark it unavailable so the app
+        reflects it; the pairing stays in the DB so it comes back online on rejoin."""
+        log.debug("[LEFT] ieee=%s  nwk=0x%04X", device.ieee, device.nwk)
+        device_id = self._mapper.device_uuid_from_ieee(self._mapper.convert_eui64_to_str(device.ieee))
+        if device_id in self._connected_devices:
+            self._create_task(self._set_availability(device_id, False))
+
+    async def _set_availability(self, device_id: UUID, available: bool) -> None:
+        """Single funnel for availability transitions — dedupes so the Hub is only told on an
+        actual change, and translates it into the framework's connect / lose callbacks."""
+        if self._availability.get(device_id) == available:
+            return
+        self._availability[device_id] = available
+        if available:
+            await self.dependencies.output.controller_did_connect_device(self, device_id)
+        else:
+            await self.dependencies.output.controller_did_lose_device(self, device_id)
+
+    # -------------------------------------------------------------------------
+    # Private helpers
+    # -------------------------------------------------------------------------
+
+    async def _fetch_after_pair(self, device: ZBDevice, zbdevice: ZPDevice) -> None:
+        log.debug("[PAIR] starting background fetch device=%s(%s)", device.id, zbdevice.model)
+        try:
+            await self.fetch(device)
+        except Exception as e:
+            log.warning(
+                "[PAIR] fetch failed for device=%s(%s), skipping connect signal: %s", device.id, zbdevice.model, e
+            )
+            return
+        await self._set_availability(device.id, True)
+        log.debug("[PAIR] background fetch done, device connected device=%s(%s)", device.id, zbdevice.model)
+
+    async def _read_cluster_attributes(
+        self,
+        device: ZBDevice,
+        zbdevice: ZPDevice,
+        endpoint: zigpy.endpoint.Endpoint,
+        cluster: zigpy.zcl.Cluster,
+        ids: list[int],
+        *,
+        only_cache: bool = False,
+        log_prefix: str = "[READ]",
+        timeout: float | None = None,
+    ) -> dict[int, object]:
+        attr_values: dict[int, object] = {}
+        chunks = [ids[i : i + _MAX_ATTRS_PER_REQUEST] for i in range(0, len(ids), _MAX_ATTRS_PER_REQUEST)]
+        for chunk in chunks:
+            try:
+                # read_attributes accepts attribute names/ids/defs; we only pass ids, and list
+                # invariance is the only reason the plain list[int] doesn't fit the wider param type.
+                values, failures = await cluster.read_attributes(
+                    cast("list[int | str | ZCLAttributeDef]", chunk), only_cache=only_cache, timeout=timeout
+                )
+            except Exception as e:
+                log.error(
+                    f"{log_prefix} read_attributes error "
+                    f"{_zb_path(device, zbdevice, endpoint, cluster, attr_ids=chunk, error=e)}"
+                )
+                await asyncio.sleep(_INTER_CHUNK_DELAY)  # let bellows send pending ASH ACKs
+                continue
+            await asyncio.sleep(_INTER_CHUNK_DELAY)  # pace chunks to prevent NCP ACK timeout
+            attr_values.update(values)
+            _check_zcl_failures(
+                failures,
+                cluster,
+                log_prefix,
+                device=device,
+                zbdevice=zbdevice,
+                endpoint=endpoint,
+                raise_errors=False,
+            )
+        return attr_values
+
+    def _create_task(self, coro) -> asyncio.Task:
+        task = asyncio.create_task(coro)
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+        return task
+
+    async def _subscribe(self, device_id: UUID, device: ZPDevice):
+        for endpoint in device.non_zdo_endpoints:
+            for cluster in endpoint.in_clusters.values():
+                listener = ZBAttributeUpdatedListener(self, device_id, cluster)
+                cluster.add_listener(listener)
+
+    async def _disconnect_unpaired_discovery(self, discovery_id: UUID, ieee: EUI64):
+        await asyncio.sleep(300)  # 5 minutes
+        if discovery_id not in self._majordom_discoveries and discovery_id in self._connected_devices:
+            # if the device was connected
+            return
+        await self._application.remove(ieee)
+        self._majordom_discoveries.pop(discovery_id)
+        self._awaiting_zb_discoveries.pop(discovery_id)
+
+    def _get_device_main_parameter(
+        self, device_id: UUID, zbdevice: ZPDevice
+    ) -> tuple[UUID | None, MainParameterSpec | None]:
+        """Pick the parameter used for the device's one-tap action on the room view, in cluster
+        priority order (see MAIN_PARAMETER_BY_CLUSTER). Returns the parameter id and its spec
+        (command or attribute main), or (None, None) if the device has no sensible one-tap action."""
+        for endpoint in zbdevice.non_zdo_endpoints:
+            for cluster_id, spec in MAIN_PARAMETER_BY_CLUSTER.items():
+                if endpoint.in_clusters.get(cluster_id):
+                    if spec.is_attribute:
+                        param_id = self._mapper.attribute_parameter_uuid(
+                            device_id, endpoint.endpoint_id, cluster_id, spec.target_id
+                        )
+                    else:
+                        param_id = self._mapper.command_parameter_uuid(
+                            device_id, endpoint.endpoint_id, cluster_id, spec.target_id
+                        )
+                    return param_id, spec
+        return None, None
+
+
+================================================================================
+# FILE: majordom_zigbee/exceptions.py
+================================================================================
+class ZBConnectionError(Exception):
+    """Raised when ZigBee application is not started or not available."""
+
+    pass
+
+
+class ZBUnexpectedError(Exception):
+    """Raised when an unexpected internal error occurs."""
+
+    pass
+
+
+class ZBOperationError(Exception):
+    """Raised when a ZCL operation succeeds at the transport level but the device returns a non-SUCCESS status."""
+
+    pass
+
+
+================================================================================
+# FILE: majordom_zigbee/listener.py
+================================================================================
+import asyncio
+from uuid import UUID
+
+from majordom_integration_sdk.schemas.event import DeviceParameterChange
+from zigpy.zcl import Cluster
+
+
+class ZBAttributeUpdatedListener:
+    def __init__(self, controller, device_id: UUID, cluster: Cluster):
+        self._controller = controller
+        self._device_id = device_id
+        self._cluster = cluster
+
+    def attribute_updated(self, attribute_id, value, time):
+        cluster = self._cluster
+        endpoint_id = cluster.endpoint.endpoint_id
+        parameter_id = self._controller._mapper.attribute_parameter_uuid(
+            self._device_id, endpoint_id, cluster.cluster_id, attribute_id
+        )
+        event = DeviceParameterChange(
+            device_id=self._device_id,
+            parameter_id=parameter_id,
+            value=self._controller._mapper.normalize_zigbee_value(value),
+        )
+
+        asyncio.create_task(
+            self._controller.dependencies.output.controller_did_receive_events(self._controller, [event])
+        )
+
+
+================================================================================
+# FILE: majordom_zigbee/mapper.py
+================================================================================
+from collections.abc import Callable
+from enum import Enum, Flag
+from uuid import UUID
+
+import zigpy.types as t
+from majordom_integration_sdk.schemas.parameter import ParameterDataType, ParameterRole
+from zigpy.types import EUI64
+from zigpy.zcl.foundation import DataTypeId, ZCLAttributeAccess
+
+from .exceptions import ZBUnexpectedError
+
+
+class ZigBeeMapper:
+    def __init__(
+        self,
+        device_uuid: Callable[[str], UUID],
+        parameter_uuid: Callable[[UUID, str], UUID],
+    ):
+        # The controller's framework UUID generators (see AbstractController). Every Zigbee
+        # id — device from its IEEE address, parameters from their endpoint/cluster/attribute
+        # path — is derived through these, so a device's parameters are namespaced under the
+        # device and stay identical whether built at pairing, on fetch, or from a live report.
+        self._device_uuid = device_uuid
+        self._parameter_uuid = parameter_uuid
+
+    # -------------------------------------------------------------------------
+    # Identity: Zigbee addresses/paths -> MajorDom UUIDs
+    # -------------------------------------------------------------------------
+
+    def device_uuid_from_ieee(self, ieee: str | None) -> UUID:
+        # ieee is Optional on the domain model, but a paired Zigbee device always has one; a
+        # missing address here means a corrupt/half-written record, not a normal path.
+        if ieee is None:
+            raise ZBUnexpectedError("Zigbee device is missing its IEEE address")
+        return self._device_uuid(ieee)
+
+    def normalize_zigbee_value(self, value):
+        """Coerce zigpy wire values to plain python types for the SDK's typed encoder.
+
+        zigpy hands attribute values back as its own types — ``t.Bool`` is an int-enum (NOT a
+        python bool), enum8/16 and bitmaps are int-enums, ints/floats/strings are subclasses.
+        ``ParameterState`` values are pythonic, so coerce zigpys wire types here — the single
+        choke point for both the fetch path and attribute reports.
+        """
+        if value is None or isinstance(value, bool):
+            return value
+        if isinstance(value, t.Bool):
+            return bool(value)
+        if isinstance(value, Enum | Flag):
+            return int(value)  # zigpy ZCL enums/bitmaps are int-based
+        if isinstance(value, int):
+            return int(value)
+        if isinstance(value, float):
+            return float(value)
+        if isinstance(value, str):
+            return str(value)
+        return value
+
+    def attribute_parameter_uuid(self, device_id: UUID, endpoint_id: int, cluster_id: int, attribute_id: int) -> UUID:
+        return self._parameter_uuid(device_id, f"attribute_{endpoint_id}/{cluster_id}/{attribute_id}")
+
+    def command_parameter_uuid(self, device_id: UUID, endpoint_id: int, cluster_id: int, command_id: int) -> UUID:
+        return self._parameter_uuid(device_id, f"command_{endpoint_id}/{cluster_id}/{command_id}")
+
+    def command_field_uuid(
+        self, device_id: UUID, endpoint_id: int, cluster_id: int, command_id: int, field_index: int
+    ) -> UUID:
+        return self._parameter_uuid(device_id, f"field_{endpoint_id}/{cluster_id}/{command_id}/{field_index}")
+
+    # -------------------------------------------------------------------------
+    # Value / type conversions
+    # -------------------------------------------------------------------------
+
+    def convert_eui64_to_str(self, data: EUI64) -> str:
+        return EUI64.__str__(data)
+
+    def convert_str_to_eui64(self, data: str | None) -> EUI64:
+        # Same as device_uuid_from_ieee: the domain field is Optional but must be present here.
+        if data is None:
+            raise ZBUnexpectedError("Zigbee device is missing its IEEE address")
+        return EUI64.convert(data)
+
+    def parse_zigbee_attribute_access(self, access) -> ParameterRole:
+        can_read = bool(access & ZCLAttributeAccess.Read)
+        can_write = bool(access & ZCLAttributeAccess.Write)
+
+        if can_write:
+            return ParameterRole.control
+
+        if can_read:
+            return ParameterRole.sensor
+
+        return ParameterRole.event
+
+    def parse_zigbee_data_type(self, zcl_type: int | type) -> ParameterDataType:
+        if isinstance(zcl_type, type):
+            if issubclass(zcl_type, t.Bool):
+                zcl_type = DataTypeId.bool_
+            elif issubclass(zcl_type, Flag):
+                zcl_type = DataTypeId.map8
+            elif issubclass(zcl_type, Enum):
+                zcl_type = DataTypeId.enum8
+            elif issubclass(zcl_type, t.FixedIntType):
+                zcl_type = DataTypeId.uint8
+            elif issubclass(zcl_type, float):
+                zcl_type = DataTypeId.single
+            else:
+                zcl_type = DataTypeId.nodata
+
+        type_id = DataTypeId(zcl_type)
+
+        if type_id in {DataTypeId.unk, DataTypeId.nodata}:
+            return ParameterDataType.none
+        # DataTypeId, not DataType — zigpy 2.0's DataType.bool_ is a rich descriptor that never
+        # equals a DataTypeId, which silently sent every bool attribute to the `none` fallthrough.
+        if type_id == DataTypeId.bool_:
+            return ParameterDataType.bool
+        if type_id in {DataTypeId.enum8, DataTypeId.enum16}:
+            return ParameterDataType.enum
+        if type_id in {DataTypeId.string, DataTypeId.string16}:
+            return ParameterDataType.string
+        if type_id in {DataTypeId.semi, DataTypeId.single, DataTypeId.double}:
+            return ParameterDataType.decimal
+        if type_id in {
+            DataTypeId.uint8,
+            DataTypeId.uint16,
+            DataTypeId.uint24,
+            DataTypeId.uint32,
+            DataTypeId.uint40,
+            DataTypeId.uint48,
+            DataTypeId.uint56,
+            DataTypeId.uint64,
+            DataTypeId.int8,
+            DataTypeId.int16,
+            DataTypeId.int24,
+            DataTypeId.int32,
+            DataTypeId.int40,
+            DataTypeId.int48,
+            DataTypeId.int56,
+            DataTypeId.int64,
+            DataTypeId.map8,
+            DataTypeId.map16,
+            DataTypeId.map24,
+            DataTypeId.map32,
+            DataTypeId.map40,
+            DataTypeId.map48,
+            DataTypeId.map56,
+            DataTypeId.map64,
+            DataTypeId.ToD,
+            DataTypeId.date,
+            DataTypeId.UTC,
+            DataTypeId.clusterId,
+            DataTypeId.attribId,
+            DataTypeId.bacOID,
+        }:
+            return ParameterDataType.integer
+        if type_id in {
+            DataTypeId.data8,
+            DataTypeId.data16,
+            DataTypeId.data24,
+            DataTypeId.data32,
+            DataTypeId.data40,
+            DataTypeId.data48,
+            DataTypeId.data56,
+            DataTypeId.data64,
+            DataTypeId.octstr,
+            DataTypeId.octstr16,
+            DataTypeId.array,
+            DataTypeId.struct,
+            DataTypeId.set,
+            DataTypeId.bag,
+            DataTypeId.EUI64,
+            DataTypeId.key128,
+        }:
+            return ParameterDataType.data
+
+        return ParameterDataType.none
+
+
+================================================================================
+# FILE: majordom_zigbee/model.py
+================================================================================
+from enum import StrEnum
+
+from majordom_integration_sdk.schemas.base import Base
+from majordom_integration_sdk.schemas.device import Device, DeviceState, Parameter, ParameterState
+from pydantic import BaseModel
+
+
+class ZBParameterType(StrEnum):
+    attribute = "attribute"
+    command = "command"
+
+
+class ZBDeviceIntegrationData(Base):
+    ieee: str | None = None
+
+
+class ZBParameterIntegrationData(BaseModel):
+    endpoint_id: int
+    cluster_id: int
+    attribute_id: int | None = None
+    command_id: int | None = None
+    type: ZBParameterType
+    # Args to send when this command is the device's one-tap main parameter and needs them (e.g. a
+    # brightness level). A command parameter's data_type is `none`, which already satisfies
+    # ParameterState.can_be_main_parameter, so no `default_value` is needed for the flag — this only
+    # carries *what to send*. send_command applies it when a command arrives with no value (i.e. the
+    # user tapped the main parameter). Mirrors Matter's default_arguments.
+    default_arguments: dict | None = None
+
+
+class ZBDevice(Device):
+    integration_data: ZBDeviceIntegrationData
+
+
+class ZBParameter(Parameter):
+    integration_data: ZBParameterIntegrationData
+
+
+class ZBParameterState(ParameterState):
+    integration_data: ZBParameterIntegrationData
+
+
+class ZBDeviceState(ZBDevice, DeviceState):
+    parameters: list[ZBParameterState]
+
+
+================================================================================
+# FILE: majordom_zigbee/radio.py
+================================================================================
+"""Backend-agnostic zigpy radio selection.
+
+zigpy talks to the coordinator dongle through a per-silicon *radio library* (bellows for Silicon
+Labs EZSP, zigpy-znp for TI Z-Stack, zigpy-deconz for deCONZ, ...). This module maps every
+supported radio to its zigpy ``ControllerApplication`` and resolves the right one for the attached
+dongle — either from explicit config (the ``MAJORDOM_ZIGBEE_RADIO`` env var / the controller's
+``radio`` attribute) or by probing each installed library. Swapping dongles therefore needs only
+the matching library installed, never a source change.
+
+Add support for a new radio by appending one ``Radio`` entry below — no other code changes.
+"""
+
+from __future__ import annotations
+
+import importlib
+import logging
+import os
+from dataclasses import dataclass
+
+from zigpy.application import ControllerApplication
+from zigpy.config import CONF_DEVICE_PATH
+
+log = logging.getLogger(__name__)
+
+#: Env var an operator can set (auto | ezsp | znp | deconz | xbee | zigate | cc) to pin the radio
+#: without touching source. Unset / "auto" -> probe every installed radio.
+RADIO_ENV = "MAJORDOM_ZIGBEE_RADIO"
+
+
+@dataclass(frozen=True)
+class Radio:
+    """One supported zigpy radio backend."""
+
+    key: str  #: short id used in config (see RADIO_ENV)
+    application: str  #: dotted path to its zigpy ControllerApplication
+    package: str  #: the pip package (and extra) that provides it
+    description: str  #: human-readable hardware hint
+
+
+# Probed in this order during auto-detection — most common coordinators first.
+RADIOS: tuple[Radio, ...] = (
+    Radio(
+        "ezsp",
+        "bellows.zigbee.application.ControllerApplication",
+        "bellows",
+        "Silicon Labs EmberZNet via EZSP (SkyConnect, Sonoff ZBDongle-E, ...)",
+    ),
+    Radio(
+        "znp",
+        "zigpy_znp.zigbee.application.ControllerApplication",
+        "zigpy-znp",
+        "Texas Instruments Z-Stack via ZNP (CC2652, Sonoff ZBDongle-P, ...)",
+    ),
+    Radio(
+        "deconz",
+        "zigpy_deconz.zigbee.application.ControllerApplication",
+        "zigpy-deconz",
+        "dresden elektronik deCONZ (ConBee, RaspBee)",
+    ),
+    Radio(
+        "xbee",
+        "zigpy_xbee.zigbee.application.ControllerApplication",
+        "zigpy-xbee",
+        "Digi XBee",
+    ),
+    Radio(
+        "zigate",
+        "zigpy_zigate.zigbee.application.ControllerApplication",
+        "zigpy-zigate",
+        "ZiGate",
+    ),
+    Radio(
+        "cc",
+        "zigpy_cc.zigbee.application.ControllerApplication",
+        "zigpy-cc",
+        "Texas Instruments Z-Stack legacy (deprecated)",
+    ),
+)
+
+_BY_KEY: dict[str, Radio] = {r.key: r for r in RADIOS}
+#: Friendly aliases so common product/stack names resolve to a radio key.
+_ALIASES: dict[str, str] = {
+    "bellows": "ezsp",
+    "silabs": "ezsp",
+    "ember": "ezsp",
+    "emberznet": "ezsp",
+    "skyconnect": "ezsp",
+    "ti": "znp",
+    "zstack": "znp",
+    "z-stack": "znp",
+    "conbee": "deconz",
+    "raspbee": "deconz",
+}
+
+
+def _normalize(name: str) -> str:
+    name = name.strip().lower()
+    return _ALIASES.get(name, name)
+
+
+def _load(radio: Radio) -> type[ControllerApplication] | None:
+    """Import a radio's ControllerApplication, or None if its library isn't installed."""
+    module_path, _, cls_name = radio.application.rpartition(".")
+    try:
+        module = importlib.import_module(module_path)
+    except ImportError:
+        log.debug("zigbee radio %r unavailable (%s not installed)", radio.key, radio.package)
+        return None
+    return getattr(module, cls_name)
+
+
+async def resolve_application(
+    device_config: dict,
+    requested: str | None = None,
+) -> type[ControllerApplication]:
+    """Return the zigpy ``ControllerApplication`` class for the attached coordinator.
+
+    ``requested`` (falling back to the ``MAJORDOM_ZIGBEE_RADIO`` env var): a radio key/alias to
+    force one library, or ``None``/``"auto"`` to probe every installed radio against
+    ``device_config`` and use the first that answers.
+    """
+    requested = requested if requested is not None else os.environ.get(RADIO_ENV)
+
+    if requested and _normalize(requested) != "auto":
+        key = _normalize(requested)
+        radio = _BY_KEY.get(key)
+        if radio is None:
+            raise ValueError(
+                f"Unknown zigbee radio {requested!r}. Known: {', '.join(_BY_KEY)} "
+                f"(or leave {RADIO_ENV} unset / =auto to probe)."
+            )
+        app = _load(radio)
+        if app is None:
+            raise RuntimeError(
+                f"Zigbee radio {radio.key!r} was selected but {radio.package!r} is not installed. "
+                f"Install it with: pip install 'majordom-zigbee[{radio.key}]'."
+            )
+        log.info("zigbee radio pinned to %r (%s)", radio.key, radio.description)
+        return app
+
+    # auto: probe each installed radio; first to answer wins.
+    installed = [(r, app) for r in RADIOS if (app := _load(r)) is not None]
+    if not installed:
+        raise RuntimeError(
+            "No zigbee radio library installed. Install one, e.g. "
+            "pip install 'majordom-zigbee[ezsp]' (Silicon Labs) or '[znp]' (TI)."
+        )
+    for radio, app in installed:
+        try:
+            # A non-matching radio typically raises (wrong protocol on the port) rather than
+            # returning False — either way we move on to the next candidate.
+            if await app.probe(device_config):
+                log.info("zigbee radio auto-detected as %r (%s)", radio.key, radio.description)
+                return app
+        except Exception as exc:  # noqa: BLE001 — any probe failure just means "not this radio"
+            log.debug("zigbee radio %r did not match: %s", radio.key, exc)
+
+    raise RuntimeError(
+        f"Could not auto-detect the zigbee radio on {device_config.get(CONF_DEVICE_PATH, '?')}. "
+        f"Probed: {', '.join(r.key for r, _ in installed)}. "
+        f"Set {RADIO_ENV} to one of: {', '.join(_BY_KEY)}."
+    )
+
+
+================================================================================
+# FILE: majordom_zigbee/readme.md
+================================================================================
+# Zigbee integration
+
+Bridges the Hub to Zigbee devices through a USB coordinator radio, built on
+[`zigpy`](https://github.com/zigpy/zigpy) with the `bellows` (EmberZNet/Silabs) stack by
+default (`znp`/Texas Instruments is selectable via `_ZIGBEE_STACK`). zigpy owns the Zigbee
+network, the ZCL, and device interviews; this integration adapts it to the Hub's
+`AbstractController` contract.
+
+The radio's serial port comes from `dependencies.hardware_interfaces[0]` (overridable via
+the `ZIGBEE_DEVICE_PATH` env var); zigpy's device database lives under the integration's
+`documents_folder` as `zigbee.db`.
+
+## Files
+
+| File | Responsibility |
+|---|---|
+| `controller.py` | `AbstractController` implementation — lifecycle, pairing, control, fetch, and the zigpy network-event listener |
+| `mapper.py` | Zigbee ↔ MajorDom conversions: UUIDs (via the framework helpers), IEEE address handling, ZCL data-type and access-permission mapping |
+| `model.py` | Typed `integration_data` schemas (`ZBDevice`, `ZBParameter`, …) |
+| `listener.py` | Per-cluster attribute-report listener that forwards live changes to the Hub |
+| `zigbee_spec.py` | Static spec metadata: system clusters, attribute units/steps, and the main-parameter map |
+
+## Discovery & pairing
+
+Zigbee has no separate discovery step — a device is on the network the moment it joins.
+`start_pairing_window` opens permit-join; a joining device is held as a discovery and
+**disconnected from the network if it isn't paired within 5 minutes**
+(`_disconnect_unpaired_discovery`). Pairing takes no credentials
+(`CredentialsType.none`). At pairing, the device's endpoints/clusters are walked to build
+the parameter list (attributes and commands), and a main (one-tap) parameter is chosen per
+`MAIN_PARAMETER_BY_CLUSTER`.
+
+## Availability
+
+The zigpy listener drives availability: `device_left` marks a paired device unavailable,
+and `device_initialized` on a rejoin marks it back online (both via `_set_availability`,
+which dedupes and emits the framework's connect/lose callbacks). On boot, devices missing
+from the network are marked unavailable. The pairing always stays in the DB so a device
+comes back on rejoin.
+
+## Parameter identity
+
+Every parameter id is derived through the framework UUID helpers as
+`parameter_uuid(device_id, "<attribute|command|field>_<endpoint>/<cluster>/<id>")`, so the
+id a parameter gets at pairing is identical to the one used on fetch and in live reports.
+
+## Tests
+
+- `test_zigbee_controller_mocked.py` — an in-memory zigpy stub, no radio or devices needed
+  (runs in CI).
+- `test_zigbee_controller_hardware.py` — a real device in the self-hosted IoT cage; manual
+  only. Its hardcoded device/parameter ids must be regenerated for your DUT (see the note
+  at the top of that file).
+
+## Notes
+
+- ZCL reads are chunked (`_MAX_ATTRS_PER_REQUEST`) and paced (`_INTER_CHUNK_DELAY`) to
+  avoid NCP ACK timeouts on busy serial links.
+
+
+================================================================================
+# FILE: majordom_zigbee/zigbee_spec.py
+================================================================================
+from typing import Any, NamedTuple
+
+from majordom_integration_sdk.schemas.parameter import ParameterRole, ParameterUnit, ParameterVisibility
+
+from .zigbee_spec_zha import ZHA_ATTRIBUTE_UX
+
+
+class MainParameterSpec(NamedTuple):
+    """Value of MAIN_PARAMETER_BY_CLUSTER, keyed by cluster_id: what makes a sensible one-tap
+    main_parameter for a device exposing that cluster. Iteration order is priority order — the
+    first cluster below that a device exposes wins.
+
+    - command main (default): ``target_id`` is a command id; ``default_arguments`` are sent with it
+      (None = the command takes no arguments, e.g. OnOff.toggle).
+    - attribute main (``is_attribute=True``): ``target_id`` is an attribute id; a tap writes it. For
+      an enum attribute (e.g. FanControl.fan_mode) ``cycle`` is the value subset the tap rotates
+      through (e.g. off/on for a toggle); it's stored on the parameter's ``default_value`` at
+      pairing so the relay derives the next value. ``None`` -> cycle the param's full valid_values.
+    """
+
+    target_id: int
+    default_arguments: dict[str, Any] | None = None
+    is_attribute: bool = False
+    cycle: list[int] | None = None
+
+
+# Command/field names are from zigpy's cluster definitions. FanControl (0x0202) has no commands —
+# it's driven by the fan_mode attribute, so its one-tap is an ATTRIBUTE main that cycles off/on.
+MAIN_PARAMETER_BY_CLUSTER: dict[int, MainParameterSpec] = {
+    0x0006: MainParameterSpec(0x02, None),  # OnOff.toggle
+    0x0008: MainParameterSpec(
+        0x04, {"level": 254, "transition_time": 0}
+    ),  # LevelControl.move_to_level_with_on_off (full)
+    0x0300: MainParameterSpec(
+        0x06, {"hue": 0, "saturation": 254, "transition_time": 0, "options_mask": 0, "options_override": 0}
+    ),  # Color.move_to_hue_and_saturation
+    0x0102: MainParameterSpec(0x05, {"percentage_lift_value": 100}),  # WindowCovering.go_to_lift_percentage (open)
+    0x0101: MainParameterSpec(0x00, {"pin_code": None}),  # DoorLock.lock_door
+    # FanControl.fan_mode attribute — tap cycles Off(0) <-> On(4) (a toggle).
+    0x0202: MainParameterSpec(0x0000, is_attribute=True, cycle=[0x00, 0x04]),
+}
+
+
+SYSTEM_CLUSTERS: set[int] = {
+    0x0000,  # Basic
+    0x0003,  # Identify
+    0x0004,  # Groups
+    0x0005,  # Scenes
+    0x000A,  # Time
+    0x000B,  # RSSI
+    0x0019,  # OTA
+    0x1000,  # Touchlink
+}
+
+
+# --- Visibility curation (see docs/device-integration/parameter-ux recipe) ------------
+# Zigbee attributes carry a Report flag, which is a decent "this is a live reading" signal, so the
+# controller keeps `reportable -> user` as a fallback. Curation refines it:
+#   - EVERYDAY_CONTROL_ATTRIBUTES: writable everyday controls -> user (+ forced control role, since
+#     zigpy sometimes under-declares access, e.g. FanControl.fan_mode has no flags at all)
+#   - USER_READINGS: readings that must show even if a device doesn't mark them reportable -> user
+#   - metadata (divisors/multipliers/bounds/tolerances, see is_metadata_attribute) -> system, even
+#     if reportable, and reused as metadata sources (min/max/step) for the real parameters
+
+EVERYDAY_CONTROL_ATTRIBUTES: set[tuple[int, int]] = {
+    (0x0202, 0x0000),  # FanControl.fan_mode (zigpy declares no access flags — force it)
+    (0x0201, 0x0011),  # Thermostat.occupied_cooling_setpoint (the everyday "set the temp")
+    (0x0201, 0x0012),  # Thermostat.occupied_heating_setpoint
+    (0x0201, 0x001C),  # Thermostat.system_mode (off/heat/cool/auto)
+}
+
+USER_READINGS: set[tuple[int, int]] = {
+    (0x0006, 0x0000),  # OnOff.on_off
+    (0x0008, 0x0000),  # LevelControl.current_level
+    (0x0201, 0x0000),  # Thermostat.local_temperature
+    (0x0402, 0x0000),  # TemperatureMeasurement.measured_value
+    (0x0405, 0x0000),  # RelativeHumidity.measured_value
+    (0x0400, 0x0000),  # IlluminanceMeasurement.measured_value
+    (0x0102, 0x0008),  # WindowCovering.current_position_lift_percentage
+    (0x0102, 0x0009),  # WindowCovering.current_position_tilt_percentage
+    (0x0001, 0x0021),  # PowerConfiguration.battery_percentage_remaining
+    (0x0500, 0x0002),  # IasZone.zone_status
+    (0x0101, 0x0000),  # DoorLock.lock_state
+    (0x0101, 0x0003),  # DoorLock.door_state
+    # Energy: the primary readings only (see CONFIG_HEAVY_CLUSTERS); the min/max/overload/phase-B/C
+    # variants stay hidden.
+    (0x0B04, 0x0304),  # ElectricalMeasurement.ac_frequency
+    (0x0B04, 0x0505),  # ElectricalMeasurement.rms_voltage
+    (0x0B04, 0x0508),  # ElectricalMeasurement.rms_current
+    (0x0B04, 0x050B),  # ElectricalMeasurement.active_power
+    (0x0B04, 0x0510),  # ElectricalMeasurement.power_factor
+    (0x0702, 0x0000),  # Metering.current_summation_delivered
+    (0x0702, 0x0400),  # Metering.instantaneous_demand
+}
+
+# Per-attribute visibility overrides (win over everything). For the handful of readings that would
+# otherwise land in the wrong bucket via the reportable fallback.
+VISIBILITY_OVERRIDES: dict[tuple[int, int], ParameterVisibility] = {
+    (0x0300, 0x0003): ParameterVisibility.system,  # Color.current_x (CIE machine encoding — redundant with hue/sat)
+    (0x0300, 0x0004): ParameterVisibility.system,  # Color.current_y
+    (0x0201, 0x0007): ParameterVisibility.setting,  # Thermostat.pi_cooling_demand (diagnostic, not everyday)
+    (0x0201, 0x0008): ParameterVisibility.setting,  # Thermostat.pi_heating_demand
+}
+
+# Clusters where `reportable` is a poor "user reading" signal because most reportable attributes
+# are config/security/metadata: DoorLock (enable_* flags, event masks, credential counts) and the
+# electrical clusters (dozens of min/max/overload/phase-B/C variants). Only curated USER_READINGS/
+# EVERYDAY reach `user`; the rest fall to setting/system.
+CONFIG_HEAVY_CLUSTERS: set[int] = {0x0101, 0x0B04, 0x0702}  # DoorLock, ElectricalMeasurement, Metering
+
+# Commands that are everyday one-tap actions (-> user). Every other command on a non-system cluster
+# defaults to `setting` (advanced: schedule/credential/log management). ids from zigpy definitions.
+EVERYDAY_COMMANDS: set[tuple[int, int]] = {
+    (0x0006, 0x00),
+    (0x0006, 0x01),
+    (0x0006, 0x02),  # OnOff off / on / toggle
+    (0x0008, 0x00),
+    (0x0008, 0x04),  # LevelControl move_to_level / _with_on_off
+    (0x0300, 0x06),
+    (0x0300, 0x0A),  # Color move_to_hue_and_saturation / move_to_color_temp
+    (0x0102, 0x00),
+    (0x0102, 0x01),
+    (0x0102, 0x02),
+    (0x0102, 0x05),  # WindowCovering up/down/stop/go_to_lift%
+    (0x0101, 0x00),
+    (0x0101, 0x01),  # DoorLock lock_door / unlock_door (credential/schedule cmds stay setting)
+}
+
+# Attributes that are scaling constants / bounds / counts rather than user-facing readings. They
+# go to `system` and feed the metadata resolver. Curated set first; a conservative name heuristic
+# (below) catches the long tail (e.g. ElectricalMeasurement's ~18 *_divisor/*_multiplier attrs).
+METADATA_ATTRIBUTES: set[tuple[int, int]] = {
+    (0x0400, 0x0001),  # Illuminance.min_measured_value
+    (0x0400, 0x0002),  # Illuminance.max_measured_value
+    (0x0402, 0x0001),  # Temperature.min_measured_value
+    (0x0402, 0x0002),  # Temperature.max_measured_value
+    (0x0405, 0x0001),  # Humidity.min_measured_value
+    (0x0405, 0x0002),  # Humidity.max_measured_value
+}
+
+_METADATA_NAME_SUFFIXES: tuple[str, ...] = ("_divisor", "_multiplier")
+_METADATA_NAME_EXACT: frozenset[str] = frozenset(
+    {"min_measured_value", "max_measured_value", "tolerance", "min_level", "max_level"}
+)
+
+
+def is_metadata_attribute(cluster_id: int, attribute_id: int, name: str) -> bool:
+    """Whether an attribute is a scaling constant / bound / count (metadata) rather than a
+    user-facing reading — curated set first, conservative name heuristic as fallback."""
+    if (cluster_id, attribute_id) in METADATA_ATTRIBUTES:
+        return True
+    return name.endswith(_METADATA_NAME_SUFFIXES) or name in _METADATA_NAME_EXACT
+
+
+# --- The merged UX classification (priority ladder; see the zigbee README) --------------------
+# Every source of a parameter's (visibility, role, unit) judgment funnels through classify_attribute.
+# role/unit of None mean "keep what the caller derived from zigpy" (access flags / get_unit()).
+
+
+class UxSpec(NamedTuple):
+    visibility: ParameterVisibility
+    role: ParameterRole | None = None
+    unit: ParameterUnit | None = None
+
+
+# zha unit strings / device_classes -> our ParameterUnit. Shared by the runtime quirk-v2 reader
+# and mirrored (standalone) in scripts/harvest_zha.py. Unmapped -> None (keep get_unit()).
+_ZHA_UNIT_BY_STRING: dict[str, ParameterUnit] = {
+    "°C": ParameterUnit.celsius,
+    "%": ParameterUnit.percentage,
+    "V": ParameterUnit.volt,
+    "A": ParameterUnit.ampere,
+    "W": ParameterUnit.watt,
+    "Hz": ParameterUnit.hertz,
+    "lx": ParameterUnit.lux,
+    "kWh": ParameterUnit.kwh,
+    "ppm": ParameterUnit.ppm,
+    "µg/m³": ParameterUnit.ugm3,
+    "Pa": ParameterUnit.pascal,
+    "hPa": ParameterUnit.pascal,
+    "kPa": ParameterUnit.pascal,
+    "K": ParameterUnit.kelvin,
+    "mired": ParameterUnit.mired,
+    "m³/h": ParameterUnit.m3h,
+    "s": ParameterUnit.second,
+}
+_ZHA_UNIT_BY_DEVICE_CLASS: dict[str, ParameterUnit] = {
+    "temperature": ParameterUnit.celsius,
+    "humidity": ParameterUnit.percentage,
+    "battery": ParameterUnit.percentage,
+    "illuminance": ParameterUnit.lux,
+    "power": ParameterUnit.watt,
+    "voltage": ParameterUnit.volt,
+    "current": ParameterUnit.ampere,
+    "energy": ParameterUnit.kwh,
+    "pressure": ParameterUnit.pascal,
+    "frequency": ParameterUnit.hertz,
+}
+
+
+def unit_from_zha(device_class: str | None, unit: str | None) -> ParameterUnit | None:
+    """Translate a zha/HA unit string or device_class to our ParameterUnit, or None if unknown."""
+    if unit and unit in _ZHA_UNIT_BY_STRING:
+        return _ZHA_UNIT_BY_STRING[unit]
+    if device_class and device_class in _ZHA_UNIT_BY_DEVICE_CLASS:
+        return _ZHA_UNIT_BY_DEVICE_CLASS[device_class]
+    return None
+
+
+def _our_attribute_ux() -> dict[tuple[int, int], UxSpec]:
+    """Our hand curation as UX overrides — the single highest static-priority source (a human's
+    call wins over harvested/quirk judgment). Built from the curated sets so there's one source
+    of truth per attribute."""
+    out: dict[tuple[int, int], UxSpec] = {}
+    for key in USER_READINGS:
+        out[key] = UxSpec(ParameterVisibility.user, ParameterRole.sensor)
+    for key in EVERYDAY_CONTROL_ATTRIBUTES:
+        out[key] = UxSpec(ParameterVisibility.user, ParameterRole.control)
+    for key, vis in VISIBILITY_OVERRIDES.items():
+        out[key] = UxSpec(vis)
+    return out
+
+
+OUR_ATTRIBUTE_UX: dict[tuple[int, int], UxSpec] = _our_attribute_ux()
+
+
+def _zha_uxspec(key: tuple[int, int]) -> UxSpec | None:
+    t = ZHA_ATTRIBUTE_UX.get(key)
+    if t is None:
+        return None
+    return UxSpec(ParameterVisibility(t[0]), ParameterRole(t[1]), ParameterUnit(t[2]))
+
+
+# Flip to True once harvested + quirk coverage is validated on real devices: unmatched attributes
+# then hide (system) instead of the reportable->user heuristic. See the zigbee README (fallback).
+_FALLBACK_HIDE_UNCURATED = False
+
+
+def classify_attribute(
+    cluster_id: int,
+    attribute_id: int,
+    name: str,
+    *,
+    writable: bool,
+    reportable: bool,
+    quirk_ux: UxSpec | None = None,
+) -> tuple[UxSpec, str]:
+    """Resolve an attribute's (visibility, role, unit) by the priority ladder, returning the spec
+    and a source tag (for logging / drift). Ladder, first match wins:
+
+      1. OUR_ATTRIBUTE_UX          — hand curation, a human's call wins over everything
+      2. metadata / manufacturer-on-system-cluster — forced system (safety)
+      3. quirk_ux                  — v2 QuirkBuilder entity metadata (runtime, device-specific)
+      4. ZHA_ATTRIBUTE_UX          — harvested standard-spec judgment
+      5. fallback policy           — heuristic; WARNS (uncurated attribute)
+    """
+    key = (cluster_id, attribute_id)
+
+    if (spec := OUR_ATTRIBUTE_UX.get(key)) is not None:
+        return spec, "ours"
+
+    if is_metadata_attribute(cluster_id, attribute_id, name):
+        return UxSpec(ParameterVisibility.system), "metadata"
+    # Manufacturer-specific attrs (>= 0xF000) on infrastructure clusters stay hidden.
+    if attribute_id >= 0xF000 and cluster_id in SYSTEM_CLUSTERS:
+        return UxSpec(ParameterVisibility.system), "mfr-on-system-cluster"
+
+    if quirk_ux is not None:
+        return quirk_ux, "quirk-v2"
+
+    if (spec := _zha_uxspec(key)) is not None:
+        return spec, "zha"
+
+    # 5. Fallback policy (uncurated) — WARNS. Kept as a heuristic until coverage is validated.
+    if _FALLBACK_HIDE_UNCURATED or cluster_id in SYSTEM_CLUSTERS:
+        return UxSpec(ParameterVisibility.system), "fallback-system"
+    if reportable and cluster_id not in CONFIG_HEAVY_CLUSTERS:
+        return UxSpec(ParameterVisibility.user), "fallback-reportable"
+    if writable:
+        return UxSpec(ParameterVisibility.setting), "fallback-writable"
+    return UxSpec(ParameterVisibility.system), "fallback-system"
+
+
+class MetadataSource(NamedTuple):
+    """Sibling attributes whose runtime VALUES provide a parameter's min/max — the device's own
+    limit attributes (the ones we hide as metadata via ``is_metadata_attribute``). Priority 1 in the
+    resolver: runtime sibling value > wire-type default. Mirrors Matter's ``MetadataSource``."""
+
+    min_attr: int | None = None
+    max_attr: int | None = None
+
+
+# (cluster_id, attribute_id) of a shown parameter -> the sibling min/max limit attributes on the
+# same cluster whose runtime values bound it. The mirror of Matter's METADATA_SOURCES.
+METADATA_SOURCES: dict[tuple[int, int], MetadataSource] = {
+    (0x0008, 0x0000): MetadataSource(0x0002, 0x0003),  # LevelControl.current_level <- min/max_level
+    (0x0400, 0x0000): MetadataSource(0x0001, 0x0002),  # Illuminance.measured_value <- min/max_measured_value
+    (0x0402, 0x0000): MetadataSource(0x0001, 0x0002),  # Temperature.measured_value <- min/max_measured_value
+    (0x0403, 0x0000): MetadataSource(0x0001, 0x0002),  # Pressure.measured_value <- min/max_measured_value
+    (0x0404, 0x0000): MetadataSource(0x0001, 0x0002),  # Flow.measured_value <- min/max_measured_value
+    (0x0405, 0x0000): MetadataSource(0x0001, 0x0002),  # Humidity.measured_value <- min/max_measured_value
+    # Thermostat setpoints bounded by the device's absolute-limit attributes.
+    (0x0201, 0x0011): MetadataSource(0x0007, 0x0008),  # occupied_cooling_setpoint <- abs_min/max_cool_setpoint_limit
+    (0x0201, 0x0012): MetadataSource(0x0003, 0x0004),  # occupied_heating_setpoint <- abs_min/max_heat_setpoint_limit
+}
+
+
+def resolve_metadata_bounds(
+    cluster_id: int,
+    attribute_id: int,
+    get_value,
+    default_min,
+    default_max,
+) -> tuple[Any, Any, list[int]]:
+    """Metadata priority 1: override a parameter's min/max with the device's own limit attributes'
+    runtime VALUES. ``get_value(attr_id)`` returns the cached sibling value (or None if the device
+    doesn't report it). Returns ``(min, max, missing)`` where ``missing`` lists the expected source
+    attribute ids that had no value — the caller warns so a quirk / omitted limit surfaces in logs."""
+    source = METADATA_SOURCES.get((cluster_id, attribute_id))
+    if source is None:
+        return default_min, default_max, []
+    min_v, max_v = default_min, default_max
+    missing: list[int] = []
+    for attr_id, is_min in ((source.min_attr, True), (source.max_attr, False)):
+        if attr_id is None:
+            continue
+        resolved = get_value(attr_id)
+        if resolved is not None:
+            if is_min:
+                min_v = resolved
+            else:
+                max_v = resolved
+        else:
+            missing.append(attr_id)
+    return min_v, max_v, missing
+
+
+# (cluster_id, attribute_id) -> ParameterUnit
+ATTRIBUTE_UNITS: dict[tuple[int, int], ParameterUnit] = {
+    # -------------------------
+    # General
+    # -------------------------
+    # Level Control (0x0008)
+    (0x0008, 0x0000): ParameterUnit.percentage,  # current_level
+    (0x0008, 0x0011): ParameterUnit.percentage,  # on_level
+    (0x0008, 0x0014): ParameterUnit.percentage,  # default_move_rate
+    (0x0008, 0x4000): ParameterUnit.percentage,  # start_up_current_level
+    # -------------------------
+    # Lighting (0x0300)
+    # -------------------------
+    # Color Control (0x0300)
+    (0x0300, 0x0001): ParameterUnit.percentage,  # current_hue
+    (0x0300, 0x0003): ParameterUnit.percentage,  # current_saturation
+    (0x0300, 0x0007): ParameterUnit.mired,  # color_temperature_mireds
+    (0x0300, 0x4010): ParameterUnit.plain,  # color_temp_physical_min_mireds
+    (0x0300, 0x4011): ParameterUnit.plain,  # color_temp_physical_max_mireds
+    (0x0300, 0x4012): ParameterUnit.plain,  # couple_color_temp_to_level_min_mireds
+    (0x0300, 0x4013): ParameterUnit.plain,  # start_up_color_temperature
+    # -------------------------
+    # Measurement & Sensing
+    # -------------------------
+    # Illuminance Measurement (0x0400)
+    (0x0400, 0x0000): ParameterUnit.lux,
+    (0x0400, 0x0001): ParameterUnit.lux,
+    (0x0400, 0x0002): ParameterUnit.lux,
+    # Temperature Measurement (0x0402)
+    (0x0402, 0x0000): ParameterUnit.celsius,
+    (0x0402, 0x0001): ParameterUnit.celsius,
+    (0x0402, 0x0002): ParameterUnit.celsius,
+    (0x0402, 0x0010): ParameterUnit.celsius,  # tolerance
+    # Pressure Measurement (0x0403)
+    (0x0403, 0x0000): ParameterUnit.pascal,  # hPa — nearest in enum
+    (0x0403, 0x0001): ParameterUnit.pascal,
+    (0x0403, 0x0002): ParameterUnit.pascal,
+    (0x0403, 0x0010): ParameterUnit.pascal,
+    (0x0403, 0x0011): ParameterUnit.pascal,
+    (0x0403, 0x0012): ParameterUnit.pascal,
+    # Flow Measurement (0x0404)
+    (0x0404, 0x0000): ParameterUnit.m3h,  # flow, m³/h
+    (0x0404, 0x0001): ParameterUnit.mps,
+    (0x0404, 0x0002): ParameterUnit.mps,
+    # Relative Humidity (0x0405)
+    (0x0405, 0x0000): ParameterUnit.percentage,
+    (0x0405, 0x0001): ParameterUnit.percentage,
+    (0x0405, 0x0002): ParameterUnit.percentage,
+    (0x0405, 0x0010): ParameterUnit.percentage,
+    # Leaf Wetness (0x0407)
+    (0x0407, 0x0000): ParameterUnit.percentage,
+    (0x0407, 0x0001): ParameterUnit.percentage,
+    (0x0407, 0x0002): ParameterUnit.percentage,
+    # Soil Moisture (0x0408)
+    (0x0408, 0x0000): ParameterUnit.percentage,
+    (0x0408, 0x0001): ParameterUnit.percentage,
+    (0x0408, 0x0002): ParameterUnit.percentage,
+    # Wind Speed (0x040C)
+    (0x040C, 0x0000): ParameterUnit.mps,
+    (0x040C, 0x0001): ParameterUnit.mps,
+    (0x040C, 0x0002): ParameterUnit.mps,
+    # Carbon Monoxide (0x040A)
+    (0x040A, 0x0000): ParameterUnit.ppm,
+    (0x040A, 0x0001): ParameterUnit.ppm,
+    (0x040A, 0x0002): ParameterUnit.ppm,
+    # Carbon Dioxide / TVOC (0x040D)
+    (0x040D, 0x0000): ParameterUnit.ppm,
+    (0x040D, 0x0001): ParameterUnit.ppm,
+    (0x040D, 0x0002): ParameterUnit.ppm,
+    # PM2.5 (0x042A)
+    (0x042A, 0x0000): ParameterUnit.ugm3,  # PM2.5, µg/m³
+    (0x042A, 0x0001): ParameterUnit.ppm,
+    (0x042A, 0x0002): ParameterUnit.ppm,
+    # Electrical Conductivity (0x040B)
+    (0x040B, 0x0000): ParameterUnit.plain,  # µS/cm — not in enum
+    # -------------------------
+    # HVAC
+    # -------------------------
+    # Thermostat (0x0201)
+    (0x0201, 0x0000): ParameterUnit.celsius,  # local_temperature
+    (0x0201, 0x0001): ParameterUnit.celsius,  # outdoor_temperature
+    (0x0201, 0x0003): ParameterUnit.celsius,  # abs_min_heat_setpoint_limit
+    (0x0201, 0x0004): ParameterUnit.celsius,  # abs_max_heat_setpoint_limit
+    (0x0201, 0x0005): ParameterUnit.celsius,  # abs_min_cool_setpoint_limit
+    (0x0201, 0x0006): ParameterUnit.celsius,  # abs_max_cool_setpoint_limit
+    (0x0201, 0x0007): ParameterUnit.percentage,  # pi_cooling_demand
+    (0x0201, 0x0008): ParameterUnit.percentage,  # pi_heating_demand
+    (0x0201, 0x0010): ParameterUnit.celsius,  # local_temperature_calibration
+    (0x0201, 0x0011): ParameterUnit.celsius,  # occupied_cooling_setpoint
+    (0x0201, 0x0012): ParameterUnit.celsius,  # occupied_heating_setpoint
+    (0x0201, 0x0013): ParameterUnit.celsius,  # unoccupied_cooling_setpoint
+    (0x0201, 0x0014): ParameterUnit.celsius,  # unoccupied_heating_setpoint
+    (0x0201, 0x0015): ParameterUnit.celsius,  # min_heat_setpoint_limit
+    (0x0201, 0x0016): ParameterUnit.celsius,  # max_heat_setpoint_limit
+    (0x0201, 0x0017): ParameterUnit.celsius,  # min_cool_setpoint_limit
+    (0x0201, 0x0018): ParameterUnit.celsius,  # max_cool_setpoint_limit
+    (0x0201, 0x0019): ParameterUnit.celsius,  # min_setpoint_dead_band
+    # -------------------------
+    # Electrical Measurement (0x0B04)
+    # -------------------------
+    (0x0B04, 0x0304): ParameterUnit.hertz,  # ac_frequency
+    (0x0B04, 0x0305): ParameterUnit.hertz,  # ac_frequency_min
+    (0x0B04, 0x0306): ParameterUnit.hertz,  # ac_frequency_max
+    (0x0B04, 0x0505): ParameterUnit.volt,  # rms_voltage
+    (0x0B04, 0x0506): ParameterUnit.volt,  # rms_voltage_min
+    (0x0B04, 0x0507): ParameterUnit.volt,  # rms_voltage_max
+    (0x0B04, 0x0508): ParameterUnit.ampere,  # rms_current
+    (0x0B04, 0x0509): ParameterUnit.ampere,  # rms_current_min
+    (0x0B04, 0x050A): ParameterUnit.ampere,  # rms_current_max
+    (0x0B04, 0x050B): ParameterUnit.watt,  # active_power
+    (0x0B04, 0x050C): ParameterUnit.watt,  # active_power_min
+    (0x0B04, 0x050D): ParameterUnit.watt,  # active_power_max
+    (0x0B04, 0x050E): ParameterUnit.watt,  # reactive_power
+    (0x0B04, 0x050F): ParameterUnit.watt,  # apparent_power (VA → watt approximation)
+    (0x0B04, 0x0510): ParameterUnit.percentage,  # power_factor
+    (0x0B04, 0x0605): ParameterUnit.volt,  # phase_b rms_voltage
+    (0x0B04, 0x0608): ParameterUnit.ampere,  # phase_b rms_current
+    (0x0B04, 0x060B): ParameterUnit.watt,  # phase_b active_power
+    (0x0B04, 0x0705): ParameterUnit.volt,  # phase_c rms_voltage
+    (0x0B04, 0x0708): ParameterUnit.ampere,  # phase_c rms_current
+    (0x0B04, 0x070B): ParameterUnit.watt,  # phase_c active_power
+    # -------------------------
+    # Metering (0x0702)
+    # -------------------------
+    (0x0702, 0x0000): ParameterUnit.kwh,  # current_summation_delivered
+    (0x0702, 0x0001): ParameterUnit.joule,  # current_summation_received
+    (0x0702, 0x0002): ParameterUnit.joule,  # current_max_demand_delivered
+    (0x0702, 0x0003): ParameterUnit.joule,  # current_max_demand_received
+    (0x0702, 0x0400): ParameterUnit.watt,  # instantaneous_demand
+    (0x0702, 0x0200): ParameterUnit.joule,  # current_day_consumption_delivered
+    (0x0702, 0x0201): ParameterUnit.joule,  # previous_day_consumption_delivered
+    # -------------------------
+    # Closures
+    # -------------------------
+    # Window Covering (0x0102)
+    (0x0102, 0x0008): ParameterUnit.percentage,  # current_position_lift_percentage
+    (0x0102, 0x0009): ParameterUnit.percentage,  # current_position_tilt_percentage
+    (0x0102, 0x000E): ParameterUnit.percentage,  # current_position_lift_percent100ths
+    (0x0102, 0x000F): ParameterUnit.percentage,  # current_position_tilt_percent100ths
+    # -------------------------
+    # Device Temperature (0x0002)
+    # -------------------------
+    (0x0002, 0x0000): ParameterUnit.celsius,  # current_temperature
+    (0x0002, 0x0001): ParameterUnit.celsius,  # min_temp_experienced
+    (0x0002, 0x0002): ParameterUnit.celsius,  # max_temp_experienced
+    (0x0002, 0x0010): ParameterUnit.celsius,  # low_temp_threshold
+    (0x0002, 0x0011): ParameterUnit.celsius,  # high_temp_threshold
+    # -------------------------
+    # Power Configuration (0x0001)
+    # -------------------------
+    (0x0001, 0x0000): ParameterUnit.volt,  # mains_voltage
+    (0x0001, 0x0001): ParameterUnit.hertz,  # mains_frequency
+    (0x0001, 0x0010): ParameterUnit.volt,  # mains_voltage_min_threshold
+    (0x0001, 0x0011): ParameterUnit.volt,  # mains_voltage_max_threshold
+    (0x0001, 0x0020): ParameterUnit.volt,  # battery_voltage
+    (0x0001, 0x0021): ParameterUnit.percentage,  # battery_percentage_remaining
+}
+
+# (cluster_id, attribute_id) -> min_step
+ATTRIBUTE_MIN_STEP: dict[tuple[int, int], int | float] = {
+    # Level Control (0x0008)
+    (0x0008, 0x0000): 1,  # current_level
+    # Color Control (0x0300)
+    (0x0300, 0x0001): 1,  # current_hue
+    (0x0300, 0x0003): 1,  # current_saturation
+    (0x0300, 0x0007): 1,  # color_temperature_mireds
+    # Thermostat (0x0201)
+    (0x0201, 0x0010): 0.1,  # local_temperature_calibration
+    (0x0201, 0x0011): 0.5,  # occupied_cooling_setpoint
+    (0x0201, 0x0012): 0.5,  # occupied_heating_setpoint
+    (0x0201, 0x0013): 0.5,  # unoccupied_cooling_setpoint
+    (0x0201, 0x0014): 0.5,  # unoccupied_heating_setpoint
+    # Temperature Measurement (0x0402)
+    (0x0402, 0x0000): 0.01,  # resolution 0.01°C в ZCL
+    # Relative Humidity (0x0405)
+    (0x0405, 0x0000): 0.01,  # resolution 0.01%
+    # Pressure Measurement (0x0403)
+    (0x0403, 0x0000): 0.1,
+    # Window Covering (0x0102)
+    (0x0102, 0x0008): 1,
+    (0x0102, 0x0009): 1,
+    # Electrical Measurement (0x0B04)
+    (0x0B04, 0x0505): 0.1,  # rms_voltage
+    (0x0B04, 0x0508): 0.01,  # rms_current
+    (0x0B04, 0x050B): 0.1,  # active_power
+    # Metering (0x0702)
+    (0x0702, 0x0000): 0.001,  # kWh
+    (0x0702, 0x0400): 1,  # instantaneous_demand W
+}
+
+
+def get_unit(cluster_id: int, attribute_id: int) -> ParameterUnit:
+    return ATTRIBUTE_UNITS.get((cluster_id, attribute_id), ParameterUnit.plain)
+
+
+def get_min_step(cluster_id: int, attribute_id: int) -> int | float | None:
+    return ATTRIBUTE_MIN_STEP.get((cluster_id, attribute_id))
+
+
+================================================================================
+# FILE: majordom_zigbee/zigbee_spec_zha.py
+================================================================================
+"""GENERATED by scripts/harvest_zha.py — DO NOT EDIT BY HAND.
+
+Source: zha==2.0.1  (Apache-2.0). Harvested standard-cluster entity
+judgment (entity_category -> visibility, platform -> role, unit). Refresh by re-running
+the harvester; put hand overrides in zigbee_spec.py (OUR_ATTRIBUTE_UX), which win on merge.
+"""
+
+# (cluster_id, attribute_id) -> (visibility, role, unit)
+ZHA_ATTRIBUTE_UX: dict[tuple[int, int], tuple[str, str, str]] = {
+    (0x0000, 0x0007): ("setting", "sensor", "plain"),
+    (0x0001, 0x0021): ("setting", "sensor", "percentage"),
+    (0x0002, 0x0000): ("setting", "sensor", "celsius"),
+    (0x0006, 0x0000): ("user", "control", "plain"),
+    (0x0006, 0x4003): ("setting", "control", "plain"),
+    (0x0008, 0x0010): ("setting", "control", "plain"),
+    (0x0008, 0x0011): ("setting", "control", "plain"),
+    (0x0008, 0x0012): ("setting", "control", "plain"),
+    (0x0008, 0x0013): ("setting", "control", "plain"),
+    (0x0008, 0x0014): ("setting", "control", "plain"),
+    (0x0008, 0x4000): ("setting", "control", "plain"),
+    (0x000C, 0x0055): ("user", "sensor", "plain"),
+    (0x000F, 0x0055): ("user", "sensor", "plain"),
+    (0x0102, 0x0000): ("setting", "sensor", "plain"),
+    (0x0102, 0x0007): ("setting", "control", "plain"),
+    (0x0201, 0x0008): ("setting", "sensor", "percentage"),
+    (0x0201, 0x0010): ("setting", "control", "celsius"),
+    (0x0201, 0x0015): ("setting", "control", "celsius"),
+    (0x0201, 0x0016): ("setting", "control", "celsius"),
+    (0x0201, 0x0030): ("setting", "sensor", "plain"),
+    (0x0201, 0x0032): ("setting", "sensor", "plain"),
+    (0x0204, 0x0001): ("setting", "control", "plain"),
+    (0x0300, 0x4010): ("setting", "control", "plain"),
+    (0x0301, 0x0010): ("setting", "control", "plain"),
+    (0x0301, 0x0011): ("setting", "control", "plain"),
+    (0x0400, 0x0000): ("user", "sensor", "lux"),
+    (0x0402, 0x0000): ("user", "sensor", "celsius"),
+    (0x0403, 0x0000): ("user", "sensor", "pascal"),
+    (0x0404, 0x0000): ("user", "sensor", "m3h"),
+    (0x0405, 0x0000): ("user", "sensor", "percentage"),
+    (0x0406, 0x0000): ("user", "sensor", "plain"),
+    (0x0406, 0x0010): ("setting", "control", "second"),
+    (0x0406, 0x0011): ("setting", "control", "second"),
+    (0x0406, 0x0020): ("setting", "control", "plain"),
+    (0x0406, 0x0022): ("setting", "control", "plain"),
+    (0x0407, 0x0000): ("user", "sensor", "percentage"),
+    (0x0408, 0x0000): ("user", "sensor", "percentage"),
+    (0x040A, 0x0000): ("user", "sensor", "plain"),
+    (0x040B, 0x0000): ("user", "sensor", "plain"),
+    (0x040C, 0x0000): ("user", "sensor", "ppm"),
+    (0x040D, 0x0000): ("user", "sensor", "ppm"),
+    (0x042A, 0x0000): ("user", "sensor", "plain"),
+    (0x042B, 0x0000): ("user", "sensor", "ppm"),
+    (0x0500, 0x0002): ("user", "sensor", "plain"),
+    (0x0702, 0x0000): ("user", "sensor", "plain"),
+    (0x0702, 0x0001): ("user", "sensor", "plain"),
+    (0x0702, 0x0100): ("user", "sensor", "plain"),
+    (0x0702, 0x0102): ("user", "sensor", "plain"),
+    (0x0702, 0x0104): ("user", "sensor", "plain"),
+    (0x0702, 0x0106): ("user", "sensor", "plain"),
+    (0x0702, 0x0108): ("user", "sensor", "plain"),
+    (0x0702, 0x010A): ("user", "sensor", "plain"),
+    (0x0702, 0x0400): ("user", "sensor", "plain"),
+    (0x0B04, 0x0100): ("user", "sensor", "volt"),
+    (0x0B04, 0x0103): ("user", "sensor", "ampere"),
+    (0x0B04, 0x0106): ("user", "sensor", "watt"),
+    (0x0B04, 0x0300): ("user", "sensor", "hertz"),
+    (0x0B04, 0x0304): ("user", "sensor", "watt"),
+    (0x0B04, 0x0505): ("user", "sensor", "volt"),
+    (0x0B04, 0x0508): ("user", "sensor", "ampere"),
+    (0x0B04, 0x050B): ("user", "sensor", "watt"),
+    (0x0B04, 0x050F): ("user", "sensor", "plain"),
+    (0x0B04, 0x0510): ("user", "sensor", "percentage"),
+    (0x0B04, 0x0905): ("user", "sensor", "volt"),
+    (0x0B04, 0x0908): ("user", "sensor", "ampere"),
+    (0x0B04, 0x090B): ("user", "sensor", "watt"),
+    (0x0B04, 0x0910): ("user", "sensor", "percentage"),
+    (0x0B04, 0x0A05): ("user", "sensor", "volt"),
+    (0x0B04, 0x0A08): ("user", "sensor", "ampere"),
+    (0x0B04, 0x0A0B): ("user", "sensor", "watt"),
+    (0x0B04, 0x0A10): ("user", "sensor", "percentage"),
+}
+
+
+================================================================================
+# FILE: pyproject.toml
+================================================================================
+[project]
+name = "majordom-zigbee"
+version = "0.1.6"
+description = "Zigbee integration for MajorDom — bridges Zigbee devices into the MajorDom language."
+authors = [{ name = "Mark Parker", email = "mark@parker-programs.com" }]
+readme = "README.md"
+# AGPL-3.0 is required, not chosen: this package is effectively a wrapper around the GPL-3.0
+# zigpy / zigpy-znp / bellows stack, so the combined work must carry a compatible copyleft
+# license. Commercial (non-AGPL) terms are available separately — see the partnership link.
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+keywords = ["majordom", "zigbee", "zigpy", "smart-home", "home-automation", "iot", "integration", "coordinator", "802-15-4"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Home Automation",
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "majordom-integration-sdk (>=0.1.5,<1.0)",
+    "zigpy (>=2.0.0,<3.0.0)",
+    "zigpy-znp (>=1.1.0,<2.0.0)",
+    "bellows (>=0.49.2,<0.50.0)",
+    # zha-quirks (zhaquirks) applies per-device quirks at the zigpy layer: it decodes
+    # manufacturer clusters into named/typed attributes and carries v2 entity metadata.
+    # Requires zigpy>=2.0, which is why the stack was bumped off the 0.88 line.
+    "zha-quirks (>=2.1.1,<3.0.0)",
+]
+
+[project.optional-dependencies]
+# Extra coordinator radios. bellows (Silicon Labs EZSP) and zigpy-znp (TI Z-Stack) ship by
+# default; install the extra matching your dongle to switch backends with no source change, e.g.
+#   pip install 'majordom-zigbee[deconz]'
+# The backend is then picked by MAJORDOM_ZIGBEE_RADIO / auto-probe (see majordom_zigbee.radio).
+deconz = ["zigpy-deconz (>=0.25.5,<1.0.0)"]  # dresden elektronik ConBee/RaspBee
+xbee = ["zigpy-xbee (>=0.21.1,<1.0.0)"]  # Digi XBee
+zigate = ["zigpy-zigate (>=0.14.0,<1.0.0)"]  # ZiGate
+all-radios = [
+    "zigpy-deconz (>=0.25.5,<1.0.0)",
+    "zigpy-xbee (>=0.21.1,<1.0.0)",
+    "zigpy-zigate (>=0.14.0,<1.0.0)",
+]
+
+[project.urls]
+Homepage = "https://majordom.io"
+Documentation = "https://docs.majordom.io/device-integration"
+Repository = "https://github.com/MajorDom-Systems/integration-zigbee"
+Issues = "https://github.com/MajorDom-Systems/integration-zigbee/issues"
+"Commercial licensing" = "https://parker-industries.org/partnership"
+
+[dependency-groups]
+dev = [
+    "poethepoet (>=0.36.0,<1.0.0)",
+    "ty", "ruff", "pip-audit",
+    "pytest", "pytest-asyncio", "pytest-cov", "pytest-timeout", "pytest-repeat",
+    "pytest-benchmark", "pytest-profiling", "pytest-resource-usage", "coverage",
+    "pympler", "psutil", "faker",
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+packages = [{ include = "majordom_zigbee" }]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+filterwarnings = ["once"]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E", "F", "UP", "B", "SIM", "I"]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = true
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["E402"]
+
+# The zigpy ControllerApplication test double intentionally uses loose signatures — scoped to
+# conftest.py (the only test file that needs it) so the rest of the suite stays fully checked.
+[[tool.ty.overrides]]
+include = ["tests/conftest.py"]
+
+[tool.ty.overrides.rules]
+invalid-method-override = "ignore"
+invalid-assignment = "ignore"
+invalid-argument-type = "ignore"
+
+[tool.poe.tasks.install]
+shell = """
+poetry install
+echo '#!/bin/sh\npoetry run poe check' > .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+echo "Pre-commit hook installed."
+"""
+
+[tool.poe.tasks.check]
+shell = """
+code=0
+echo "\nRunning ruff lint:"
+poetry run ruff check --fix || code=1
+echo "\nRunning ruff format:"
+poetry run ruff format || code=1
+echo "\nRunning ty:"
+poetry run ty check || code=1
+echo "\nRunning pytest:"
+poetry run pytest --cov=majordom_zigbee --cov-report=xml || code=1
+echo "\nRunning poetry build:"
+poetry build || code=1
+echo "\nRunning poetry check:"
+poetry check || code=1
+${ci:+git diff --exit-code}
+exit $code
+"""
+args = [{ name = "ci", type = "boolean" }]
+
+
+================================================================================
+# FILE: scripts/check_zha_drift.py
+================================================================================
+#!/usr/bin/env python3
+"""CI drift check for the vendored zha harvest — the Dependabot-style refresher.
+
+Re-harvests zha (must be installed in the CI/throwaway venv) and diffs the result against the
+committed ``zigbee_spec_zha.py``. Exit codes let CI decide what to do:
+
+    0  no drift
+    1  drift, low/medium risk only (ADD/REMOVE)      -> open an auto-refresh PR
+    2  drift includes RECLASSIFY (HIGH risk)         -> PR flagged for human review
+
+Run: python scripts/check_zha_drift.py
+"""
+
+from __future__ import annotations
+
+import sys
+
+from majordom_integration_sdk.spec_drift import diff_specs
+
+from majordom_zigbee.zigbee_spec_zha import ZHA_ATTRIBUTE_UX as COMMITTED
+from scripts.harvest_zha import harvest
+
+
+def main() -> int:
+    current, _skipped = harvest()
+    report = diff_specs(current, COMMITTED)
+    print(report.render(source="zha"), file=sys.stderr)
+    if report.is_empty:
+        return 0
+    return 2 if report.has_high_risk else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
+
+================================================================================
+# FILE: scripts/harvest_zha.py
+================================================================================
+#!/usr/bin/env python3
+"""Harvest zha's standard-cluster entity judgment into ``majordom_zigbee/zigbee_spec_zha.py``.
+
+DEV / BUILD TOOL — run in a throwaway venv that has ``zha`` installed. ``zha`` is **not** a
+runtime dependency of this integration: we consume it here as a data source and vendor the
+result. See the parameter-ux recipe and the zigbee README's priority ladder.
+
+What it takes (the genuinely additive "judgment" that isn't in zigpy): per standard
+``(cluster_id, attribute_id)``, zha's ``entity_category`` (→ our visibility), the entity
+platform (→ our role), and unit/device_class (→ our ParameterUnit). What it drops: names,
+types, valid_values, raw bounds — we already derive those from zigpy directly.
+
+Usage:
+    python scripts/harvest_zha.py                 # writes the generated module
+    python scripts/harvest_zha.py --stdout        # print instead (for CI diffing)
+"""
+
+from __future__ import annotations
+
+import argparse
+import importlib
+import sys
+from collections import defaultdict
+from importlib.metadata import version
+
+import zigpy.zcl
+
+_ZHA_VERSION = version("zha")
+
+# Platform modules whose import fires the @register_entity side effects into ENTITY_REGISTRY.
+_PLATFORMS = (
+    "sensor",
+    "binary_sensor",
+    "switch",
+    "number",
+    "select",
+    "climate",
+    "lock",
+    "cover",
+    "fan",
+    "light",
+    "button",
+    "siren",
+)
+
+# zha unit strings / device_classes -> our ParameterUnit value. Anything unmapped -> "plain".
+_UNIT_BY_STRING = {
+    "°C": "celsius",
+    "%": "percentage",
+    "V": "volt",
+    "A": "ampere",
+    "W": "watt",
+    "Hz": "hertz",
+    "lx": "lux",
+    "kWh": "kwh",
+    "ppm": "ppm",
+    "µg/m³": "ugm3",
+    "Pa": "pascal",
+    "hPa": "pascal",
+    "kPa": "pascal",
+    "K": "kelvin",
+    "mired": "mired",
+    "m³/h": "m3h",
+    "s": "second",
+}
+_UNIT_BY_DEVICE_CLASS = {
+    "temperature": "celsius",
+    "humidity": "percentage",
+    "battery": "percentage",
+    "illuminance": "lux",
+    "power": "watt",
+    "voltage": "volt",
+    "current": "ampere",
+    "energy": "kwh",
+    "pressure": "pascal",
+    "frequency": "hertz",
+}
+# Platforms that write the device (control) vs. read it (sensor).
+_CONTROL_PLATFORMS = {"switch", "number", "select", "climate", "lock", "cover", "fan", "light", "button", "siren"}
+
+
+def _unit_for(dc: str | None, unit: str | None) -> str:
+    if unit and unit in _UNIT_BY_STRING:
+        return _UNIT_BY_STRING[unit]
+    if dc and dc in _UNIT_BY_DEVICE_CLASS:
+        return _UNIT_BY_DEVICE_CLASS[dc]
+    return "plain"
+
+
+def _enum_value(x: object) -> str | None:
+    # HA enums carry str values; plain strings pass through unchanged.
+    return str(getattr(x, "value", x)) if x is not None else None
+
+
+def harvest() -> tuple[dict[tuple[int, int], tuple[str, str, str]], list[str]]:
+    for p in _PLATFORMS:
+        importlib.import_module(f"zha.application.platforms.{p}")
+    from zha.application.platforms import ENTITY_REGISTRY
+
+    reg = zigpy.zcl.Cluster._registry
+    # Collect every (visibility, role, unit) vote per key, then reduce with a fixed policy.
+    votes: dict[tuple[int, int], list[tuple[str, str, str]]] = defaultdict(list)
+    skipped: list[str] = []
+
+    for cluster_id, classes in ENTITY_REGISTRY.items():
+        cluster_cls = reg.get(cluster_id)
+        for cls in classes:
+            attr_name = getattr(cls, "_attribute_name", None)
+            platform = cls.__module__.split(".")[-1]
+            if attr_name is None:
+                # Composite entities (light/climate/cover) map a whole cluster, not one attr.
+                skipped.append(f"{cluster_id:#06x} {platform}:{cls.__name__} (no single attribute)")
+                continue
+            if cluster_cls is None or attr_name not in cluster_cls.attributes_by_name:
+                skipped.append(f"{cluster_id:#06x} {platform}:{attr_name} (id unresolved)")
+                continue
+            attr_id = cluster_cls.attributes_by_name[attr_name].id
+            ec = _enum_value(getattr(cls, "_attr_entity_category", None))
+            visibility = "user" if ec is None else "setting"  # config/diagnostic -> settings tap
+            role = "control" if platform in _CONTROL_PLATFORMS else "sensor"
+            unit = _unit_for(
+                _enum_value(getattr(cls, "_attr_device_class", None)),
+                getattr(cls, "_attr_native_unit_of_measurement", None),
+            )
+            votes[(cluster_id, attr_id)].append((visibility, role, unit))
+
+    # Reduce collisions (one cluster attr can back several entities across device types):
+    #   visibility: most-visible wins (user > setting)   role: control > sensor
+    #   unit:       first non-plain
+    out: dict[tuple[int, int], tuple[str, str, str]] = {}
+    for key, vs in votes.items():
+        visibility = "user" if any(v[0] == "user" for v in vs) else "setting"
+        role = "control" if any(v[1] == "control" for v in vs) else "sensor"
+        unit = next((v[2] for v in vs if v[2] != "plain"), "plain")
+        out[key] = (visibility, role, unit)
+    return out, skipped
+
+
+def render(data: dict[tuple[int, int], tuple[str, str, str]]) -> str:
+    lines = [
+        '"""GENERATED by scripts/harvest_zha.py — DO NOT EDIT BY HAND.',
+        "",
+        f"Source: zha=={_ZHA_VERSION}  (Apache-2.0). Harvested standard-cluster entity",
+        "judgment (entity_category -> visibility, platform -> role, unit). Refresh by re-running",
+        "the harvester; put hand overrides in zigbee_spec.py (OUR_ATTRIBUTE_UX), which win on merge.",
+        '"""',
+        "",
+        "# (cluster_id, attribute_id) -> (visibility, role, unit)",
+        "ZHA_ATTRIBUTE_UX: dict[tuple[int, int], tuple[str, str, str]] = {",
+    ]
+    for (cid, aid), (vis, role, unit) in sorted(data.items()):
+        lines.append(f"    ({cid:#06x}, {aid:#06x}): ({vis!r}, {role!r}, {unit!r}),")
+    lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--stdout", action="store_true", help="print instead of writing the module")
+    ap.add_argument("--out", default="majordom_zigbee/zigbee_spec_zha.py")
+    args = ap.parse_args()
+
+    data, skipped = harvest()
+    text = render(data)
+    if args.stdout:
+        sys.stdout.write(text)
+    else:
+        with open(args.out, "w") as f:
+            f.write(text)
+        print(f"[harvest_zha] zha=={_ZHA_VERSION}: wrote {len(data)} entries -> {args.out}", file=sys.stderr)
+    print(f"[harvest_zha] {len(skipped)} composite/unresolved entities skipped", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
+
+================================================================================
+# FILE: scripts/param_ux_audit.py
+================================================================================
+"""Run majordom's zigbee visibility/role mapping across the ENTIRE ZCL surface (all zigpy
+clusters), replicating controller.py's parameter-build rules, and bucket the result the way the
+iOS app would show it: main / user / setting / system. Read-only static audit — no hardware."""
+
+import importlib
+import inspect
+
+from zigpy.zcl import Cluster
+from zigpy.zcl.foundation import ZCLAttributeAccess
+
+from majordom_zigbee.zigbee_spec import (
+    CONFIG_HEAVY_CLUSTERS,
+    EVERYDAY_COMMANDS,
+    EVERYDAY_CONTROL_ATTRIBUTES,
+    MAIN_PARAMETER_BY_CLUSTER,
+    SYSTEM_CLUSTERS,
+    USER_READINGS,
+    VISIBILITY_OVERRIDES,
+    is_metadata_attribute,
+)
+
+MODULES = [
+    "general",
+    "measurement",
+    "lighting",
+    "hvac",
+    "closures",
+    "homeautomation",
+    "security",
+    "smartenergy",
+    "protocol",
+    "lightlink",
+    "manufacturer_specific",
+]
+
+
+def clusters():
+    seen = {}
+    for m in MODULES:
+        try:
+            mod = importlib.import_module(f"zigpy.zcl.clusters.{m}")
+        except Exception:
+            continue
+        for _, obj in inspect.getmembers(mod, inspect.isclass):
+            if issubclass(obj, Cluster) and obj is not Cluster and getattr(obj, "cluster_id", None) is not None:
+                seen.setdefault(obj.cluster_id, obj)
+    return dict(sorted(seen.items()))
+
+
+def attr_visibility(cluster_id, attr_id, access, name):
+    # replicate controller.py curated visibility policy
+    key = (cluster_id, attr_id)
+    if key in VISIBILITY_OVERRIDES:
+        return VISIBILITY_OVERRIDES[key].value
+    vis = "system"
+    if attr_id < 0xF000 or cluster_id not in SYSTEM_CLUSTERS:
+        if is_metadata_attribute(cluster_id, attr_id, name):
+            vis = "system"
+        elif (
+            key in EVERYDAY_CONTROL_ATTRIBUTES
+            or key in USER_READINGS
+            or access & ZCLAttributeAccess.Report
+            and cluster_id not in CONFIG_HEAVY_CLUSTERS
+        ):
+            vis = "user"
+        elif access & ZCLAttributeAccess.Write:
+            vis = "setting"
+    return vis
+
+
+def attr_role(access):
+    r = bool(access & ZCLAttributeAccess.Read)
+    w = bool(access & ZCLAttributeAccess.Write)
+    return "control" if (r and w) else "sensor" if r else "event"
+
+
+buckets_total = {"user": 0, "setting": 0, "system": 0}
+main_clusters = set(MAIN_PARAMETER_BY_CLUSTER)
+rows = []
+for cid, cls in clusters().items():
+    is_sys = cid in SYSTEM_CLUSTERS
+    b = {"user": [], "setting": [], "system": []}
+    attrs = getattr(cls, "attributes", {}) or {}
+    for aid, adef in attrs.items():
+        if not isinstance(aid, int):
+            continue
+        access = getattr(adef, "access", None)
+        if access is None:
+            continue
+        vis = attr_visibility(cid, aid, access, getattr(adef, "name", str(aid)))
+        b[vis].append(getattr(adef, "name", str(aid)))
+    # client-side commands -> user (or system if system cluster)
+    cmds = getattr(cls, "server_commands", {}) or {}  # sendable actions, matching controller
+    for k, c in cmds.items():
+        if not isinstance(k, int):
+            continue
+        cv = "system" if is_sys else ("user" if (cid, k) in EVERYDAY_COMMANDS else "setting")
+        b[cv].append(f"{getattr(c, 'name', str(k))}()")
+    for k in buckets_total:
+        buckets_total[k] += len(b[k])
+    rows.append((cid, cls.__name__, is_sys, cid in main_clusters, b))
+
+print(f"=== ZIGBEE full-ZCL mapping: {len(rows)} clusters ===")
+print(
+    f"total params by bucket: user={buckets_total['user']} "
+    f"setting={buckets_total['setting']} system={buckets_total['system']}"
+)
+print(f"clusters providing a MAIN parameter: {sorted(hex(c) for c in main_clusters)}\n")
+
+# spotlight: common device-facing clusters + anomalies
+SPOT = {
+    0x0006: "OnOff",
+    0x0008: "LevelControl",
+    0x0300: "Color",
+    0x0201: "Thermostat",
+    0x0202: "FanControl",
+    0x0102: "WindowCovering",
+    0x0101: "DoorLock",
+    0x0402: "TempMeas",
+    0x0405: "Humidity",
+    0x0400: "Illuminance",
+    0x0000: "Basic(SYS)",
+    0x0001: "PowerConfig",
+    0x0B04: "ElectricalMeas",
+    0x0500: "IAS_Zone",
+}
+for cid, name, is_sys, has_main, b in rows:
+    if cid in SPOT:
+        print(f"--- 0x{cid:04X} {name}{' [SYSTEM]' if is_sys else ''}{' [MAIN]' if has_main else ''} ---")
+        for k in ("user", "setting", "system"):
+            if b[k]:
+                print(f"   {k:7}({len(b[k])}): {', '.join(b[k][:12])}{' …' if len(b[k]) > 12 else ''}")
+
+# anomaly scan: standard attributes on SYSTEM clusters that leaked to user/setting (the `or` bug)
+print("\n=== ANOMALY: user/setting params on SYSTEM clusters (should arguably be system) ===")
+for cid, name, is_sys, _has_main, b in rows:
+    if is_sys and (b["user"] or b["setting"]):
+        print(f"  0x{cid:04X} {name}: user={b['user'][:6]} setting={b['setting'][:6]}")
+
+
+================================================================================
+# FILE: tests/conftest.py
+================================================================================
+"""Unit tests for the Zigbee controller.
+
+Drive `ZigBeeController` directly — via the SDK's test dependencies, against an in-memory
+zigpy stub (no radio, no DB). The Hub keeps the e2e (mocked-radio) coverage and the
+real-hardware tests.
+"""
+
+import asyncio
+from unittest.mock import AsyncMock, patch
+
+import pytest_asyncio
+import zigpy.application
+import zigpy.device
+import zigpy.endpoint
+import zigpy.profiles
+import zigpy.state as app_state
+import zigpy.types as t
+import zigpy.zdo.types as zdo_t
+from majordom_integration_sdk.controller import AbstractController
+from majordom_integration_sdk.repository import DeviceRepositoryMemory
+from majordom_integration_sdk.testing import (
+    FakeBLEDiscoveryService,
+    FakeSSDPDiscoveryService,
+    FakeZeroconfDiscoveryService,
+    RecordingControllerOutput,
+)
+
+from majordom_zigbee import ZigBeeController
+
+# IEEE 00:11:22:33:44:55:66:77 -> discovery_id 3ad0d5e0-e32d-5b43-ac8f-150aa969c63d
+MOCK_IEEE = t.EUI64.convert("00:11:22:33:44:55:66:77")
+MOCK_NWK = t.NWK(0x1234)
+NCP_IEEE = t.EUI64.convert("aa:11:22:bb:33:44:be:ef")
+
+DEVICE_ID = "3ad0d5e0-e32d-5b43-ac8f-150aa969c63d"
+PARAM_COMMAND_ID = "71f0a643-94d1-5def-b4ff-c5a394fafb63"  # toggle command_1/6/2
+PARAM_ATTRIBUTE_ID = "d20e6f38-6ad2-5f51-a7b0-0f812b58e5cd"  # on_time attribute_1/6/16385 (Read|Write)
+
+
+def _make_mock_zb_device(app: zigpy.application.ControllerApplication) -> zigpy.device.Device:
+    dev = app.add_device(nwk=MOCK_NWK, ieee=MOCK_IEEE)
+    dev.node_desc = zdo_t.NodeDescriptor(
+        logical_type=zdo_t.LogicalType.Router,
+        complex_descriptor_available=0,
+        user_descriptor_available=0,
+        reserved=0,
+        aps_flags=0,
+        frequency_band=zdo_t.NodeDescriptor.FrequencyBand.Freq2400MHz,
+        mac_capability_flags=zdo_t.NodeDescriptor.MACCapabilityFlags.AllocateAddress,
+        manufacturer_code=4174,
+        maximum_buffer_size=82,
+        maximum_incoming_transfer_size=82,
+        server_mask=0,
+        maximum_outgoing_transfer_size=82,
+        descriptor_capability_field=zdo_t.NodeDescriptor.DescriptorCapability.NONE,
+    )
+    ep = dev.add_endpoint(1)
+    ep.status = zigpy.endpoint.Status.ZDO_INIT
+    ep.profile_id = 260
+    ep.device_type = zigpy.profiles.zha.DeviceType.ON_OFF_LIGHT
+    ep.add_input_cluster(6)  # OnOff
+    ep.add_input_cluster(8)  # LevelControl
+    return dev
+
+
+class _MockZigpyApp(zigpy.application.ControllerApplication):
+    """In-memory zigpy stub — no hardware, no DB."""
+
+    _zb_controller = None  # set to the controller after start()
+
+    async def send_packet(self, *_):
+        pass
+
+    async def connect(self, *_):
+        pass
+
+    async def disconnect(self, *_):
+        pass
+
+    async def start_network(self, *_):
+        pass
+
+    async def force_remove(self, *_):
+        pass
+
+    async def add_endpoint(self, *_):
+        pass
+
+    async def permit_ncp(self, *_):
+        pass
+
+    async def write_network_info(self, *_):
+        pass
+
+    async def reset_network_info(self, *_):
+        pass
+
+    async def permit_with_link_key(self, *_):
+        pass
+
+    async def shutdown(self, *_):
+        pass
+
+    async def load_network_info(self, *, load_devices=False):
+        self.state.network_info.channel = 15
+
+    async def permit(self, time_s=60, node=None):
+        """Simulate a device joining — triggers device_joined + device_initialized."""
+        if self._zb_controller is None:
+            return
+        dev = _make_mock_zb_device(self)
+        self._zb_controller.device_joined(dev)
+        await asyncio.sleep(0.05)
+        self._zb_controller.device_initialized(dev)
+
+    async def remove(self, ieee):
+        if self.get_device(ieee):
+            del self.devices[ieee]
+
+
+@pytest_asyncio.fixture
+async def zigbee():
+    """Started ZigBeeController wired to an in-memory zigpy stub, plus the recording output
+    and repository so tests can assert on both sides."""
+    created: list[_MockZigpyApp] = []
+
+    async def _new(config, auto_form=False):
+        app = _MockZigpyApp({"database_path": None, "device": {"path": "/dev/null"}})
+        app.state.node_info = app_state.NodeInfo(
+            nwk=t.NWK(0x0000), ieee=NCP_IEEE, logical_type=zdo_t.LogicalType.Coordinator
+        )
+        created.append(app)
+        return app
+
+    repository = DeviceRepositoryMemory(integration="ZigBee")
+    output = RecordingControllerOutput()
+
+    import tempfile
+    from pathlib import Path
+
+    deps = AbstractController.Dependencies(
+        output=output,
+        make_device_repository=repository.session,
+        documents_folder=Path(tempfile.mkdtemp()),
+        zeroconf_discovery_service=FakeZeroconfDiscoveryService(),
+        ssdp_discovery_service=FakeSSDPDiscoveryService(),
+        ble_discovery_service=FakeBLEDiscoveryService(),
+        hardware_interfaces=["/dev/null"],
+    )
+
+    with (
+        patch("bellows.zigbee.application.ControllerApplication.new", side_effect=_new),
+        patch("zigpy.zcl.Cluster.read_attributes", new_callable=AsyncMock, return_value=({}, {})),
+        patch("zigpy.zcl.Cluster.write_attributes", new_callable=AsyncMock, return_value=[{}, {}]),
+        patch("zigpy.zcl.Cluster.command", new_callable=AsyncMock, return_value=None),
+    ):
+        controller = ZigBeeController(deps)
+        controller.radio = "ezsp"  # pin the backend in tests (don't probe the fake /dev/null port)
+        await controller.start()
+        created[0]._zb_controller = controller
+        yield controller, output, repository, created[0]
+        await controller.stop()
+
+
+================================================================================
+# FILE: tests/test_controller.py
+================================================================================
+"""Unit tests driving ZigBeeController directly against the in-memory zigpy stub."""
+
+from uuid import UUID
+
+from conftest import DEVICE_ID, PARAM_ATTRIBUTE_ID, PARAM_COMMAND_ID
+
+
+async def _wait_for(predicate, timeout: float = 3.0):
+    import asyncio
+
+    async with asyncio.timeout(timeout):
+        while not predicate():
+            await asyncio.sleep(0.02)
+
+
+async def test_discovers_joining_device(zigbee):
+    controller, output, _repo, _app = zigbee
+    await controller.start_pairing_window(5)  # permit-join -> the stub simulates a device joining
+
+    await _wait_for(lambda: bool(output.received_discoveries))
+    discovery = output.received_discoveries[-1]
+    assert str(discovery.id) == DEVICE_ID
+    assert discovery.integration == "ZigBee"
+    assert UUID(DEVICE_ID) in controller.discoveries
+
+
+async def _discover(controller, output):
+    await controller.start_pairing_window(5)
+    await _wait_for(lambda: bool(output.received_discoveries))
+    return output.received_discoveries[-1]
+
+
+async def _seed_provisional(repository, discovery):
+    """The Hub creates the device row before calling pair_device (persistence is the Hub's job)."""
+    from majordom_zigbee.model import ZBDeviceIntegrationData, ZBDeviceState
+
+    async with repository.session() as repo:
+        await repo.save(
+            ZBDeviceState(
+                id=discovery.id,
+                name="Mock Device",
+                room_id=UUID(int=1),
+                transport=discovery.transport,
+                integration="ZigBee",
+                manufacturer=None,
+                parameters=[],
+                integration_data=ZBDeviceIntegrationData(),
+            )
+        )
+
+
+async def test_pairs_a_joined_device(zigbee):
+    controller, output, repository, _app = zigbee
+    from majordom_zigbee.model import ZBDevice
+
+    discovery = await _discover(controller, output)
+    await _seed_provisional(repository, discovery)
+
+    await controller.pair_device(discovery, None)
+
+    # the discovery is consumed and the device is now tracked as connected
+    assert discovery.id not in controller.discoveries
+    assert discovery.id in controller._connected_devices
+    # persistence: the controller mapped the device's clusters into parameters
+    async with repository.session() as repo:
+        device = await repo.get(discovery.id, as_=ZBDevice)
+        state = await repo.state(discovery.id)
+    assert device is not None and device.integration_data.ieee
+    assert state is not None and len(state.parameters) > 0
+
+
+async def _pair(zigbee):
+    controller, output, repository, app = zigbee
+    discovery = await _discover(controller, output)
+    await _seed_provisional(repository, discovery)
+    await controller.pair_device(discovery, None)
+    return discovery
+
+
+async def _param(repository, device_id, parameter_id):
+    from majordom_zigbee.model import ZBDeviceState, ZBParameter
+
+    async with repository.session() as repo:
+        state = await repo.state(device_id, as_=ZBDeviceState)
+    param = next(p for p in state.parameters if str(p.id) == parameter_id)
+    return ZBParameter.model_validate(param.model_dump())
+
+
+async def _device(repository, device_id):
+    from majordom_zigbee.model import ZBDevice
+
+    async with repository.session() as repo:
+        return await repo.get(device_id, as_=ZBDevice)
+
+
+async def test_sends_a_command_parameter(zigbee):
+    from majordom_integration_sdk.schemas.command import DeviceCommand
+
+    controller, output, repository, _app = zigbee
+    discovery = await _pair(zigbee)
+    device = await _device(repository, discovery.id)
+    parameter = await _param(repository, discovery.id, PARAM_COMMAND_ID)
+
+    # a ZCL command parameter (toggle) — no exception means the command reached the cluster
+    await controller.send_command(
+        DeviceCommand(device_id=discovery.id, parameter_id=UUID(PARAM_COMMAND_ID), value=None), device, parameter
+    )
+
+
+async def test_sends_an_attribute_write(zigbee):
+    from majordom_integration_sdk.schemas.command import DeviceCommand
+
+    controller, output, repository, _app = zigbee
+    discovery = await _pair(zigbee)
+    device = await _device(repository, discovery.id)
+    parameter = await _param(repository, discovery.id, PARAM_ATTRIBUTE_ID)
+
+    await controller.send_command(
+        DeviceCommand(device_id=discovery.id, parameter_id=UUID(PARAM_ATTRIBUTE_ID), value=0), device, parameter
+    )
+
+
+async def test_unpairs_a_device(zigbee):
+    controller, output, repository, app = zigbee
+    discovery = await _pair(zigbee)
+    device = await _device(repository, discovery.id)
+
+    await controller.unpair(device)
+    # the device is gone from the zigpy network
+    from conftest import MOCK_IEEE
+
+    assert MOCK_IEEE not in app.devices
+
+
+================================================================================
+# FILE: tests/test_param_ux.py
+================================================================================
+"""Light probes for the parameter-UX mapping — exercise the curation code paths without
+re-hardcoding every device's expected parameters (that stays manual review; see the audit script
+and the docs recipe)."""
+
+from uuid import uuid4
+
+from majordom_integration_sdk.schemas.parameter import ParameterDataType, ParameterRole, ParameterVisibility
+
+from majordom_zigbee.zigbee_spec import (
+    CONFIG_HEAVY_CLUSTERS,
+    EVERYDAY_COMMANDS,
+    EVERYDAY_CONTROL_ATTRIBUTES,
+    MAIN_PARAMETER_BY_CLUSTER,
+    METADATA_SOURCES,
+    OUR_ATTRIBUTE_UX,
+    USER_READINGS,
+    VISIBILITY_OVERRIDES,
+    ZHA_ATTRIBUTE_UX,
+    UxSpec,
+    classify_attribute,
+    is_metadata_attribute,
+    resolve_metadata_bounds,
+)
+
+
+def test_metadata_heuristic_catches_scaling_constants():
+    assert is_metadata_attribute(0x0B04, 0x0602, "ac_voltage_divisor")
+    assert is_metadata_attribute(0x0B04, 0x0603, "ac_voltage_multiplier")
+    assert is_metadata_attribute(0x0402, 0x0002, "max_measured_value")
+
+
+def test_metadata_heuristic_leaves_real_readings_alone():
+    assert not is_metadata_attribute(0x0402, 0x0000, "measured_value")
+    assert not is_metadata_attribute(0x0B04, 0x050B, "active_power")
+
+
+def test_curation_sets_are_consistent():
+    # a parameter can't be both an everyday writable control and a read-only user reading
+    assert USER_READINGS.isdisjoint(EVERYDAY_CONTROL_ATTRIBUTES)
+    # overrides don't contradict the curated user lists (an override is for the *other* cases)
+    assert set(VISIBILITY_OVERRIDES).isdisjoint(USER_READINGS | EVERYDAY_CONTROL_ATTRIBUTES)
+
+
+def test_config_heavy_and_commands_populated():
+    # DoorLock, ElectricalMeasurement, Metering are the config-heavy clusters
+    assert {0x0101, 0x0B04, 0x0702} <= CONFIG_HEAVY_CLUSTERS
+    # the everyday one-tap commands include lock/unlock and on/off
+    assert {(0x0101, 0x00), (0x0101, 0x01), (0x0006, 0x02)} <= EVERYDAY_COMMANDS
+
+
+def test_fan_control_is_an_attribute_main_that_cycles():
+    spec = MAIN_PARAMETER_BY_CLUSTER[0x0202]  # FanControl has no commands
+    assert spec.is_attribute
+    assert spec.target_id == 0x0000  # fan_mode
+    assert spec.cycle == [0x00, 0x04]  # off <-> on toggle
+
+
+def test_attribute_main_cycle_stored_as_default_value():
+    # Pairing stores an attribute main's cycle subset on default_value (not integration_data), so
+    # the relay derives the next value via Parameter.main_cycle — the same path for every protocol.
+    from majordom_zigbee.model import ZBParameterIntegrationData, ZBParameterState, ZBParameterType
+
+    spec = MAIN_PARAMETER_BY_CLUSTER[0x0202]
+    assert spec.cycle is not None
+    param = ZBParameterState(
+        id=uuid4(),
+        name="fan_mode",
+        data_type=ParameterDataType.enum,
+        role=ParameterRole.control,
+        visibility=ParameterVisibility.user,
+        valid_values={0x00: "off", 0x01: "low", 0x02: "medium", 0x03: "high", 0x04: "on"},
+        integration_data=ZBParameterIntegrationData(
+            endpoint_id=1, cluster_id=0x0202, attribute_id=0x0000, type=ZBParameterType.attribute
+        ),
+        default_value=set(spec.cycle),
+    )
+
+    assert param.can_be_main_parameter
+    assert param.main_cycle == [0x00, 0x04]  # only the curated off/on subset, not the full enum
+    assert not hasattr(param.integration_data, "main_cycle")
+
+
+def test_metadata_resolver_prefers_device_limit_values():
+    # LevelControl.current_level bounded by the device's own min/max_level runtime values
+    values = {0x0002: 10, 0x0003: 200}
+    lo, hi, missing = resolve_metadata_bounds(0x0008, 0x0000, values.get, 0, 254)
+    assert (lo, hi) == (10, 200)
+    assert not missing
+
+
+def test_metadata_resolver_reports_missing_sources():
+    lo, hi, missing = resolve_metadata_bounds(0x0008, 0x0000, {}.get, 0, 254)
+    assert (lo, hi) == (0, 254)  # falls back to wire-type defaults
+    assert set(missing) == {0x0002, 0x0003}
+
+
+def test_metadata_resolver_passthrough_when_no_source():
+    assert resolve_metadata_bounds(0x0500, 0x0000, {}.get, 1, 2) == (1, 2, [])
+
+
+def test_metadata_sources_point_at_real_metadata():
+    # every declared source's target parameter is itself a real (non-metadata) reading key
+    for cluster_id, attr_id in METADATA_SOURCES:
+        assert not is_metadata_attribute(cluster_id, attr_id, "measured_value")
+
+
+# --- classification ladder probes (see classify_attribute) --------------------------------------
+
+
+def test_our_override_beats_everything():
+    # OnOff.on_off is in USER_READINGS -> our layer forces user/sensor, even though zha also has it.
+    spec, source = classify_attribute(0x0006, 0x0000, "on_off", writable=True, reportable=True)
+    assert source == "ours"
+    assert spec.visibility is ParameterVisibility.user
+
+
+def test_metadata_forced_system():
+    spec, source = classify_attribute(0x0402, 0x0002, "max_measured_value", writable=False, reportable=True)
+    assert source == "metadata"
+    assert spec.visibility is ParameterVisibility.system
+
+
+def test_harvested_zha_applied_when_uncurated():
+    # pick any harvested key that isn't in our hand layer, and check it flows through the zha tier
+    zha_only = next(k for k in ZHA_ATTRIBUTE_UX if k not in OUR_ATTRIBUTE_UX)
+    cid, aid = zha_only
+    spec, source = classify_attribute(cid, aid, "x", writable=True, reportable=False)
+    assert source in ("zha", "metadata")  # metadata safety rule may pre-empt some keys
+
+
+def test_quirk_metadata_beats_zha():
+    # a v2 quirk spec is honored above the harvested zha layer (but below our hand overrides)
+    q = UxSpec(ParameterVisibility.setting, ParameterRole.control, None)
+    spec, source = classify_attribute(
+        0x0008, 0x0010, "on_off_transition_time", writable=True, reportable=False, quirk_ux=q
+    )
+    assert source == "quirk-v2"
+    assert spec is q
+
+
+def test_fallback_warns_for_uncurated():
+    # an attribute in no source falls to the heuristic and is tagged fallback-*
+    spec, source = classify_attribute(0x0AAA, 0x1234, "mystery", writable=False, reportable=True)
+    assert source.startswith("fallback")
+    assert spec.visibility is ParameterVisibility.user  # reportable heuristic (until coverage flip)
+
+
+def test_harvest_artifact_is_populated():
+    assert len(ZHA_ATTRIBUTE_UX) > 30  # the vendored zha harvest loaded
+
+
+================================================================================
+# FILE: tests/test_radio.py
+================================================================================
+"""Unit tests for backend-agnostic radio selection (majordom_zigbee.radio)."""
+
+import sys
+import types
+from unittest.mock import AsyncMock
+
+import pytest
+
+from majordom_zigbee import radio as radio_mod
+
+
+def _fake_radio_module(monkeypatch, dotted_path: str, probe_result):
+    """Install a fake module exposing a ControllerApplication with a stubbed async probe()."""
+    module_path, _, cls_name = dotted_path.rpartition(".")
+
+    app_cls = type(cls_name, (), {"probe": AsyncMock(return_value=probe_result)})
+    module = types.ModuleType(module_path)
+    setattr(module, cls_name, app_cls)
+    # register the (possibly dotted) module so importlib.import_module finds it
+    parts = module_path.split(".")
+    for i in range(1, len(parts) + 1):
+        name = ".".join(parts[:i])
+        monkeypatch.setitem(sys.modules, name, sys.modules.get(name) or types.ModuleType(name))
+    monkeypatch.setitem(sys.modules, module_path, module)
+    return app_cls
+
+
+@pytest.mark.asyncio
+async def test_pinned_radio_returns_that_backend(monkeypatch):
+    ezsp = next(r for r in radio_mod.RADIOS if r.key == "ezsp")
+    app = _fake_radio_module(monkeypatch, ezsp.application, probe_result=True)
+    resolved = await radio_mod.resolve_application({"path": "/dev/ttyUSB0"}, requested="ezsp")
+    assert resolved is app
+
+
+@pytest.mark.asyncio
+async def test_alias_resolves(monkeypatch):
+    ezsp = next(r for r in radio_mod.RADIOS if r.key == "ezsp")
+    app = _fake_radio_module(monkeypatch, ezsp.application, probe_result=True)
+    resolved = await radio_mod.resolve_application({"path": "/dev/x"}, requested="SkyConnect")
+    assert resolved is app
+
+
+@pytest.mark.asyncio
+async def test_unknown_radio_raises(monkeypatch):
+    with pytest.raises(ValueError, match="Unknown zigbee radio"):
+        await radio_mod.resolve_application({"path": "/dev/x"}, requested="nope")
+
+
+@pytest.mark.asyncio
+async def test_env_var_pins_radio(monkeypatch):
+    znp = next(r for r in radio_mod.RADIOS if r.key == "znp")
+    app = _fake_radio_module(monkeypatch, znp.application, probe_result=True)
+    monkeypatch.setenv(radio_mod.RADIO_ENV, "znp")
+    resolved = await radio_mod.resolve_application({"path": "/dev/x"}, requested=None)
+    assert resolved is app
+
+
+@pytest.mark.asyncio
+async def test_auto_probe_picks_first_matching(monkeypatch):
+    # ezsp probe fails (raises), znp probe matches -> znp is chosen.
+    ezsp = next(r for r in radio_mod.RADIOS if r.key == "ezsp")
+    znp = next(r for r in radio_mod.RADIOS if r.key == "znp")
+    ezsp_app = _fake_radio_module(monkeypatch, ezsp.application, probe_result=False)
+    ezsp_app.probe = AsyncMock(side_effect=RuntimeError("wrong protocol"))
+    znp_app = _fake_radio_module(monkeypatch, znp.application, probe_result=True)
+    # make sure no other radio libs are importable so the loop only sees our two fakes
+    for r in radio_mod.RADIOS:
+        if r.key not in ("ezsp", "znp"):
+            monkeypatch.setitem(sys.modules, r.application.rpartition(".")[0], None)
+    monkeypatch.delenv(radio_mod.RADIO_ENV, raising=False)
+    resolved = await radio_mod.resolve_application({"path": "/dev/x"}, requested="auto")
+    assert resolved is znp_app
+

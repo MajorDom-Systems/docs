@@ -1,0 +1,1632 @@
+# integration-homekit — full source
+# repo: https://github.com/MajorDom-Systems/integration-homekit  branch: master  commit: be32f0bb9859eb46ddb10139d35662767cdd2b3a
+# generated: 2026-08-01 — AUTO-GENERATED, do not edit by hand
+
+## File tree
+  .gitignore
+  LICENSE
+  README.md
+  majordom_homekit/__init__.py
+  majordom_homekit/characteristics_storage.py
+  majordom_homekit/controller.py
+  majordom_homekit/mapper.py
+  majordom_homekit/models.py
+  majordom_homekit/pairings_storage.py
+  majordom_homekit/parameters_map.py
+  majordom_homekit/readme.md
+  pyproject.toml
+  tests/conftest.py
+  tests/test_controller.py
+
+
+================================================================================
+# FILE: .gitignore
+================================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+.hypothesis/
+
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+
+# Poetry
+# poetry.lock  # uncomment for applications, keep commented for libraries
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# Tools
+.ruff_cache/
+.ropeproject
+
+# mkdocs (only relevant if you kept mkdocs.yml + docs/)
+/site
+.cache/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+================================================================================
+# FILE: LICENSE
+================================================================================
+# PolyForm Noncommercial License 1.0.0
+
+<https://polyformproject.org/licenses/noncommercial/1.0.0>
+
+## Acceptance
+
+In order to get any license under these terms, you must agree to them as both strict obligations and conditions to all your licenses.
+
+## Copyright License
+
+The licensor grants you a copyright license for the software to do everything you might do with the software that would otherwise infringe the licensor's copyright in it for any permitted purpose.  However, you may only distribute the software according to [Distribution License](#distribution-license) and make changes or new works based on the software according to [Changes and New Works License](#changes-and-new-works-license).
+
+## Distribution License
+
+The licensor grants you an additional copyright license to distribute copies of the software.  Your license to distribute covers distributing the software with changes and new works permitted by [Changes and New Works License](#changes-and-new-works-license).
+
+## Notices
+
+You must ensure that anyone who gets a copy of any part of the software from you also gets a copy of these terms or the URL for them above, as well as copies of any plain-text lines beginning with `Required Notice:` that the licensor provided with the software.  For example:
+
+> Required Notice: Copyright Yoyodyne, Inc. (http://example.com)
+
+## Changes and New Works License
+
+The licensor grants you an additional copyright license to make changes and new works based on the software for any permitted purpose.
+
+## Patent License
+
+The licensor grants you a patent license for the software that covers patent claims the licensor can license, or becomes able to license, that you would infringe by using the software.
+
+## Noncommercial Purposes
+
+Any noncommercial purpose is a permitted purpose.
+
+## Personal Uses
+
+Personal use for research, experiment, and testing for the benefit of public knowledge, personal study, private entertainment, hobby projects, amateur pursuits, or religious observance, without any anticipated commercial application, is use for a permitted purpose.
+
+## Noncommercial Organizations
+
+Use by any charitable organization, educational institution, public research organization, public safety or health organization, environmental protection organization, or government institution is use for a permitted purpose regardless of the source of funding or obligations resulting from the funding.
+
+## Fair Use
+
+You may have "fair use" rights for the software under the law. These terms do not limit them.
+
+## No Other Rights
+
+These terms do not allow you to sublicense or transfer any of your licenses to anyone else, or prevent the licensor from granting licenses to anyone else.  These terms do not imply any other licenses.
+
+## Patent Defense
+
+If you make any written claim that the software infringes or contributes to infringement of any patent, your patent license for the software granted under these terms ends immediately. If your company makes such a claim, your patent license ends immediately for work on behalf of your company.
+
+## Violations
+
+The first time you are notified in writing that you have violated any of these terms, or done anything with the software not covered by your licenses, your licenses can nonetheless continue if you come into full compliance with these terms, and take practical steps to correct past violations, within 32 days of receiving notice.  Otherwise, all your licenses end immediately.
+
+## No Liability
+
+***As far as the law allows, the software comes as is, without any warranty or condition, and the licensor will not be liable to you for any damages arising out of these terms or the use or nature of the software, under any kind of legal claim.***
+
+## Definitions
+
+The **licensor** is the individual or entity offering these terms, and the **software** is the software the licensor makes available under these terms.
+
+**You** refers to the individual or entity agreeing to these terms.
+
+**Your company** is any legal entity, sole proprietorship, or other kind of organization that you work for, plus all organizations that have control over, are under the control of, or are under common control with that organization.  **Control** means ownership of substantially all the assets of an entity, or the power to direct its management and policies by vote, contract, or otherwise.  Control can be direct or indirect.
+
+**Your licenses** are all the licenses granted to you for the software under these terms.
+
+**Use** means anything you do with the software requiring one of your licenses.
+
+
+================================================================================
+# FILE: README.md
+================================================================================
+# integration-homekit
+
+A [MajorDom](https://majordom.io) integration — bridges **Apple HomeKit** accessories into the
+MajorDom language.
+
+Built for the **MajorDom Hub**, but it doesn't need it: this is a standalone, standardized
+library for HomeKit that you can use on its own (see **Run it standalone** below). Built on the
+[MajorDom Integration SDK](https://github.com/MajorDom-Systems/integration-sdk). The entry point
+is `HomeKitController` (`majordom_homekit/controller.py`), which the Hub — or the SDK's dev runner —
+instantiates and drives through its lifecycle: discovery → pairing → commands → teardown.
+
+- **Other protocols:** browse the [MajorDom integrations](https://github.com/orgs/MajorDom-Systems/repositories?q=integration-).
+- **Create your own:** start from the [integration template](https://github.com/MajorDom-Systems/integration-template).
+
+## Documentation
+
+Full integration-author docs — the controller lifecycle, data models, storing data, discovery,
+and a worked example — live at **[docs.majordom.io](https://docs.majordom.io/device-integration)**.
+
+## Development
+
+```sh
+poetry install && poetry run poe install
+```
+
+| Task | Description |
+|------|-------------|
+| `poe check` | Full quality pipeline (ruff, ty, pytest, poetry build/check) |
+| `poe check --ci` | Same, plus `git diff --exit-code` |
+
+Work lands on `develop`; `master` is protected and released via **Actions → Release**. Tests drive
+the controller with the SDK's test doubles against an in-process fake HAP accessory server — no real
+accessory required (see `tests/`).
+
+## Run it standalone (without the Hub)
+
+`majordom-homekit` is a standalone library — import it into your own app, or run **just this
+integration** interactively (discover, pair, control, and inspect devices from a prompt) with no Hub.
+It discovers IP accessories over mDNS (BLE accessories need a BLE adapter); no external service is
+required.
+
+See **[Standalone mode](https://docs.majordom.io/device-integration/standalone)** for the interactive
+CLI, watch mode, and the programmatic API.
+
+## About this integration
+
+- **Protocol / platform:** Apple HomeKit Accessory Protocol (HAP) via the
+  [`parker-aiohomekit`](https://pypi.org/project/parker-aiohomekit/) fork of `aiohomekit`.
+- **Transport(s):** IP (Wi-Fi / Ethernet, discovered via mDNS); BLE for BLE accessories.
+- **Supported devices:** HomeKit-compatible accessories — lights, plugs, switches, sensors, locks.
+- **Credentials needed to pair:** `code` (the accessory's 8-digit HomeKit setup code).
+
+### Required harness
+
+- **Hardware adapters:** a BLE adapter only if pairing BLE accessories; IP accessories need none.
+- **Third-party software services:** none — `aiohomekit` speaks HAP directly.
+- **OS / permissions:** mDNS on the LAN for discovery; BLE access for BLE accessories.
+
+### Protocol stack (OSI)
+
+| OSI layer | Protocol | Implemented by |
+|-----------|----------|----------------|
+| Application (7) | HAP characteristics / services | **this integration** (via `aiohomekit`) |
+| Session (5) | Pair-Setup / Pair-Verify (SRP, Ed25519) | library (`aiohomekit`) |
+| Transport (4) | TCP (IP) / GATT (BLE) | OS |
+| Network + below (1–3) | IP over Wi-Fi / Ethernet (or BLE) | OS |
+
+### Progress
+
+- [x] Discovery services registered (mDNS via `zeroconf_discovery_service`; BLE where applicable); cancel closures called in `stop`
+- [x] Discovery listeners fire and call `controller_did_receive_discovery`
+- [x] Re-discovery of already-paired accessories on reconnect (`controller_did_connect_device`)
+- [x] Device pairing (HAP pair-setup with the setup code)
+- [x] Device schema mapped: services/characteristics → parameter list with per-parameter metadata
+- [x] Hub → Device control (`send_command`)
+- [x] Device → Hub event subscription (`controller_did_receive_events`)
+- [x] `identify`
+- [x] `unpair`
+- [x] `fetch`
+- [x] Availability tracking while running (`controller_did_lose_device` / `last_error`)
+- [x] Graceful shutdown in `stop`
+- [x] Tests pass against a fake HAP accessory server (`tests/`)
+
+### Notes
+
+Uses the `parker-aiohomekit` fork of `aiohomekit`; note its Python upper bound (`<3.14`).
+
+## License
+
+See [LICENSE](LICENSE). For commercial licensing or partnership inquiries regarding MajorDom,
+contact us via [parker-industries.org/partnership](https://parker-industries.org/partnership).
+
+
+================================================================================
+# FILE: majordom_homekit/__init__.py
+================================================================================
+"""HomeKit integration for MajorDom.
+
+Bridges HomeKit accessories into the MajorDom language. `HomeKitController` is the entry
+point the Hub (or the SDK's standalone dev runner) instantiates and drives.
+"""
+
+from majordom_homekit.controller import HomeKitController
+
+__all__ = ["HomeKitController"]
+
+
+================================================================================
+# FILE: majordom_homekit/characteristics_storage.py
+================================================================================
+"""
+HomeKit-specific storage adapter.
+TLDR;
+aiohomekit manages pairing and characteristics data internally, but delegates persistence to a
+pluggable storage interface.
+This class implements that interface on top of MajorDom's DeviceRepository, so HomeKit state is
+stored in the Hub's database.
+"""
+
+from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager
+
+from aiohomekit.model.accessories import AccessoriesState
+from aiohomekit.model.typed_dicts import HKDeviceID
+from aiohomekit.storage.characteristics_storage import CharacteristicsStorageProtocol
+from majordom_integration_sdk.repository import DeviceRepositoryProtocol
+
+from .mapper import HKMajorDomMapper
+from .models import HKDevice, HKDeviceIntegrationData, HKDeviceState
+
+
+class HKCharacteristicsStorageMajorDom(CharacteristicsStorageProtocol):
+    def __init__(
+        self,
+        make_device_repository: Callable[[], AbstractAsyncContextManager[DeviceRepositoryProtocol]],
+        mapper: HKMajorDomMapper,
+    ):
+        self.make_device_repository = make_device_repository
+        self.mapper = mapper
+
+    @property
+    def _integration_name(self):
+        return "HomeKit"
+
+    # CharacteristicsStorageProtocol Implementation
+
+    async def get_all(self) -> dict[HKDeviceID, AccessoriesState]:
+        all = {}
+        async with self.make_device_repository() as device_repository:
+            for device in await device_repository.get_all(as_=HKDevice):
+                if accessory := device.integration_data.characteristics_cache:
+                    all[device.hk_id] = accessory
+        return all
+
+    async def get(self, id: HKDeviceID) -> AccessoriesState | None:
+        uuid = self.mapper.hap_id_to_uuid(id)
+        async with self.make_device_repository() as device_repository:
+            if (device := await device_repository.get(uuid, as_=HKDevice)) and (
+                accessory := device.integration_data.characteristics_cache
+            ):
+                return accessory
+        return None
+
+    async def save(self, id: HKDeviceID, item: AccessoriesState):
+        # NOTE: this method is called only when data model (characteristics) is updated
+        # which is detected by a change of config_num
+        # usually after the accessory's software update
+        async with self.make_device_repository() as device_repository:
+            device_id = self.mapper.hap_id_to_uuid(id)
+            device = await device_repository.state(device_id, as_=HKDeviceState)
+            assert device
+            if not device.integration_data:
+                device.integration_data = HKDeviceIntegrationData()
+
+            # fill only the unique data from AccessoryState that isn't already passed from
+            # Discovery or DeviceCreate by the core
+            # TODO: check these values with real devices
+
+            accessory = item.accessories[0]  # TODO: add later support for multiple accessories
+            device.manufacturer = accessory.manufacturer
+            # Manufacturer-provided, read-only description — the HAP accessory model.
+            device.description = getattr(accessory, "model", None)
+            device.integration_data.characteristics_cache = item
+
+            # map all homekit characteristics to majordom parameters
+
+            for accessory in item.accessories:
+                for service in accessory.services:
+                    for characteristic in service.characteristics:
+                        parameter = self.mapper.hap_char_to_majordom_parameter(device.id, accessory.aid, characteristic)
+                        device.parameters.append(parameter)
+
+            await device_repository.save(device)
+
+    async def delete(self, id: HKDeviceID):
+        # TODO: check usage, remove vs unpair, allow fast re-pairing
+        async with self.make_device_repository() as device_repository:
+            uuid = self.mapper.hap_id_to_uuid(id)
+            if device := await device_repository.get(uuid, as_=HKDevice):
+                device.integration_data.characteristics_cache = None  # TODO: empty collection?
+                await device_repository.save(device)
+
+
+================================================================================
+# FILE: majordom_homekit/controller.py
+================================================================================
+import asyncio
+import logging
+from collections.abc import Iterable
+from typing import override
+from uuid import UUID
+
+from aiohomekit.controller.abstract import (
+    AbstractController,
+    AbstractDiscovery,
+    AbstractPairing,
+)
+from aiohomekit.controller.relay import Controller as AioHomeKitController
+from aiohomekit.controller.relay import controller as controller_module
+from aiohomekit.model.characteristics import CharacteristicKey
+from aiohomekit.model.characteristics.characteristic_key import CharacteristicKeyValue
+from aiohomekit.model.characteristics.permissions import CharacteristicPermissions
+from aiohomekit.model.typed_dicts import HKDeviceID, Response
+from majordom_integration_sdk.controller import (
+    AbstractController as MajorDomController,  # avoid collision with aiohomekit
+)
+from majordom_integration_sdk.schemas.base import NonEmptyStr
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import (
+    CredentialsType,
+    Discovery,
+    ProvidedCredentials,
+)
+from majordom_integration_sdk.schemas.event import DeviceParameterChange
+
+from .characteristics_storage import HKCharacteristicsStorageMajorDom
+from .mapper import HKMajorDomMapper
+from .models import HKDevice, HKParameter
+from .pairings_storage import HKPairingsStorageMajorDom
+
+logger = logging.getLogger(__name__)
+
+# TODO: make a better way to pass this
+controller_module.BLE_TRANSPORT_SUPPORTED = False
+controller_module.COAP_TRANSPORT_SUPPORTED = False
+controller_module.IP_TRANSPORT_SUPPORTED = True
+
+# TODO: what are Accessory.needs_polling chars? handle them
+
+
+class HomeKitController(MajorDomController):
+    """Bridges the Hub to HomeKit (HAP) accessories over IP via aiohomekit.
+
+    aiohomekit owns the HAP protocol, discovery, pairing crypto, and the live connection;
+    this controller adapts it to the Hub's AbstractController contract and persists HomeKit
+    state in the Hub DB through the two storage adapters. See readme.md.
+    """
+
+    mapper: HKMajorDomMapper
+
+    # -------------------------------------------------------------------------
+    # AbstractController interface
+    # -------------------------------------------------------------------------
+
+    name = "HomeKit"
+
+    @property
+    def discoveries(self) -> dict[UUID, Discovery]:
+        return self._majordom_discoveries
+
+    # device_type / parameter_type let the Hub deserialize into our typed subclasses.
+
+    @property
+    @override
+    def device_type(self) -> type[HKDevice]:
+        return HKDevice
+
+    @property
+    @override
+    def parameter_type(self) -> type[HKParameter]:
+        return HKParameter
+
+    # -------------------------------------------------------------------------
+    # Lifecycle
+    # -------------------------------------------------------------------------
+
+    async def start(self):
+        # A single mapper, wired with the framework's UUID generators, is shared with both
+        # storage adapters so every HAP id maps to the same MajorDom UUID everywhere.
+        self.mapper = HKMajorDomMapper(device_uuid=self.device_uuid, parameter_uuid=self.parameter_uuid)
+        self._majordom_discoveries: dict[UUID, Discovery] = dict()
+        self._hap_discoveries: dict[UUID, AbstractDiscovery] = dict()
+        self._availability: dict[UUID, bool] = dict()  # device_id -> last signalled availability
+
+        # aiohomekit already registers the `_hap._tcp/_udp` mDNS browsers itself (given our
+        # shared AsyncZeroconf below), so we don't register them on the discovery service here.
+
+        self.hk_char_storage = HKCharacteristicsStorageMajorDom(self.dependencies.make_device_repository, self.mapper)
+        self.hk_pairing_data_storage = HKPairingsStorageMajorDom(self.dependencies.make_device_repository, self.mapper)
+
+        # TODO: BLE discovery and pairing (aiohomekit supports it; the hub only wires IP for now)
+
+        self._aiohomekit_controller = AioHomeKitController(
+            zeroconf_instance=self.dependencies.zeroconf_discovery_service.async_zeroconf,
+            char_cache=self.hk_char_storage,
+            pairing_data_storage=self.hk_pairing_data_storage,
+        )
+        self._aiohomekit_controller.on_discovery(self._aiohomekit_did_discover)
+        await self._aiohomekit_controller.start()
+
+        # aiohomekit only pushes "became available"; it never pushes "became unavailable"
+        # (see AbstractPairing.add_observer_for_availability). So we poll each paired
+        # accessory's connection state to catch both directions — mid-session drops and
+        # reconnects — and reconcile it through _set_availability.
+        self._availability_task = asyncio.create_task(self._availability_loop())
+
+    async def stop(self):
+        if task := getattr(self, "_availability_task", None):
+            task.cancel()
+        await self._aiohomekit_controller.stop()
+
+    # -------------------------------------------------------------------------
+    # Public device operations (Hub -> device)
+    # -------------------------------------------------------------------------
+
+    async def pair_device(self, discovery: Discovery, credentials: ProvidedCredentials | None):
+        if not credentials or credentials.type not in discovery.expected_credentials_options:
+            raise ValueError(
+                f"Credentials type {credentials.type if credentials else None!r} is not one of the "
+                f"types this discovery advertised: {discovery.expected_credentials_options}"
+            )
+
+        hap_discovery = self._hap_discoveries[discovery.id]
+
+        async with asyncio.timeout(1):  # TODO: timeout to settings
+            finish_pairing = await hap_discovery.start_pairing()
+
+        # TODO: check if pairing steps need to be split
+        async with asyncio.timeout(1):
+            pairing_data = await finish_pairing(str(credentials.value or ""))
+
+        pairing_id = pairing_data["AccessoryPairingID"].lower()
+        # main "patch"/"create" data is saved in majordom's core
+        # aiohomekit will save pairing data and characteristics (data model) automatically using
+        # the provided storage during finish_pairing
+        # so no need to fetch or save anything manually here
+
+        # upd: looks like it isn't implemented in aiohomekit yet, so doing it manually
+        pairing = self._aiohomekit_controller.pairings[pairing_id]
+        await pairing.fetch_accessories_and_characteristics()
+        await self.hk_char_storage.save(
+            pairing_id, pairing.accessories_state
+        )  # converts and saves parameters (aka characteristics)
+        await self.hk_pairing_data_storage.save(pairing_id, pairing_data)  # converts and saves data for connection
+
+        await self._handle_connected_pairing(pairing_id)
+        self._hap_discoveries.pop(discovery.id)
+        self._majordom_discoveries.pop(discovery.id)
+
+    async def unpair(self, device: HKDevice):
+        await self._aiohomekit_controller.remove_pairing(device.hk_id)
+        # aiohomekit will cleanup the storage, so no need to do anything here
+
+    async def identify(self, device: HKDevice):
+        await self._aiohomekit_controller.identify(device.hk_id)
+
+    async def fetch(self, device: HKDevice):
+        pairing = self._aiohomekit_controller.pairings[device.hk_id]
+        if not pairing:
+            raise RuntimeError(
+                f"Unexpected Error: Pairing {device.hk_id} for '{device.id}' aka '{device.name}' not found"
+            )
+
+        # fetching the values only; aiohomekit will save the data model on change automatically
+        response = await pairing.get_characteristics(
+            self._get_all_characteristics_keys(pairing, {CharacteristicPermissions.paired_read})
+        )
+        await self._handle_accessory_response(device.hk_id, response)
+
+    async def send_command(self, command: DeviceCommand, device: HKDevice, parameter: HKParameter):
+        hk_value = self.mapper.mj_value_to_hap(command.value)
+
+        pairing = self._aiohomekit_controller.pairings[device.hk_id]
+
+        if not pairing:
+            raise RuntimeError(
+                f"Unexpected Error: Pairing {device.hk_id} for '{device.id}' aka '{device.name}' not found"
+            )
+
+        response = await pairing.put_characteristics(
+            [CharacteristicKeyValue(parameter.integration_data.aid, parameter.integration_data.iid, hk_value)]
+        )
+        await self._handle_accessory_response(device.hk_id, response)
+
+    # -------------------------------------------------------------------------
+    # Device -> Hub: discovery (aiohomekit delegate)
+    # -------------------------------------------------------------------------
+
+    def _aiohomekit_did_discover(self, controller: AbstractController, hk_discovery: AbstractDiscovery):
+        asyncio.create_task(self._async_aiohomekit_did_discover(controller, hk_discovery))
+
+    async def _async_aiohomekit_did_discover(self, controller: AbstractController, hk_discovery: AbstractDiscovery):
+        # Already paired to us -> a reconnect, not a new discovery.
+        if hk_discovery.description.id in controller.pairings:
+            logger.debug(f"{self.name} Discovered paired device...")
+            await self._handle_connected_pairing(hk_discovery.description.id)
+            return
+
+        # Paired to some other controller -> can't offer for pairing here.
+        if hk_discovery.paired:
+            # TODO: handle this case
+            # If device supports only one controller, show as unreachable (requires unpairing)
+            # Some protocols support multiple controllers (like Matter, some HomeKit, Zigbee green with hacks, etc.)
+            # In this case, accessory might need to be put in pairing mode using the first
+            # controller to allow a second pairing with this controller
+            logger.info(f'Device "{hk_discovery.description.name}" is paired to another controller')
+            return
+
+        # A new, unpaired accessory -> surface it as a discovery.
+        logger.info(f"{self.name} Discovered new device...")
+        desc = hk_discovery.description
+        discovery_uuid = self.mapper.hap_id_to_uuid(hk_discovery.description.id)
+        mj_discovery_info = Discovery(
+            # technical
+            id=discovery_uuid,
+            integration=NonEmptyStr(self.name),
+            expected_credentials_options=[CredentialsType.code.with_mask("DDD-DD-DDD")],
+            expiration=None,  # TODO:
+            # UX
+            transport=NonEmptyStr("IP"),
+            device_name=desc.name,
+            device_manufacturer=None,  # looks like it needs device to be paired first
+            device_category=desc.category,
+            device_icon=None,  # will be implemented later
+            # device_model_id = None,
+            # ? model_name: desc.model
+        )
+        self._hap_discoveries[discovery_uuid] = hk_discovery
+        self._majordom_discoveries[discovery_uuid] = mj_discovery_info
+        await self.dependencies.output.controller_did_receive_discovery(self, mj_discovery_info)
+
+        # TODO: dismiss Discovery if discovery disapperd or expired
+
+    # -------------------------------------------------------------------------
+    # Device -> Hub: parameter events & availability
+    # -------------------------------------------------------------------------
+
+    def _run_handle_accessory_response(self, hk_device_id: HKDeviceID, responses: Response):
+        asyncio.create_task(self._handle_accessory_response(hk_device_id, responses))
+
+    async def _handle_accessory_response(self, hk_device_id: HKDeviceID, responses: Response):
+        # TODO: review, test
+        parameter_changed_events = []
+        for (aid, iid), response in responses.items():
+            if "value" in response:
+                hk_value = response["value"]
+                device_id = self.mapper.hap_id_to_uuid(hk_device_id)
+                device_parameter_id = self.mapper.hap_iid_to_param_uuid(hk_device_id, aid, iid)
+                parameter_changed_events.append(
+                    DeviceParameterChange(
+                        device_id=device_id,
+                        parameter_id=device_parameter_id,
+                        value=hk_value,  # TODO: self.mapper.hap_value_to_mj(pairing.characteristic_for_key((aid, iid)))
+                    )
+                )
+            if "status" in response and response["status"] != 0:
+                raise ValueError(
+                    f'Something\'s wrong with characteristic "{aid}.{iid}": '
+                    f'status "{response["status"]}", description: {response.get("description", "none")}'
+                )
+
+        await self.dependencies.output.controller_did_receive_events(self, parameter_changed_events)
+
+    async def _set_availability(self, device_id: UUID, available: bool):
+        """Single funnel for availability transitions — dedupes so the Hub is only told on an
+        actual change, and translates it into the framework's connect / lose callbacks."""
+        if self._availability.get(device_id) == available:
+            return
+        self._availability[device_id] = available
+        if available:
+            await self.dependencies.output.controller_did_connect_device(self, device_id)
+        else:
+            await self.dependencies.output.controller_did_lose_device(self, device_id)
+
+    async def _availability_loop(self, interval: float = 30):
+        while True:
+            await asyncio.sleep(interval)
+            try:
+                for hk_id, pairing in list(self._aiohomekit_controller.pairings.items()):
+                    await self._set_availability(self.mapper.hap_id_to_uuid(hk_id), pairing.is_available)
+            except Exception:
+                logger.exception(f"{self.name} availability poll failed")
+
+    # -------------------------------------------------------------------------
+    # Private helpers: connection setup
+    # -------------------------------------------------------------------------
+
+    async def _handle_connected_pairing(self, pairing_id: HKDeviceID):
+        pairing = self._aiohomekit_controller.pairings[pairing_id.lower()]
+        await self._set_availability(self.mapper.hap_id_to_uuid(pairing_id), True)
+        # subscribe to events
+        await self._observe_characteristics(pairing)
+        # update state
+        state = await pairing.get_characteristics(
+            self._get_all_characteristics_keys(pairing, {CharacteristicPermissions.paired_read})
+        )
+        await self._handle_accessory_response(pairing_id, state)
+
+    async def _observe_characteristics(self, pairing: AbstractPairing):
+        cleanup = pairing.add_observer_for_characteristics(self._run_handle_accessory_response)
+
+        # make controller handle cleanup for us
+        if pairing.id not in self._aiohomekit_controller._pairing_cleanups:
+            self._aiohomekit_controller._pairing_cleanups[pairing.id] = []
+        self._aiohomekit_controller._pairing_cleanups[pairing.id].append(cleanup)
+
+        # NOTE: intentionally NOT using pairing.add_observer_for_availability. In aiohomekit that
+        # observer (`_callback_availability_changed`) is only ever fired with True — on (re)connect,
+        # across IP/BLE/CoAP. A dropped connection (`_connection_lost`) silently clears the transport
+        # and starts a reconnector without notifying, so the observer would surface "came back" but
+        # never "went away". `pairing.is_available` (== connection.is_connected) DOES flip both ways,
+        # so `_availability_loop` polls it as the single source of truth. If you ever wire the
+        # observer, keep it only as a *supplement* for faster up-detection — never as the sole
+        # availability signal, or devices will appear stuck online after they drop.
+
+        response = await pairing.subscribe_characteristics(
+            self._get_all_characteristics_keys(pairing, {CharacteristicPermissions.events})
+        )
+        await self._handle_accessory_response(pairing.id, response)
+
+    def _get_all_characteristics_keys(
+        self, pairing: AbstractPairing, perms: set[CharacteristicPermissions]
+    ) -> Iterable[CharacteristicKey]:
+        for accessory in pairing.accessories_state.accessories:
+            for service in accessory.services:
+                for characteristic in service.characteristics:
+                    if perms.issubset(characteristic.perms):
+                        yield CharacteristicKey(accessory.aid, characteristic.iid)
+
+
+================================================================================
+# FILE: majordom_homekit/mapper.py
+================================================================================
+"""
+Conversion logic between HAP (HomeKit Accessory Protocol) concepts and MajorDom's domain model.
+Isolated here to keep the Controller free of boilerplate — formats, units, permissions, and valid
+enum values are all mapped in one place.
+"""
+
+import inspect
+import re
+from collections.abc import Callable, Iterable
+from enum import Enum
+from typing import Any
+from uuid import UUID
+
+from aiohomekit.model.characteristics import (
+    Characteristic,
+    CharacteristicFormats,
+    CharacteristicUnits,
+)
+from aiohomekit.model.characteristics import const as aiohomekit_consts
+from aiohomekit.model.characteristics.characteristic_types import CharacteristicsTypes
+from aiohomekit.model.characteristics.permissions import CharacteristicPermissions
+from aiohomekit.model.typed_dicts import HKDeviceID
+from majordom_integration_sdk.schemas.parameter import (
+    ParameterDataType,
+    ParameterRole,
+    ParameterUnit,
+    ParameterVisibility,
+)
+
+from majordom_homekit.models import (
+    HKParameterIntegrationData,
+    HKParameterState,
+)
+
+
+class HKMajorDomMapper:
+    def __init__(
+        self,
+        device_uuid: Callable[[str], UUID],
+        parameter_uuid: Callable[[UUID, str], UUID],
+    ):
+        # The controller's provided (framework) UUID generators — see AbstractController.
+        # HAP identifiers are turned into MajorDom UUIDs exclusively through these, so device
+        # and parameter ids are namespaced under the integration consistently with every other
+        # integration.
+        self._device_uuid = device_uuid
+        self._parameter_uuid = parameter_uuid
+
+    # -------------------------------------------------------------------------
+    # Identity: HAP identifiers -> MajorDom UUIDs
+    # -------------------------------------------------------------------------
+
+    def hap_id_to_uuid(self, hk_device_id: HKDeviceID) -> UUID:
+        return self._device_uuid(hk_device_id.lower())
+
+    def hap_iid_to_param_uuid(self, hk_device_id: HKDeviceID, aid: int, iid: int) -> UUID:
+        return self._parameter_uuid(self.hap_id_to_uuid(hk_device_id), f"{aid}.{iid}")
+
+    # -------------------------------------------------------------------------
+    # MajorDom -> HAP
+    # -------------------------------------------------------------------------
+
+    def mj_value_to_hap(self, value: Any):
+        # TODO: implement conversion if needed
+        # aiohomekit handle a lot of processing for us
+        # use characteristic.format and characteristic.unit for correct conversion
+        # checking existing mapping inside aiohomekit might be helpful
+        return value
+
+    # -------------------------------------------------------------------------
+    # HAP -> MajorDom
+    # -------------------------------------------------------------------------
+
+    def hap_char_to_majordom_parameter(
+        self, device_id: UUID, aid: int, characteristic: Characteristic
+    ) -> HKParameterState:
+        return HKParameterState(
+            id=self._parameter_uuid(device_id, f"{aid}.{characteristic.iid}"),
+            name=characteristic.description or "",
+            data_type=self._hap_format_to_mj_data_type(characteristic.format),
+            unit=self._hap_unit_to_mj(characteristic.unit),
+            role=self._hap_perms_to_mj_role(characteristic.perms),
+            visibility=ParameterVisibility.user,
+            min_value=characteristic.minValue,
+            max_value=characteristic.maxValue or characteristic.maxLen,
+            min_step=characteristic.minStep,
+            valid_values=self._valid_values(characteristic),
+            integration_data=HKParameterIntegrationData(
+                type=characteristic.type,
+                aid=aid,
+                iid=characteristic.iid,
+            ),
+            value=self.hap_value_to_mj(characteristic),
+        )
+        # UNUSED:
+        # Service.available
+        # Characteristic.available
+        # Characteristic.ev
+        # Characteristic.maxDataLen
+        # Characteristic.handle
+        # Characteristic.broadcast_events
+        # Characteristic.disconnected_events
+        # Characteristic.valid_values_range
+
+    def hap_value_to_mj(self, characteristic: Characteristic):
+        # characteristic.value should already work in most cases since aiohomekit handle a lot of processing for us
+        # otherwise use characteristic.format and characteristic.unit for correct conversion
+        # checking existing mapping inside aiohomekit might be helpful
+        return characteristic.value
+
+    def _hap_format_to_mj_data_type(self, format: str | None) -> ParameterDataType:
+        mapping: dict[str | None, ParameterDataType] = {
+            CharacteristicFormats.bool: ParameterDataType.bool,
+            CharacteristicFormats.uint8: ParameterDataType.integer,
+            CharacteristicFormats.uint16: ParameterDataType.integer,
+            CharacteristicFormats.uint32: ParameterDataType.integer,
+            CharacteristicFormats.uint64: ParameterDataType.integer,
+            CharacteristicFormats.int: ParameterDataType.integer,
+            CharacteristicFormats.int32: ParameterDataType.integer,
+            CharacteristicFormats.float: ParameterDataType.decimal,
+            CharacteristicFormats.string: ParameterDataType.string,
+            CharacteristicFormats.data: ParameterDataType.data,
+            # TODO: review
+            CharacteristicFormats.tlv8: ParameterDataType.data,
+            CharacteristicFormats.array: ParameterDataType.data,
+            CharacteristicFormats.dict: ParameterDataType.data,
+        }
+        return mapping[format]
+
+    def _hap_unit_to_mj(self, unit: str | None) -> ParameterUnit:
+        mapping: dict[str | None, ParameterUnit] = {
+            CharacteristicUnits.celsius: ParameterUnit.celsius,
+            CharacteristicUnits.percentage: ParameterUnit.percentage,
+            CharacteristicUnits.arcdegrees: ParameterUnit.arcdegree,
+            CharacteristicUnits.lux: ParameterUnit.lux,
+            CharacteristicUnits.seconds: ParameterUnit.second,
+            None: ParameterUnit.plain,
+        }
+        return mapping[unit]
+
+    def _hap_perms_to_mj_role(self, perms: Iterable[str]) -> ParameterRole:
+        # TODO: review all perms in specs
+        if CharacteristicPermissions.paired_write in perms:
+            return ParameterRole.control
+        elif CharacteristicPermissions.paired_read in perms:
+            return ParameterRole.sensor
+        else:
+            return ParameterRole.event
+
+    def _valid_values(self, characteristic: Characteristic) -> dict[int | str | float, str] | None:
+        # TODO: convert to codegen instead of runtime parsing
+        if values_enum := self._search_values_enum_for_characteristic(characteristic):
+            return {v.value: underscore_to_display_case(k) for k, v in values_enum.__members__.items()}
+        else:
+            return {key: str(key) for key in characteristic.valid_values or []}
+
+    # scrapping
+
+    def _search_values_enum_for_characteristic(self, characteristic: Characteristic) -> type[Enum] | None:
+        # try get characteristic type name by id
+        for char_type in CharacteristicsTypes:
+            if char_type == characteristic.type and (values_enum := self._search_values_enum_by_name(char_type.name)):
+                return values_enum
+
+        # try using description as a type name
+        if characteristic.description:
+            possible_enum_name = "_".join(characteristic.description.split(" ")).upper()
+            if values_enum := self._search_values_enum_by_name(possible_enum_name):
+                return values_enum
+
+        return None
+
+    def _search_values_enum_by_name(self, char_uppercase_name: str) -> type[Enum] | None:
+        # ignore = {'values', 'target', 'current', 'state', 'status', 'capabilities', 'units'}
+        searched_char_name_set = set(word.lower() for word in char_uppercase_name.split("_"))
+
+        for name, obj in inspect.getmembers(aiohomekit_consts, inspect.isclass):
+            if not issubclass(obj, Enum):
+                continue
+            member_name_set = set(word.lower() for word in re.split(r"(?<!^)(?=[A-Z])", name))
+            # compare as sets because some enum names have different word order
+            if searched_char_name_set == member_name_set:
+                return obj
+
+
+def underscore_to_display_case(name: str) -> str:
+    return " ".join([word.title() for word in name.split("_")])
+
+
+================================================================================
+# FILE: majordom_homekit/models.py
+================================================================================
+"""
+MajorDom's Device and Parameter schemas expose an `integration_data` field for storing protocol-specific state.
+By default it is an untyped dict persisted as JSON. Integrations can subclass Device/DeviceState
+and Parameter/ParameterState
+to declare a typed schema for that field — Hub will then handle (de-)serialization automatically
+before passing Device instance to Controller's methods or when saving to the database.
+To make the Hub instantiate these custom types, the integration's Controller must override
+`device_type` and `parameter_type`.
+"""
+
+from typing import Any
+from uuid import UUID
+
+from aiohomekit.model.accessories import AccessoriesState
+from aiohomekit.model.typed_dicts import PairingData
+from majordom_integration_sdk.schemas.base import Base
+from majordom_integration_sdk.schemas.device import Device, DeviceState, ParameterState
+from majordom_integration_sdk.schemas.parameter import Parameter
+from pydantic import BaseModel, field_serializer, field_validator
+
+# Integration data
+
+
+class HKDeviceIntegrationData(Base):
+    # NOTE: must be initializable without any arguments
+
+    pairing_data: PairingData | None = None
+    characteristics_cache: AccessoriesState | None = None
+
+    # since AccessoriesState isn't a pydantic class, we need to implement (de)serialization
+
+    model_config = {
+        "arbitrary_types_allowed": True,
+    }
+
+    @field_serializer("characteristics_cache")
+    def serialize_characteristics_cache(self, v: AccessoriesState, _info) -> dict[str, Any]:
+        return v.as_dict() if v else {}
+
+    @field_validator("characteristics_cache", mode="before")
+    @classmethod
+    def parse_characteristics_cache(cls, v: Any) -> AccessoriesState | None:
+        if not v:
+            return None
+        if isinstance(v, AccessoriesState):
+            return v
+        if isinstance(v, dict):
+            return AccessoriesState.from_dict(v)
+        raise ValueError(f"Expected dict or AccessoriesState, got {type(v)}")
+
+
+class HKParameterIntegrationData(BaseModel):
+    type: UUID
+    aid: int
+    iid: int
+
+
+# Overriding types for ease of use (shortcuts)
+
+
+class HKParameter(Parameter):
+    integration_data: HKParameterIntegrationData
+
+
+class HKParameterState(ParameterState):
+    integration_data: HKParameterIntegrationData
+
+
+class HKDevice(Device):
+    integration_data: HKDeviceIntegrationData
+
+    @property
+    def hk_id(self) -> str:
+        assert self.integration_data and self.integration_data.pairing_data
+        return self.integration_data.pairing_data["AccessoryPairingID"].lower()
+
+
+# never used
+class HKDeviceState(HKDevice, DeviceState):
+    # HKDevice + DeviceState — only used in isolation for convenient parsing, so the
+    # parameter-type narrowing is safe here.
+    parameters: list[HKParameterState]
+
+
+================================================================================
+# FILE: majordom_homekit/pairings_storage.py
+================================================================================
+"""
+TLDR: same purpose as characteristics_storage.py
+"""
+
+from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager
+
+from aiohomekit.model.typed_dicts import HKDeviceID, PairingData
+from aiohomekit.storage.pairing_data_storage import PairingDataStorageProtocol
+from majordom_integration_sdk.repository import DeviceRepositoryProtocol
+
+from .mapper import HKMajorDomMapper
+from .models import HKDevice
+
+
+class HKPairingsStorageMajorDom(PairingDataStorageProtocol):
+    def __init__(
+        self,
+        make_device_repository: Callable[[], AbstractAsyncContextManager[DeviceRepositoryProtocol]],
+        mapper: HKMajorDomMapper,
+    ):
+        self.make_device_repository = make_device_repository
+        self.mapper = mapper
+
+    @property
+    def _integration_name(self):
+        return "HomeKit"
+
+    # aiohomekit.PairingsStorageType
+
+    async def get_all(self) -> dict[HKDeviceID, PairingData]:
+        # keyed by the HAP pairing id (HKDeviceID), matching HKCharacteristicsStorage.get_all
+        # and what aiohomekit looks pairings up by — not the MajorDom device UUID.
+        pairings: dict[HKDeviceID, PairingData] = {}
+        async with self.make_device_repository() as device_repository:
+            for device in await device_repository.get_all(as_=HKDevice):
+                if pairing_data := device.integration_data.pairing_data:
+                    pairings[device.hk_id] = pairing_data
+        return pairings
+
+    async def get(self, id: str) -> PairingData | None:
+        uuid = self.mapper.hap_id_to_uuid(id)
+        async with self.make_device_repository() as device_repository:
+            if (device := await device_repository.get(uuid, as_=HKDevice)) and (
+                pairing_data := device.integration_data.pairing_data
+            ):
+                return pairing_data
+        return None
+
+    async def save(self, id: str, item: PairingData):
+        uuid = self.mapper.hap_id_to_uuid(id)
+        async with self.make_device_repository() as device_repository:
+            if device := await device_repository.get(uuid, as_=HKDevice):
+                device.integration_data.pairing_data = item
+                await device_repository.save(device)
+
+    async def delete_model(self, id: str):
+        # TODO: check usage
+        uuid = self.mapper.hap_id_to_uuid(id)
+        async with self.make_device_repository() as device_repository:
+            if device := await device_repository.get(uuid):
+                device.integration_data.pairing_data = None
+                await device_repository.save(device)
+                # TODO: check if should delete the device
+                # Discussion:
+                # this class is responsible solely for managing pairing data storage, and should
+                # not be used for any other purpose.
+                # However, we should ensure there is no case of aiohomekit disconnecting from the
+                # device without notifying us.
+
+
+================================================================================
+# FILE: majordom_homekit/parameters_map.py
+================================================================================
+"""
+Supplemental metadata for parameters / characteristics that the API does not expose directly.
+Maps characteristic types to static values or callables that provide missing information — such as
+enum labels, value ranges, or units.
+"""
+
+parameters_map = {}
+
+
+================================================================================
+# FILE: majordom_homekit/readme.md
+================================================================================
+# HomeKit integration
+
+Bridges the Hub to HomeKit (HAP) accessories over IP, built on top of
+[`aiohomekit`](https://github.com/Jc2k/aiohomekit). `aiohomekit` owns the HAP protocol,
+discovery, pairing crypto, and the live connection; this integration adapts it to the
+Hub's `AbstractController` contract and persists HomeKit state in the Hub's database.
+
+## Files
+
+| File | Responsibility |
+|---|---|
+| `controller.py` | `AbstractController` implementation — lifecycle, pairing, control, and the aiohomekit discovery/event delegates |
+| `mapper.py` | HAP ↔ MajorDom conversions: UUIDs (via the framework helpers), characteristic → parameter, formats/units/permissions/valid-values |
+| `models.py` | Typed `integration_data` schemas (`HKDevice`, `HKParameter`, …) |
+| `characteristics_storage.py` | Adapts aiohomekit's characteristics cache onto the Hub's `DeviceRepository` |
+| `pairings_storage.py` | Adapts aiohomekit's pairing-data storage onto the Hub's `DeviceRepository` |
+
+The two storage classes implement aiohomekit's storage protocols so that all HomeKit
+state lives in the Hub DB rather than aiohomekit's own files. They share the controller's
+single `HKMajorDomMapper` instance, so every HAP id maps to the same MajorDom UUID
+everywhere.
+
+## Discovery & pairing
+
+- **Discovery** uses the Hub's shared Zeroconf service: aiohomekit browses `_hap._tcp` /
+  `_hap._udp` using the `AsyncZeroconf` handed to it from
+  `dependencies.zeroconf_discovery_service`, and calls back into
+  `_aiohomekit_did_discover`. Already-paired accessories seen again trigger a reconnect;
+  accessories paired to another controller are surfaced but not offered for pairing.
+- **Pairing** takes a HAP setup code (`CredentialsType.code`, `DDD-DD-DDD`). The credentials
+  type is validated against the discovery's `expected_credentials_options` before pairing.
+
+## Availability
+
+aiohomekit only pushes a *became-available* signal, never *became-unavailable*, so the
+controller polls each paired accessory's connection state (`_availability_loop`) and
+funnels both directions through `_set_availability`, which dedupes and emits the
+framework's `controller_did_connect_device` / `controller_did_lose_device`.
+
+## Tests
+
+`tests/test_controllers/test_homekit/` runs against aiohomekit's in-process
+`AccessoryServer` (a fake accessory) — no real hardware needed.
+
+## Not yet implemented
+
+- BLE discovery/pairing (aiohomekit supports it; the Hub wires IP only for now).
+- Multi-accessory bridges save only the first accessory's manufacturer.
+
+
+================================================================================
+# FILE: pyproject.toml
+================================================================================
+[project]
+name = "majordom-homekit"
+version = "0.1.6"
+description = "HomeKit integration for MajorDom — bridges HomeKit accessories into the MajorDom language."
+authors = [{ name = "Mark Parker", email = "mark@parker-programs.com" }]
+readme = "README.md"
+license = "LicenseRef-PolyForm-Noncommercial-1.0.0"
+license-files = ["LICENSE"]
+keywords = ["majordom", "homekit", "hap", "apple", "smart-home", "home-automation", "iot", "integration", "accessory"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Home Automation",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.12,<3.14"  # upper bound comes from parker-aiohomekit
+dependencies = [
+    "majordom-integration-sdk (>=0.1.5,<1.0)",
+    "parker-aiohomekit (>=4.0.1,<5.0.0)",
+]
+
+[project.urls]
+Homepage = "https://majordom.io"
+Documentation = "https://docs.majordom.io/device-integration"
+Repository = "https://github.com/MajorDom-Systems/integration-homekit"
+Issues = "https://github.com/MajorDom-Systems/integration-homekit/issues"
+"Commercial licensing" = "https://parker-industries.org/partnership"
+
+[dependency-groups]
+dev = [
+    "poethepoet (>=0.36.0,<1.0.0)",
+    "ty",
+    "ruff",
+    "pip-audit",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-timeout",
+    "pytest-repeat",
+    "pytest-benchmark",
+    "pytest-profiling",
+    "pytest-resource-usage",
+    "coverage",
+    "pympler",
+    "psutil",
+    "faker",
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+packages = [{ include = "majordom_homekit" }]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+filterwarnings = ["once"]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E", "F", "UP", "B", "SIM", "I"]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = true
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["E402"]
+
+
+[tool.poe.tasks.install]
+shell = """
+poetry install
+echo '#!/bin/sh\npoetry run poe check' > .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+echo "Pre-commit hook installed."
+"""
+
+[tool.poe.tasks.check]
+shell = """
+code=0
+
+echo "\nRunning ruff lint:"
+poetry run ruff check --fix || code=1
+
+echo "\nRunning ruff format:"
+poetry run ruff format || code=1
+
+echo "\nRunning ty:"
+poetry run ty check || code=1
+
+echo "\nRunning pytest:"
+poetry run pytest --cov=majordom_homekit --cov-report=xml || code=1
+
+echo "\nRunning poetry build:"
+poetry build || code=1
+
+echo "\nRunning poetry check:"
+poetry check || code=1
+
+${ci:+git diff --exit-code}
+
+exit $code
+"""
+args = [{ name = "ci", type = "boolean" }]
+
+
+================================================================================
+# FILE: tests/conftest.py
+================================================================================
+"""Unit tests for the HomeKit controller.
+
+These drive `HomeKitController` directly — via the SDK's test dependencies, against
+aiohomekit's in-process virtual accessory server with a mocked zeroconf — so they test the
+integration on its own, with no Hub. The Hub keeps the e2e coverage (Coordinator + API/ws).
+"""
+
+import socket
+import tempfile
+import threading
+from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID, uuid5
+
+import pytest
+import pytest_asyncio
+from aiohomekit.model.accessories import Accessory
+from aiohomekit.model.characteristics import CharacteristicsTypes
+from aiohomekit.model.services import ServicesTypes
+from aiohomekit.testing.accessoryserver import AccessoryServer
+from aiohomekit.testing.mock_zeroconf import (
+    AsyncServiceBrowserStub,
+    DNSCache,
+    MockedAsyncServiceInfo,
+    install_mock_service_info,
+)
+from aiohomekit.testing.utils import next_available_port, wait_for_server_online
+from majordom_integration_sdk.controller import AbstractController
+from majordom_integration_sdk.discovery.zeroconf_discovery import ZeroconfDiscoveryService
+from majordom_integration_sdk.repository import DeviceRepositoryMemory
+from majordom_integration_sdk.testing import (
+    FakeBLEDiscoveryService,
+    FakeSSDPDiscoveryService,
+    RecordingControllerOutput,
+)
+
+from majordom_homekit import HomeKitController
+from majordom_homekit.models import HKDeviceIntegrationData, HKDeviceState
+
+HAP_TYPE_TCP = "_hap._tcp.local."
+
+# The device id the accessory (pairing id 12:34:56:00:01:0A) maps to under HomeKit's slug —
+# uuid5(uuid5(namespace, "homekit"), "12:34:56:00:01:0a"). Computed the same way the mapper does.
+INTEGRATION_UUID = uuid5(UUID(int=0), "homekit")
+DEVICE_ID = uuid5(INTEGRATION_UUID, "12:34:56:00:01:0a")
+ON_PARAM_ID = uuid5(DEVICE_ID, "1.9")
+BRIGHTNESS_PARAM_ID = uuid5(DEVICE_ID, "1.10")
+
+
+def provisional_device(pairing_data=None) -> HKDeviceState:
+    """A device row as the Hub has it *before* handing control to the integration: identity
+    and integration_data present, parameters still empty (the controller fills them)."""
+    return HKDeviceState(
+        id=DEVICE_ID,
+        name="Testlicht",
+        room_id=UUID(int=1),
+        transport="IP",
+        integration="HomeKit",
+        manufacturer="",
+        parameters=[],
+        integration_data=HKDeviceIntegrationData(pairing_data=pairing_data, characteristics_cache=None),
+    )
+
+
+def get_mock_service_info(port: int, is_paired: bool) -> MockedAsyncServiceInfo:
+    desc = {
+        b"c#": b"1",
+        b"id": b"12:34:56:00:01:0A",
+        b"md": b"Demoserver",
+        b"s#": b"1",
+        b"ci": b"5",
+        b"sf": b"0" if is_paired else b"1",
+    }
+    return MockedAsyncServiceInfo(
+        HAP_TYPE_TCP,
+        f"Testlicht.{HAP_TYPE_TCP}",
+        addresses=[socket.inet_aton("127.0.0.1")],
+        port=port,
+        properties=desc,
+        weight=0,
+        priority=0,
+    )
+
+
+@pytest.fixture(autouse=True)
+def mock_zeroconf():
+    with (
+        patch("majordom_integration_sdk.discovery.zeroconf_discovery.AsyncServiceBrowser", AsyncServiceBrowserStub),
+        patch("majordom_integration_sdk.discovery.zeroconf_discovery.AsyncZeroconf") as mock_zc,
+        patch("zeroconf.asyncio.AsyncServiceBrowser", AsyncServiceBrowserStub),
+        patch("zeroconf.asyncio.AsyncZeroconf", mock_zc),
+        patch("aiohomekit.controller.zeroconf.controller.AsyncServiceInfo", MockedAsyncServiceInfo),
+    ):
+        zc = mock_zc.return_value
+        zc.register_service = AsyncMock()
+        zc.async_close = AsyncMock()
+        zeroconf = MagicMock(name="zeroconf_mock")
+        zeroconf.cache = DNSCache()
+        zeroconf.async_wait_for_start = AsyncMock()
+        zeroconf.listeners = [AsyncServiceBrowserStub()]
+        zc.zeroconf = zeroconf
+        with patch("aiohomekit.testing.accessoryserver.Zeroconf", zc):
+            yield zc
+
+
+@pytest.fixture
+def id_factory():
+    counter = 0
+
+    def _get_id():
+        nonlocal counter
+        counter += 1
+        return counter
+
+    return _get_id
+
+
+PAIRING_DATA = {
+    "AccessoryPairingID": "12:34:56:00:01:0A",
+    "AccessoryLTPK": "7986cf939de8986f428744e36ed72d86189bea46b4dcdc8d9d79a3e4fceb92b9",
+    "AccessoryLTSK": "3d99f3e959a1f93af4056966f858074b2a1fdec1c5fd84a51ea96f9fa004156a",
+    "iOSDeviceId": "decc6fa3-de3e-41c9-adba-ef7409821bfc",
+    "iOSDeviceLTPK": "d708df2fbf4a8779669f0ccd43f4962d6d49e4274f88b1292f822edc3bcf8ed8",
+    "iOSDeviceLTSK": "fa45f082ef87efc6c8c8d043d74084a3ea923a2253e323a7eb9917b4090c2fcc",
+    "Connection": "IP",
+    "AccessoryAddress": "127.0.0.1",
+}
+
+_ACCESSORY_CONFIG = b"""{
+    "accessory_ltpk": "7986cf939de8986f428744e36ed72d86189bea46b4dcdc8d9d79a3e4fceb92b9",
+    "accessory_ltsk": "3d99f3e959a1f93af4056966f858074b2a1fdec1c5fd84a51ea96f9fa004156a",
+    "accessory_pairing_id": "12:34:56:00:01:0A",
+    "accessory_pin": "031-45-154",
+    "c#": 1, "category": "Lightbulb", "host_ip": "127.0.0.1", "host_port": %port%,
+    "name": "unittestLight", "peers": %peers%, "unsuccessful_tries": 0
+}"""
+
+
+def _make_accessory_server(id_factory, port: int, peers: bytes, with_brightness: bool) -> AccessoryServer:
+    config_file = tempfile.NamedTemporaryFile(delete=False)  # noqa: SIM115 (outlives fn; AccessoryServer reads it by path)
+    config_file.write(_ACCESSORY_CONFIG.replace(b"%port%", str(port).encode()).replace(b"%peers%", peers))
+    config_file.close()
+    server = AccessoryServer(config_file.name, None)
+    accessory = Accessory.create_with_info(
+        aid=id_factory(),
+        name="Testlicht",
+        manufacturer="lusiardi.de",
+        model="Demoserver",
+        serial_number="0001",
+        firmware_revision="0.1",
+    )
+    bulb = accessory.add_service(ServicesTypes.LIGHTBULB)
+    bulb.add_char(CharacteristicsTypes.ON, value=False)
+    if with_brightness:
+        bulb.add_char(CharacteristicsTypes.BRIGHTNESS, value=0)
+    server.add_accessory(accessory)
+    return server
+
+
+@pytest_asyncio.fixture
+async def repository():
+    """The in-memory device repository the controller is handed, scoped to HomeKit."""
+    return DeviceRepositoryMemory(integration="HomeKit")
+
+
+@pytest_asyncio.fixture
+async def dependencies(repository, mock_zeroconf, tmp_path):
+    zeroconf_service = ZeroconfDiscoveryService()
+    await zeroconf_service.start()  # under mock_zeroconf, so async_zeroconf yields the mock
+    output = RecordingControllerOutput()
+    deps = AbstractController.Dependencies(
+        output=output,
+        make_device_repository=repository.session,
+        documents_folder=tmp_path,
+        zeroconf_discovery_service=zeroconf_service,
+        ssdp_discovery_service=FakeSSDPDiscoveryService(),
+        ble_discovery_service=FakeBLEDiscoveryService(),
+    )
+    yield deps
+    await zeroconf_service.stop()
+
+
+@pytest_asyncio.fixture
+async def controller(dependencies):
+    controller = HomeKitController(dependencies)
+    await controller.start()
+    yield controller
+    await controller.stop()
+
+
+@pytest_asyncio.fixture
+async def unpaired_server(id_factory, mock_zeroconf):
+    port = next_available_port()
+    server = _make_accessory_server(id_factory, port, peers=b"{}", with_brightness=False)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    service_info = get_mock_service_info(port, is_paired=False)
+
+    async def start():
+        thread.start()
+        await wait_for_server_online(port)
+        assert not server.data.is_paired
+        return server
+
+    with install_mock_service_info(mock_zeroconf, service_info):
+        yield start
+    server.shutdown()
+    thread.join()
+
+
+@pytest_asyncio.fixture
+async def paired_server(id_factory, repository, mock_zeroconf):
+    """A pre-paired accessory + a HomeKit device seeded into the repository the way the Hub
+    would have after pairing."""
+    port = next_available_port()
+    peers = (
+        b'{"decc6fa3-de3e-41c9-adba-ef7409821bfc": {"admin": true,'
+        b' "key": "d708df2fbf4a8779669f0ccd43f4962d6d49e4274f88b1292f822edc3bcf8ed8"}}'
+    )
+    server = _make_accessory_server(id_factory, port, peers=peers, with_brightness=True)
+
+    pairing_data = {**PAIRING_DATA, "AccessoryPort": port}
+    async with repository.session() as repo:
+        await repo.save(provisional_device(pairing_data))
+
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    service_info = get_mock_service_info(port, is_paired=True)
+    thread.start()
+    await wait_for_server_online(port)
+    assert server.data.is_paired
+
+    with install_mock_service_info(mock_zeroconf, service_info):
+        yield server, pairing_data
+    server.shutdown()
+    thread.join()
+
+
+================================================================================
+# FILE: tests/test_controller.py
+================================================================================
+"""Unit tests driving HomeKitController directly (no Hub).
+
+Each asserts on both sides: what the controller reported back via the recording output, and
+what actually happened on the virtual accessory / in the repository.
+"""
+
+import asyncio
+from uuid import UUID as _UUID
+
+import pytest
+from aiohomekit.controller.zeroconf.ip import IpPairing
+from aiohomekit.model.characteristics import CharacteristicKey
+from conftest import BRIGHTNESS_PARAM_ID, DEVICE_ID, ON_PARAM_ID, provisional_device
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import CredentialsType, ProvidedCredentials
+
+from majordom_homekit.models import HKDevice, HKParameter, HKParameterIntegrationData
+
+UUID_ONE = _UUID(int=1)
+
+
+async def _wait_for(predicate, timeout: float = 2.0):
+    async with asyncio.timeout(timeout):
+        while not predicate():
+            await asyncio.sleep(0.02)
+
+
+async def test_discovers_unpaired_accessory(unpaired_server, controller, dependencies):
+    await unpaired_server()
+    output = dependencies.output
+
+    await _wait_for(lambda: bool(output.received_discoveries))
+
+    assert DEVICE_ID in controller.discoveries
+    discovery = controller.discoveries[DEVICE_ID]
+    assert discovery.integration == "HomeKit"
+    assert discovery.transport == "IP"
+    assert discovery.device_name == "Testlicht"
+    assert CredentialsType.code in discovery.expected_credentials_options
+    assert output.received_discoveries[-1].id == DEVICE_ID
+
+
+async def test_pairs_a_discovered_device(unpaired_server, controller, dependencies, repository):
+    server = await unpaired_server()
+    output = dependencies.output
+    await _wait_for(lambda: DEVICE_ID in controller.discoveries)
+
+    # the Hub has already created the device row before calling pair_device
+    async with repository.session() as repo:
+        await repo.save(provisional_device())
+
+    discovery = controller.discoveries[DEVICE_ID]
+    await controller.pair_device(discovery, ProvidedCredentials(type=CredentialsType.code, value="031-45-154"))
+
+    # device side: the accessory is now paired
+    assert server.data.is_paired
+    # Hub side: the controller reported the connect, and dropped the discovery
+    assert DEVICE_ID in output.connected_devices
+    assert DEVICE_ID not in controller.discoveries
+    # persistence: pairing data landed in the device's integration_data
+    async with repository.session() as repo:
+        device = await repo.get(DEVICE_ID, as_=HKDevice)
+    assert device is not None
+    assert device.integration_data.pairing_data
+    assert device.integration_data.pairing_data["AccessoryPairingID"] == "12:34:56:00:01:0A"
+
+
+async def test_pair_device_rejects_wrong_credentials_type(unpaired_server, controller):
+    await unpaired_server()
+    await _wait_for(lambda: DEVICE_ID in controller.discoveries)
+    discovery = controller.discoveries[DEVICE_ID]
+    with pytest.raises(ValueError):
+        await controller.pair_device(discovery, ProvidedCredentials(type=CredentialsType.qr, value="x"))
+
+
+from majordom_homekit.models import HKDeviceIntegrationData
+
+
+def _brightness_parameter() -> HKParameter:
+    return HKParameter(
+        id=BRIGHTNESS_PARAM_ID,
+        name="Brightness",
+        data_type="integer",
+        unit="plain",
+        role="control",
+        visibility="user",
+        integration_data=HKParameterIntegrationData(type=UUID_ONE, aid=1, iid=10),
+    )
+
+
+def _hk_device(pairing_data) -> HKDevice:
+    return HKDevice(
+        id=DEVICE_ID,
+        name="Testlicht",
+        room_id=UUID_ONE,
+        transport="IP",
+        integration="HomeKit",
+        manufacturer="lusiardi.de",
+        integration_data=HKDeviceIntegrationData(pairing_data=pairing_data, characteristics_cache=None),
+    )
+
+
+async def test_unpairs_a_device(paired_server, controller, dependencies):
+    server, pairing_data = paired_server
+    await _wait_for(lambda: DEVICE_ID in dependencies.output.connected_devices)
+    assert server.data.is_paired
+
+    await controller.unpair(_hk_device(pairing_data))
+    assert not server.data.is_paired
+
+
+async def test_sends_a_command_to_the_device(paired_server, controller, dependencies):
+    _, pairing_data = paired_server
+    await _wait_for(lambda: DEVICE_ID in dependencies.output.connected_devices)
+
+    value = 42
+    brightness = _brightness_parameter()
+
+    await controller.send_command(
+        DeviceCommand(device_id=DEVICE_ID, parameter_id=BRIGHTNESS_PARAM_ID, value=value),
+        _hk_device(pairing_data),
+        brightness,
+    )
+    # device side: the accessory actually took the new brightness
+    got = await IpPairing(pairing_data).get_characteristics([CharacteristicKey(1, 10)])
+    assert got == {CharacteristicKey(1, 10): {"value": value}}
+
+
+async def test_reports_device_state_as_events_on_connect(paired_server, controller, dependencies):
+    # The device -> Hub reporting path: on connecting to a paired accessory the controller
+    # reads its characteristics and reports each as a DeviceParameterChange. (This is what the
+    # Hub's e2e test_events actually exercises — it uses value == the initial, so it never
+    # distinguished a pushed change; the mock accessory server doesn't deliver async pushes
+    # to the observer in-process. The reporting *channel* is what matters and is covered here.)
+    _, pairing_data = paired_server
+    output = dependencies.output
+    await _wait_for(lambda: DEVICE_ID in output.connected_devices)
+
+    await _wait_for(lambda: any(e.parameter_id == ON_PARAM_ID for e in output.events))
+    on_events = [e for e in output.events if e.parameter_id == ON_PARAM_ID]
+    assert on_events[-1].value is False  # the accessory's ON characteristic starts False
+
+
+async def test_identify(paired_server, controller, dependencies):
+    _, pairing_data = paired_server
+    await _wait_for(lambda: DEVICE_ID in dependencies.output.connected_devices)
+    # smoke: identify reaches the accessory without error
+    await controller.identify(_hk_device(pairing_data))
+

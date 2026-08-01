@@ -1,0 +1,4793 @@
+# integration-sdk — full source
+# repo: https://github.com/MajorDom-Systems/integration-sdk  branch: master  commit: f0eaf188d7a3860a175f8a790de925e510e9d032
+# generated: 2026-08-01 — AUTO-GENERATED, do not edit by hand
+
+## File tree
+  .gitignore
+  LICENSE
+  README.md
+  majordom_integration_sdk/__init__.py
+  majordom_integration_sdk/controller/__init__.py
+  majordom_integration_sdk/controller/abstract_controller.py
+  majordom_integration_sdk/dev/__init__.py
+  majordom_integration_sdk/dev/cli.py
+  majordom_integration_sdk/discovery/__init__.py
+  majordom_integration_sdk/discovery/ble_discovery.py
+  majordom_integration_sdk/discovery/ssdp_discovery.py
+  majordom_integration_sdk/discovery/zeroconf_discovery.py
+  majordom_integration_sdk/parameter_audit.py
+  majordom_integration_sdk/repository/__init__.py
+  majordom_integration_sdk/repository/_record.py
+  majordom_integration_sdk/repository/memory.py
+  majordom_integration_sdk/repository/protocol.py
+  majordom_integration_sdk/repository/sqlite.py
+  majordom_integration_sdk/schemas/__init__.py
+  majordom_integration_sdk/schemas/base.py
+  majordom_integration_sdk/schemas/command.py
+  majordom_integration_sdk/schemas/device.py
+  majordom_integration_sdk/schemas/event.py
+  majordom_integration_sdk/schemas/notification.py
+  majordom_integration_sdk/schemas/parameter.py
+  majordom_integration_sdk/spec_drift.py
+  majordom_integration_sdk/testing/__init__.py
+  pyproject.toml
+  tests/conftest.py
+  tests/test_cli.py
+  tests/test_controller.py
+  tests/test_dev.py
+  tests/test_main_parameter.py
+  tests/test_notification.py
+  tests/test_parameter_audit.py
+  tests/test_repository.py
+  tests/test_schemas.py
+  tests/test_spec_drift.py
+
+
+================================================================================
+# FILE: .gitignore
+================================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+.hypothesis/
+
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+
+# Poetry
+# poetry.lock  # uncomment for applications, keep commented for libraries
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# Tools
+.ruff_cache/
+.ropeproject
+
+# mkdocs (only relevant if you kept mkdocs.yml + docs/)
+/site
+.cache/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+================================================================================
+# FILE: LICENSE
+================================================================================
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+
+================================================================================
+# FILE: README.md
+================================================================================
+# majordom-integration-sdk
+
+Models, protocols, and tooling for building [MajorDom](https://majordom.io) integrations.
+
+An integration bridges an external protocol or platform (Matter, Zigbee, HomeKit, a vendor
+cloud, …) into the MajorDom language. This SDK is the contract: the schemas, the
+`AbstractController` framework, the device-repository protocol, discovery services, and a
+standalone dev runner so you can build and test an integration **without a running Hub**.
+The Hub itself depends on this same package — first-party integrations use no private
+shortcut.
+
+## Install
+
+```sh
+pip install majordom-integration-sdk
+```
+
+Requires Python 3.12+.
+
+## Also a standalone IoT toolkit
+
+You don't need MajorDom to get value from this package. `majordom_integration_sdk.discovery`
+ships three fully working, standardized device-discovery services you can drop into **any**
+async Python project:
+
+- **Zeroconf / mDNS** (`ZeroconfDiscoveryService`) — browse Bonjour/mDNS services with a
+  clean listener protocol, and — unusually — **reliable disappearance tracking**: it augments
+  raw zeroconf with an active cache-poll + confirm-evict loop so you get accurate "device
+  went away" events, not just arrivals.
+- **SSDP / UPnP** (`SSDPDiscoveryService`) — flexible, per-listener **configurable** search
+  targets and refresh behavior over raw sockets, without dragging in a full UPnP stack.
+- **BLE** (`BLEDiscoveryService`) — a uniform listener interface over Bleak for advertisement
+  scanning.
+
+All three share one `register(listener, …) → cancel` shape, run standalone (each module has a
+runnable `__main__` demo), and are a solid reference for implementing **standardized
+interfaces over messy IoT protocols** even if you never touch MajorDom. The
+`AbstractController` framework and the `DeviceRepositoryProtocol` + in-memory/SQLite
+implementations are equally reusable as a small, typed device-modelling toolkit.
+
+## Documentation
+
+Full integration-author docs — models, the controller lifecycle, storing data, discovery,
+and a worked example — live at **[docs.majordom.io](https://docs.majordom.io/device-integration)**.
+
+The fastest way to start a new integration is the
+[integration-template](https://github.com/MajorDom-Systems/integration-template) repository
+(**Use this template → Create a new repository**).
+
+## License
+
+See [LICENSE](LICENSE). For commercial licensing or partnership inquiries, contact us via
+[parker-industries.org/partnership](https://parker-industries.org/partnership).
+
+---
+
+## Development
+
+Setup:
+
+```sh
+poetry install && poetry run poe install
+```
+
+This installs dependencies and the pre-commit hook that runs `poe check`.
+
+| Task | Description |
+|------|-------------|
+| `poe install` | Install deps and register the pre-commit hook |
+| `poe check` | Full quality pipeline (ruff, ty, pytest, poetry build/check) |
+| `poe check --ci` | Same, plus `git diff --exit-code` |
+
+Two long-lived branches: `develop` (integration branch, all work lands here) and `master`
+(protected, released). Releases are cut from `develop` via **Actions → Release**; see
+[ParkerIndustries/workflows](https://github.com/ParkerIndustries/workflows) for the CI/CD.
+
+
+================================================================================
+# FILE: majordom_integration_sdk/__init__.py
+================================================================================
+"""MajorDom Integration SDK — models, protocols, and tooling for building integrations.
+
+Public submodules:
+
+- ``majordom_integration_sdk.schemas``     — the wire protocol (pydantic models shared with the Hub)
+- ``majordom_integration_sdk.controller``  — the ``AbstractController`` framework + ``ControllerOutput``
+- ``majordom_integration_sdk.repository``  — ``DeviceRepositoryProtocol`` + in-memory / SQLite implementations
+- ``majordom_integration_sdk.discovery``   — zeroconf / SSDP / BLE discovery services
+- ``majordom_integration_sdk.testing``     — shared test doubles for integration test suites
+- ``majordom_integration_sdk.dev``         — standalone runner for developing an integration without the Hub
+
+The names an integration author reaches for most are re-exported here for convenience, e.g.
+``from majordom_integration_sdk import AbstractController, Device``.
+"""
+
+from majordom_integration_sdk.controller import AbstractController, ControllerOutput
+from majordom_integration_sdk.repository import (
+    DeviceRepositoryMemory,
+    DeviceRepositoryProtocol,
+    SqliteDeviceRepository,
+)
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import Device, Discovery, Parameter, ProvidedCredentials
+from majordom_integration_sdk.schemas.event import DeviceParameterChange, Event
+
+__version__ = "0.1.0"
+
+__all__ = [
+    "AbstractController",
+    "ControllerOutput",
+    "DeviceRepositoryProtocol",
+    "DeviceRepositoryMemory",
+    "SqliteDeviceRepository",
+    "DeviceCommand",
+    "Device",
+    "Discovery",
+    "Parameter",
+    "ProvidedCredentials",
+    "Event",
+    "DeviceParameterChange",
+]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/controller/__init__.py
+================================================================================
+"""The integration controller framework — the interface the Hub drives."""
+
+from .abstract_controller import AbstractController, ControllerOutput
+
+__all__ = ["AbstractController", "ControllerOutput"]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/controller/abstract_controller.py
+================================================================================
+"""
+Entrypoint and lifecycle boundary for an integration's Controller.
+See docs.majordom.io/device-integration for the full integration guide.
+"""
+
+from __future__ import annotations
+
+import re
+from abc import ABC, abstractmethod
+from collections.abc import Callable, Iterable
+from contextlib import AbstractAsyncContextManager
+from dataclasses import dataclass, field, replace
+from pathlib import Path
+from typing import ClassVar, Protocol, cast, final
+from uuid import UUID, uuid5
+
+from slugify import slugify
+
+from majordom_integration_sdk.discovery.ble_discovery import BLEDiscoveryService
+from majordom_integration_sdk.discovery.ssdp_discovery import SSDPDiscoveryService
+from majordom_integration_sdk.discovery.zeroconf_discovery import ZeroconfDiscoveryService
+from majordom_integration_sdk.repository.protocol import DeviceRepositoryProtocol
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import Device, Discovery, Parameter, ProvidedCredentials
+from majordom_integration_sdk.schemas.event import Event
+from majordom_integration_sdk.schemas.notification import Notification
+
+_NAME_HELP = (
+    "The integration name is auto-derived from your controller class name; set a class-level "
+    '`name` only to override it (e.g. `name = "ZigBee"`). '
+    "See the example integration at https://docs.majordom.io/device-integration"
+)
+
+
+def _titleize(class_name: str) -> str:
+    """Human-readable integration name derived from a controller class name.
+
+    Strips a trailing "Controller" and splits CamelCase/PascalCase into spaced words:
+    ``HueController`` -> ``"Hue"``, ``ZigBeeController`` -> ``"Zig Bee"``. Set an explicit
+    ``name`` on the subclass to override when you want different casing (e.g. ``"ZigBee"``).
+    """
+    base = class_name[: -len("Controller")] if class_name.endswith("Controller") else class_name
+    words = re.findall(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+", base)
+    return " ".join(words) or base
+
+
+class ControllerOutput(Protocol):
+    """
+    Defines the callback interface for passing data from an integration back to the Hub.
+    An instance is injected by Hub into every controller via Dependencies.
+    """
+
+    async def controller_did_receive_discovery(self, controller: AbstractController, discovery: Discovery): ...
+    async def controller_did_update_discovery(self, controller: AbstractController, discovery: Discovery): ...
+    async def controller_did_lose_discovery(self, controller: AbstractController, discovery_id: UUID): ...
+
+    async def controller_did_connect_device(self, controller: AbstractController, device_id: UUID): ...
+
+    async def controller_did_lose_device(self, controller: AbstractController, device_id: UUID):
+        """Paired device became unreachable while the Hub is running (not just at startup/reboot)."""
+        ...
+
+    async def controller_did_receive_events(self, controller: AbstractController, events: Iterable[Event]):
+        """Report device-domain events (e.g. DeviceParameterChange) observed by the controller."""
+        ...
+
+    async def controller_did_encounter_error(
+        self,
+        controller: AbstractController,
+        message: str,
+        still_running: bool,
+    ):
+        """A user-facing problem the integration hit — surfaced to the user, not the developer.
+
+        Use this for things the user should know about or can act on (a wrong setup, an unplugged
+        radio); developer/technical detail goes to the logs instead. ``message`` is plain
+        language — include any call-to-action right in the text. Problems scoped to one device
+        belong on that device's ``last_error``, not here.
+
+        ``still_running`` is ``False`` when the controller can no longer run and is now inactive
+        — the Hub reflects it as a failed integration; the user is told it failed (and why, if
+        actionable) without a technical dump.
+        """
+        ...
+
+    async def controller_did_emit_notification(self, controller: AbstractController, notification: Notification):
+        """Surface a general user-facing notification — a floating tile in the app. Unlike
+        ``controller_did_encounter_error`` (specifically for failures/health), this is for anything
+        informational or advisory: a firmware update is available, a device needs a physical action,
+        a routine finished. The ``Notification`` carries the message plus its callout ``type``
+        (info/warning/error), delivery ``priority``, and ``ttl`` (seconds before auto-dismiss).
+        """
+        ...
+
+
+class AbstractController[TDevice: Device, TParameter: Parameter](ABC):
+    """
+    Base class for all integration controllers.
+    Defines the interface the Hub uses to interact with an integration — the Hub instantiates the subclass and drives it by calling these methods.
+    """
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        # Auto-derive `name` from the class name unless the subclass set one explicitly.
+        if "name" not in cls.__dict__:
+            cls.name = _titleize(cls.__name__)
+
+    @dataclass(frozen=True)
+    class Dependencies:
+        """
+        Standardized dependencies injected by the Hub into every controller on construction.
+        """
+
+        output: ControllerOutput
+        make_device_repository: Callable[[], AbstractAsyncContextManager[DeviceRepositoryProtocol]]
+        # The directory this integration may write files into that don't belong in the
+        # device database (certificates, protocol caches, …). The Hub computes and injects
+        # it per integration; the standalone dev runner points it at a local folder.
+        documents_folder: Path
+
+        # FUTURE: consider DI container
+        zeroconf_discovery_service: ZeroconfDiscoveryService
+        ssdp_discovery_service: SSDPDiscoveryService
+        ble_discovery_service: BLEDiscoveryService
+
+        hardware_interfaces: list[str] = field(default_factory=list)
+
+        def copy(self, **kwargs) -> AbstractController.Dependencies:
+            return replace(self, **kwargs)
+
+    def __init__(self, dependencies: Dependencies):
+        """
+        Called by the Hub with the injected dependencies. Do not change this signature.
+        """
+        self.dependencies = dependencies
+
+    # Abstract
+
+    @property
+    @abstractmethod
+    def discoveries(self) -> dict[UUID, Discovery]:
+        """
+        Returns the current set of unpaired, discoverable devices as a cached snapshot.
+        The ID for a given physical device must remain stable.
+        Do not trigger any scanning here — only return already-cached data.
+        """
+        # TODO: save datetime and remove expired
+        return {}
+
+    name: ClassVar[str]
+    """
+    Human-readable name of the integration (e.g. "HomeKit", "ZigBee").
+
+    Auto-derived from the controller class name by default (``HueController`` -> "Hue",
+    ``ZigBeeController`` -> "Zig Bee"), so you usually don't set it. Set it on your subclass
+    only to override the casing/wording:
+
+        class ZigBeeController(AbstractController[Device, Parameter]):
+            name = "ZigBee"
+
+    It identifies the integration, so it's a constant of the class rather than per-instance
+    state — the Hub reads it (and `slug()`) off the class to wire an integration's
+    dependencies *before* the controller exists.
+    """
+
+    # TODO: review if these two are needed, test the implementation
+
+    @property
+    def device_type(self) -> type[TDevice]:
+        """Override to return a Device subclass. Hub will deserialize devices into this type before passing them to other controller methods."""
+        return cast(type[TDevice], Device)
+
+    @property
+    def parameter_type(self) -> type[TParameter]:
+        """Override to return a Parameter subclass. Hub will deserialize parameters into this type before passing them to other controller methods."""
+        return cast(type[TParameter], Parameter)
+
+    # Lifecycle
+
+    @abstractmethod
+    async def start(self):
+        """
+        Starts the integration. Called once on Hub startup, or when the integration is manually enabled.
+        Register discovery services, subscribe to events, and check the status of already-paired devices here.
+        """
+
+    @abstractmethod
+    async def stop(self):
+        """
+        Stops the integration. Called once on Hub shutdown, or when the integration is manually disabled.
+        Cancel running tasks and release all held resources.
+        """
+
+    # Hub -> device
+
+    async def start_pairing_window(self, duration_sec: int):  # noqa: B027  (optional no-op hook, not abstract)
+        """
+        Temporarily enables protocol-level discovery mechanisms that are not continuously active. Must only be used when default continuous discovery options aren't available or are insufficient. Does not affect, nor does use always-on discovery channels such as mDNS or SSDP.
+
+        Used to trigger short-lived scan/inquiry modes for transports that require explicit activation
+        (e.g. Zigbee permit-join style discovery, BLE scan bursts, proprietary radios).
+
+        Devices discovered during this window may be eligible for onboarding via the pairing API.
+
+        If devices are not successfully paired within the window, they must be disconnected.
+        """
+        pass
+
+    @abstractmethod
+    async def pair_device(self, discovery: Discovery, credentials: ProvidedCredentials | None):
+        """
+        Pairs a discovered device to the Hub. Called when the user initiates pairing from the UI.
+        """
+
+    @abstractmethod
+    async def unpair(self, device: TDevice):
+        """
+        Unpairs a device from the Hub. Called when the user initiates removal from the UI.
+        """
+
+    @abstractmethod
+    async def identify(self, device: TDevice):
+        """
+        Asks the device to produce an identifying signal (e.g. blink a light, play a sound).
+        Called when the user triggers identification from the UI.
+        """
+
+    @abstractmethod
+    async def fetch(self, device: TDevice):
+        """
+        Fetches and refreshes the current state of the device and all its parameters.
+        Called by the Hub when an up-to-date snapshot is needed.
+        """
+
+    @abstractmethod
+    async def send_command(self, command: DeviceCommand, device: TDevice, parameter: TParameter):
+        """
+        Sends a control command targeting a specific device parameter.
+        Called by the Hub when the user or an automation changes a parameter value.
+        """
+
+    # helpers / services
+
+    @final
+    @classmethod
+    def slug(cls) -> str:
+        """Slugified name of the integration.
+
+        Class-level, so the Hub can key an integration's storage on it before constructing
+        the controller.
+        """
+        slug = slugify(cls.name)
+        if not slug:
+            raise ValueError(
+                f"{cls.__name__}'s name {cls.name!r} has no letters or digits to build a slug from. {_NAME_HELP}"
+            )
+        return slug
+
+    @final
+    @property
+    def name_slug(self) -> str:
+        """Slugified name of the integration"""
+        return type(self).slug()
+
+    @final
+    def namespace_uuid(self) -> UUID:
+        """Namespace UUID for the integration - used to generate device and parameter UUIDs"""
+        return UUID(int=0)  # TODO: consider basing it on hub's mac address
+
+    @final
+    def integration_uuid(self) -> UUID:
+        """Unique identifier of the integration"""
+        return uuid5(self.namespace_uuid(), self.name_slug)
+
+    @final
+    def device_uuid(self, device_id: str) -> UUID:
+        """uuid of the device based on an arbitrary string identifier"""
+        return uuid5(self.integration_uuid(), device_id)
+
+    @final
+    def parameter_uuid(self, device_uuid: UUID, parameter_id: str) -> UUID:
+        """uuid of the parameter based on an arbitrary string identifier"""
+        return uuid5(device_uuid, parameter_id)
+
+    @final
+    @property
+    def documents_folder(self) -> Path:
+        """Folder for storing files related to this integration that don't belong in the device database."""
+        return self.dependencies.documents_folder
+
+    # def add_service_coroutine(self, coroutine: Callable[[], Awaitable]): ... # FUTURE
+
+    # def add_service_thread(self, thread: Thread): ... # FUTURE
+
+    # def schedule_task(self, callback: Callable[[], Awaitable] | Callable[[], Any], interval: float): ... # FUTURE
+
+    # def search_native_parameter(self, name: str) -> Parameter | None: ... # FUTURE
+
+
+================================================================================
+# FILE: majordom_integration_sdk/dev/__init__.py
+================================================================================
+"""Run one integration controller standalone — no Hub process.
+
+This is the "run standalone, then bridge into the MajorDom language" half of the
+integration workflow: wire a single controller with real discovery services and a local
+repository, start it, and watch what it discovers/reports on the console. Modeled on the
+discovery services' own ``__main__`` demos rather than the Hub's multi-controller CLI.
+
+    import asyncio
+    from majordom_integration_sdk.dev import run_controller
+    from majordom_hue import HueController  # your integration
+
+    asyncio.run(run_controller(HueController))
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+from collections.abc import Iterable
+from pathlib import Path
+from uuid import UUID
+
+from majordom_integration_sdk.controller.abstract_controller import AbstractController, ControllerOutput
+from majordom_integration_sdk.discovery.ble_discovery import BLEDiscoveryService
+from majordom_integration_sdk.discovery.ssdp_discovery import SSDPDiscoveryService
+from majordom_integration_sdk.discovery.zeroconf_discovery import ZeroconfDiscoveryService
+from majordom_integration_sdk.repository.memory import DeviceRepositoryMemory
+from majordom_integration_sdk.repository.protocol import DeviceRepositoryProtocol
+from majordom_integration_sdk.repository.sqlite import SqliteDeviceRepository
+from majordom_integration_sdk.schemas.device import Discovery
+from majordom_integration_sdk.schemas.event import Event
+from majordom_integration_sdk.schemas.notification import Notification
+
+logger = logging.getLogger("majordom_integration_sdk.dev")
+
+
+class LoggingControllerOutput(ControllerOutput):
+    """A ``ControllerOutput`` that logs every callback — the Hub's stand-in for dev runs."""
+
+    async def controller_did_receive_discovery(self, controller: AbstractController, discovery: Discovery):
+        logger.info("discovered %s (%s) id=%s", discovery.device_name, discovery.transport, discovery.id)
+
+    async def controller_did_update_discovery(self, controller: AbstractController, discovery: Discovery):
+        logger.info("updated discovery %s", discovery.id)
+
+    async def controller_did_lose_discovery(self, controller: AbstractController, discovery_id: UUID):
+        logger.info("lost discovery %s", discovery_id)
+
+    async def controller_did_connect_device(self, controller: AbstractController, device_id: UUID):
+        logger.info("connected device %s", device_id)
+
+    async def controller_did_lose_device(self, controller: AbstractController, device_id: UUID):
+        logger.info("lost device %s", device_id)
+
+    async def controller_did_receive_events(self, controller: AbstractController, events: Iterable[Event]):
+        for event in events:
+            logger.info("event %s: %r", type(event).__name__, event)
+
+    async def controller_did_encounter_error(
+        self,
+        controller: AbstractController,
+        message: str,
+        still_running: bool,
+    ):
+        state = "still running" if still_running else "STOPPED — integration inactive"
+        logger.error("integration error (%s): %s", state, message)
+
+    async def controller_did_emit_notification(self, controller: AbstractController, notification: Notification):
+        logger.info(
+            "notification [%s/%s]: %s", notification.type.value, notification.priority.value, notification.message
+        )
+
+
+def build_dependencies(
+    *,
+    storage_root: Path | None = None,
+    db_path: str | Path | None = None,
+    integration: str | None = None,
+    slug: str | None = None,
+    output: ControllerOutput | None = None,
+) -> AbstractController.Dependencies:
+    """Assemble real (network-live) dependencies for a standalone run.
+
+    ``db_path`` selects a file-backed :class:`SqliteDeviceRepository` (state survives
+    restarts); omit it for an in-memory repository. ``integration`` scopes the repository to
+    that integration's devices and gives it its own ``documents_folder`` subtree. The storage
+    root defaults to ``./.majordom-dev``.
+    """
+    repository: DeviceRepositoryProtocol
+    repository = (
+        SqliteDeviceRepository(db_path, integration=integration)
+        if db_path is not None
+        else DeviceRepositoryMemory(integration=integration)
+    )
+    root = Path(storage_root) if storage_root is not None else Path(".majordom-dev")
+    subfolder = slug or integration
+    folder = root / subfolder if subfolder else root
+    folder.mkdir(parents=True, exist_ok=True)
+    return AbstractController.Dependencies(
+        output=output or LoggingControllerOutput(),
+        make_device_repository=repository.session,
+        documents_folder=folder,
+        zeroconf_discovery_service=ZeroconfDiscoveryService(),
+        ssdp_discovery_service=SSDPDiscoveryService(),
+        ble_discovery_service=BLEDiscoveryService(),
+    )
+
+
+async def run_controller(
+    controller_type: type[AbstractController],
+    *,
+    storage_root: Path | None = None,
+    db_path: str | Path | None = None,
+) -> None:
+    """Instantiate ``controller_type``, start it and its discovery services, and run until
+    interrupted (Ctrl-C), then stop everything cleanly."""
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+
+    # The integration's identity is class-level, so its repository and documents folder can be
+    # scoped before it's constructed.
+    deps = build_dependencies(
+        storage_root=storage_root,
+        db_path=db_path,
+        integration=controller_type.name,
+        slug=controller_type.slug(),
+    )
+    controller = controller_type(deps)
+
+    await deps.zeroconf_discovery_service.start()
+    await deps.ssdp_discovery_service.start()
+    await deps.ble_discovery_service.start()
+    await controller.start()
+    logger.info("%s started — watching for devices. Ctrl-C to stop.", controller.name)
+
+    try:
+        await asyncio.Event().wait()  # run forever until cancelled
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        pass
+    finally:
+        await controller.stop()
+        await deps.ble_discovery_service.stop()
+        await deps.ssdp_discovery_service.stop()
+        await deps.zeroconf_discovery_service.stop()
+        logger.info("%s stopped.", controller.name)
+
+
+def __getattr__(name: str):
+    # `run_cli` (interactive REPL) needs the optional `cli` extra — typer-shell + rich. Import it
+    # lazily so `dev` (and `run_controller`) stay usable without those dependencies installed.
+    if name == "run_cli":
+        try:
+            from .cli import run_cli
+        except ImportError as exc:  # pragma: no cover - only when the extra is missing
+            raise ImportError(
+                "The interactive CLI needs extra dependencies — install them with:\n"
+                '    pip install "majordom-integration-sdk[cli]"'
+            ) from exc
+        return run_cli
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+__all__ = ["run_controller", "run_cli", "build_dependencies", "LoggingControllerOutput"]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/dev/cli.py
+================================================================================
+"""Interactive REPL for running one integration standalone — the ``majordom-integration-sdk[cli]`` extra.
+
+Ported from the MajorDom Hub's operator CLI and scoped to a single controller: start it with real
+discovery services and a local repository, then pair / control / inspect devices from a prompt.
+Where :func:`run_controller` just *watches*, this lets you *drive* the integration by hand.
+
+Needs the ``cli`` extra (typer-shell + rich)::
+
+    pip install "majordom-integration-sdk[cli]"
+
+    import asyncio
+    from majordom_integration_sdk.dev import run_cli
+    from majordom_matter import MatterController  # your integration
+
+    asyncio.run(run_cli(MatterController, db_path="devices.db"))
+"""
+
+from __future__ import annotations
+
+import asyncio
+import builtins
+import json
+import logging
+import shutil
+import sys
+from datetime import datetime
+from pathlib import Path
+from uuid import UUID
+
+import rich
+from typer_shell import make_typer_shell
+
+from ..controller.abstract_controller import AbstractController, ControllerOutput
+from ..schemas.command import DeviceCommand
+from ..schemas.device import CredentialsType, ProvidedCredentials
+from ..schemas.event import DeviceParameterChange
+from ..schemas.parameter import ParameterRole
+from . import build_dependencies
+
+logger = logging.getLogger("majordom_integration_sdk.dev")
+
+
+# --- prompt-safe output ------------------------------------------------------------------------
+# The catch with an interactive REPL: the shell is blocked reading a line in a worker thread, so
+# anything printed from elsewhere (discoveries/events on the event loop, or a stray log line) lands
+# *on the prompt line* and eats what the user is typing. Print above the prompt and restore the
+# cursor instead. Ported from the Hub CLI's `println`; falls back to a plain print when stdout
+# isn't a TTY (pipes, tests, logs to a file) where the escape codes would just be noise.
+
+
+def _println(msg: object) -> None:
+    if not sys.stdout.isatty():
+        rich.print(msg)
+        return
+    builtins.print("\x1b[s\x1b[1A\x1b[999D\x1b[1S\x1b[L", end="", flush=True)  # save, up, home, scroll, insert-line
+    rich.print(msg, end="", flush=True)
+    builtins.print("\x1b[u", end="", flush=True)  # restore cursor to the prompt
+
+
+def _print(*values: object, sep: str = "  ") -> None:
+    """Prompt-safe print: wrap to the terminal width and emit each line via :func:`_println`."""
+    columns, _ = shutil.get_terminal_size((80, 20))
+    for line in sep.join(str(v) for v in values).split("\n"):
+        if not line:
+            _println("")
+        for i in range(0, len(line), columns or 80):
+            _println(line[i : i + (columns or 80)])
+
+
+class _CapturingHandler(logging.Handler):
+    """Buffer every log record instead of emitting it, so chatty controllers / discovery /
+    matter-server logs (and warnings, via ``logging.captureWarnings``) don't disrupt the
+    interactive prompt. The whole buffer is dumped to stderr once on exit or crash — quiet TUI
+    during the session, full logs for debugging after."""
+
+    def __init__(self):
+        super().__init__()
+        self.records: list[logging.LogRecord] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.records.append(record)
+
+    def dump(self) -> None:
+        if not self.records:
+            return
+        builtins.print("\n--- captured logs (CLI session) ---", file=sys.stderr, flush=True)
+        for record in self.records:
+            builtins.print(self.format(record), file=sys.stderr, flush=True)
+
+
+# --- controller-driving core (testable without the REPL) ---------------------------------------
+
+
+class _CliSession:
+    """The id-based logic behind the CLI commands. Kept separate from the typer-shell wiring so it
+    can be exercised directly against a fake controller in tests. Mirrors the Hub relay's object
+    resolution (``repo.get`` + ``get_parameter_state`` + ``model_validate`` into the controller's
+    ``device_type`` / ``parameter_type``)."""
+
+    def __init__(self, controller: AbstractController):
+        self._controller = controller
+        self._deps = controller.dependencies
+
+    @property
+    def discoveries(self):
+        return self._controller.discoveries
+
+    async def pair(self, discovery_id: UUID, credentials_type: str = "none", credentials_value: str = ""):
+        discovery = self._controller.discoveries.get(discovery_id)
+        if not discovery:
+            return None
+        credentials = ProvidedCredentials(type=CredentialsType(credentials_type), value=credentials_value or None)
+        return await self._controller.pair_device(discovery, credentials)
+
+    async def pair_window(self, seconds: int) -> None:
+        await self._controller.start_pairing_window(seconds)
+
+    async def list_devices(self):
+        async with self._deps.make_device_repository() as repo:
+            return await repo.get_all()
+
+    async def device_state(self, device_id: UUID):
+        async with self._deps.make_device_repository() as repo:
+            return await repo.state(device_id)
+
+    async def _device(self, device_id: UUID):
+        async with self._deps.make_device_repository() as repo:
+            device = await repo.get(device_id)
+        return self._controller.device_type.model_validate(device) if device else None
+
+    async def identify(self, device_id: UUID) -> bool:
+        if not (device := await self._device(device_id)):
+            return False
+        await self._controller.identify(device)
+        return True
+
+    async def fetch(self, device_id: UUID) -> bool:
+        if not (device := await self._device(device_id)):
+            return False
+        await self._controller.fetch(device)
+        return True
+
+    async def unpair(self, device_id: UUID) -> bool:
+        if not (device := await self._device(device_id)):
+            return False
+        await self._controller.unpair(device)
+        return True
+
+    async def control(self, device_id: UUID, parameter_id: UUID, value: object) -> str:
+        command = DeviceCommand(device_id=device_id, parameter_id=parameter_id, value=value)
+        async with self._deps.make_device_repository() as repo:
+            device = await repo.get(command.device_id)
+            if not device:
+                return f"No device {device_id}"
+            parameter = await repo.get_parameter_state(command.device_id, command.parameter_id)
+            if not parameter:
+                return f"No parameter {parameter_id} on device {device_id}"
+            if parameter.role != ParameterRole.control:
+                return f"Parameter {parameter_id} is not controllable (role={parameter.role.value})"
+            await self._controller.send_command(
+                command,
+                self._controller.device_type.model_validate(device),
+                self._controller.parameter_type.model_validate(parameter),
+            )
+        return "Command sent"
+
+
+class _CliControllerOutput(ControllerOutput):
+    """The CLI's own output delegate — a different approach from the logging one: it shows each
+    callback through the prompt-safe printer (intentional TUI content, not logs) *and* persists
+    state to the repository, so ``devices`` / ``device`` reflect live availability and values. A
+    single-controller stand-in for the Hub relay's output side."""
+
+    def __init__(self, make_device_repository):
+        self._make_device_repository = make_device_repository
+
+    async def controller_did_receive_discovery(self, controller, discovery):
+        _print(f"[discovered] {discovery.id}  {discovery.device_name}  ({discovery.transport})")
+
+    async def controller_did_update_discovery(self, controller, discovery):
+        _print(f"[discovery updated] {discovery.id}")
+
+    async def controller_did_lose_discovery(self, controller, discovery_id):
+        _print(f"[discovery lost] {discovery_id}")
+
+    async def controller_did_connect_device(self, controller, device_id):
+        _print(f"[connected] {device_id}")
+        async with self._make_device_repository() as repo:
+            if device := await repo.get(device_id):
+                device.last_seen = datetime.now()
+                device.available = True
+                await repo.save(device)
+
+    async def controller_did_lose_device(self, controller, device_id):
+        _print(f"[lost] {device_id}")
+        async with self._make_device_repository() as repo:
+            if device := await repo.get(device_id):
+                device.available = False
+                device.last_error = f"Device is no longer connected to the {controller.name} network"
+                await repo.save(device)
+
+    async def controller_did_receive_events(self, controller, events):
+        events = list(events)
+        async with self._make_device_repository() as repo:
+            for event in events:
+                if not isinstance(event, DeviceParameterChange):
+                    continue
+                if device := await repo.get(event.device_id):
+                    device.last_seen = datetime.now()
+                    await repo.save(device)
+                if state := await repo.get_parameter_state(event.device_id, event.parameter_id):
+                    state.value = event.value
+                    await repo.save_parameter_state(event.device_id, state)
+        for event in events:
+            _print(f"[event] {type(event).__name__}: {event!r}")
+
+
+# --- the REPL ----------------------------------------------------------------------------------
+
+
+async def run_cli(
+    controller_type: type[AbstractController],
+    *,
+    storage_root: Path | None = None,
+    db_path: str | Path | None = None,
+) -> None:
+    """Start ``controller_type`` (with real discovery + a local repository) and drop into an
+    interactive prompt. ``db_path`` file-backs the repository so paired devices survive restarts;
+    omit it for in-memory. ``exit`` / Ctrl-D leaves the prompt and stops everything cleanly."""
+    # Capture all logs + warnings into a buffer for the duration of the session so they don't break
+    # the interactive TUI; the buffer is dumped to stderr on exit/crash (see the finally block).
+    # The CLI's own discovery/event/command output (via _print) stays visible and prompt-safe.
+    root = logging.getLogger()
+    saved_handlers, saved_level = root.handlers[:], root.level
+    captured = _CapturingHandler()
+    captured.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+    root.handlers[:] = [captured]
+    root.setLevel(logging.DEBUG)
+    logging.captureWarnings(True)
+
+    loop = asyncio.get_running_loop()
+
+    # Identity is class-level, so the repository/documents folder are scoped before construction;
+    # then swap in an output that also persists state.
+    deps = build_dependencies(
+        storage_root=storage_root,
+        db_path=db_path,
+        integration=controller_type.name,
+        slug=controller_type.slug(),
+    )
+    deps = deps.copy(output=_CliControllerOutput(deps.make_device_repository))
+    controller = controller_type(deps)
+    session = _CliSession(controller)
+
+    await deps.zeroconf_discovery_service.start()
+    await deps.ssdp_discovery_service.start()
+    await deps.ble_discovery_service.start()
+    await controller.start()
+    _print(f"{controller.name} started — discovering. Type 'help' for commands, 'exit' to quit.")
+
+    # Shell commands run in a worker thread (typer-shell blocks); hop back onto this loop to call
+    # the controller's async API.
+    def call(coro):
+        return asyncio.run_coroutine_threadsafe(coro, loop).result()
+
+    app = make_typer_shell(
+        prompt=f"{controller.name.lower()} > ",
+        intro=f"MajorDom {controller.name} standalone CLI. Type 'help' for commands, 'exit' to quit.",
+    )
+
+    @app.command()
+    def discoveries():
+        """List discoveries currently visible (id, name, transport, expected credentials)."""
+        found = session.discoveries
+        if not found:
+            _print("(no discoveries yet)")
+        for id, d in found.items():
+            expects = ", ".join(c.value for c in d.expected_credentials_options)
+            _print(f"{id}  {d.device_name}  transport={d.transport}  expects=[{expects}]")
+
+    @app.command()
+    def discovery(discovery_id: str):
+        """Show full discovery info by id."""
+        d = session.discoveries.get(UUID(discovery_id))
+        _print(d.model_dump_json(indent=2) if d else f"No discovery {discovery_id}")
+
+    @app.command()
+    def pair(discovery_id: str, credentials_type: str = "none", credentials_value: str = ""):
+        """Pair a discovered device. credentials_type must be one of the discovery's expected options
+        (see `discovery`); credentials_value is the code/QR string when that type needs one."""
+        device_id = call(session.pair(UUID(discovery_id), credentials_type, credentials_value))
+        _print(f"Paired device {device_id}" if device_id else f"No discovery {discovery_id}")
+
+    @app.command()
+    def pair_window(seconds: int = 60):
+        """Open a pairing/join window for `seconds` (Zigbee needs this; a no-op for integrations
+        that discover continuously)."""
+        call(session.pair_window(seconds))
+        _print(f"Pairing window open for {seconds}s")
+
+    @app.command()
+    def devices():
+        """List paired devices (id, name, available)."""
+        found = call(session.list_devices())
+        if not found:
+            _print("(no paired devices)")
+        for device in found:
+            _print(f"{device.id}  {device.name}  available={device.available}")
+
+    @app.command()
+    def device(device_id: str):
+        """List a paired device's parameters (id, name, role, visibility, value)."""
+        state = call(session.device_state(UUID(device_id)))
+        if not state:
+            _print(f"No device {device_id}")
+            return
+        for p in state.parameters:
+            _print(f"{p.id}  {p.name}  role={p.role.value}  visibility={p.visibility.value}  value={p.value!r}")
+
+    @app.command()
+    def identify(device_id: str):
+        """Ask a device to identify itself (blink/beep)."""
+        _print("identify sent" if call(session.identify(UUID(device_id))) else f"No device {device_id}")
+
+    @app.command()
+    def fetch(device_id: str):
+        """Refresh a device's state from the device."""
+        _print("fetched" if call(session.fetch(UUID(device_id))) else f"No device {device_id}")
+
+    @app.command()
+    def unpair(device_id: str):
+        """Remove a paired device."""
+        _print(f"Unpaired {device_id}" if call(session.unpair(UUID(device_id))) else f"No device {device_id}")
+
+    @app.command()
+    def control(device_id: str, parameter_id: str, value: str):
+        """Send a command: device_id parameter_id value (value is parsed as JSON when possible, else
+        used as a raw string). The target parameter must have the `control` role."""
+        try:
+            parsed: object = json.loads(value)
+        except json.JSONDecodeError:
+            parsed = value
+        _print(call(session.control(UUID(device_id), UUID(parameter_id), parsed)))
+
+    # typer-shell parses sys.argv on start; clear it so a bare `run_cli()` doesn't inherit flags.
+    sys.argv = sys.argv[:1]
+    try:
+        await loop.run_in_executor(None, app)
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        pass
+    finally:
+        await controller.stop()
+        await deps.ble_discovery_service.stop()
+        await deps.ssdp_discovery_service.stop()
+        await deps.zeroconf_discovery_service.stop()
+        _print(f"{controller.name} stopped.")
+        # restore logging and dump everything captured during the session for debugging
+        logging.captureWarnings(False)
+        root.handlers[:], root.level = saved_handlers, saved_level
+        captured.dump()
+
+
+__all__ = ["run_cli"]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/discovery/__init__.py
+================================================================================
+from .ble_discovery import BLEDiscoveryInfo, BLEDiscoveryListener, BLEDiscoveryService
+from .ssdp_discovery import SSDPDiscoveryInfo, SSDPDiscoveryListener, SSDPDiscoveryService
+from .zeroconf_discovery import ZeroconfDiscoveryInfo, ZeroconfDiscoveryListener, ZeroconfDiscoveryService
+
+__all__ = [
+    "BLEDiscoveryInfo",
+    "BLEDiscoveryListener",
+    "BLEDiscoveryService",
+    "SSDPDiscoveryInfo",
+    "SSDPDiscoveryListener",
+    "SSDPDiscoveryService",
+    "ZeroconfDiscoveryInfo",
+    "ZeroconfDiscoveryListener",
+    "ZeroconfDiscoveryService",
+]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/discovery/ble_discovery.py
+================================================================================
+import asyncio
+import logging
+from collections.abc import Callable
+from dataclasses import dataclass
+from time import monotonic
+from typing import Protocol
+from uuid import UUID
+
+from bleak import BleakScanner
+from bleak.backends.device import BLEDevice
+from bleak.backends.scanner import AdvertisementData
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class BLEDiscoveryInfo:
+    device: BLEDevice
+    advertisement: AdvertisementData
+
+
+class BLEDiscoveryListener(Protocol):
+    async def ble_did_discover_device(self, ble: "BLEDiscoveryService", info: BLEDiscoveryInfo): ...
+    async def ble_did_update_device(self, ble: "BLEDiscoveryService", info: BLEDiscoveryInfo): ...
+    async def ble_did_remove_device(self, ble: "BLEDiscoveryService", info: BLEDiscoveryInfo): ...
+
+
+def _adv_signature(adv: AdvertisementData) -> tuple:
+    """Stable advertisement fingerprint — avoids false updates from object identity changes."""
+    return (
+        adv.local_name,
+        tuple(sorted(adv.service_uuids)),
+        tuple(sorted((k, bytes(v)) for k, v in adv.manufacturer_data.items())),
+        tuple(sorted((k, bytes(v)) for k, v in adv.service_data.items())),
+    )
+
+
+@dataclass
+class _BLETrackedDevice:
+    info: BLEDiscoveryInfo
+    last_seen_at: float  # monotonic
+    signature: tuple = ()
+
+
+class BLEDiscoveryService:
+    """Bleak-based BLE device discovery."""
+
+    def __init__(self):
+        self._services: dict[frozenset[UUID], BLEDiscoveryListener] = {}
+        self._is_running: bool = False
+        self._removal_grace_sec: float = 11.0  # seconds since last seen before did_remove is fired
+        self._eviction_interval_sec: float = 10.0
+        self._tracked: dict[str, _BLETrackedDevice] = {}  # address -> tracked device
+        self._scanner: BleakScanner | None = None
+        self._tasks: list[asyncio.Task] = []
+
+    # FUTURE: filter type
+    def register(self, listener: BLEDiscoveryListener, service_ids: set[UUID]) -> Callable[[], None]:
+        """
+        Registers a listener for BLE devices advertising any of the given service UUIDs.
+        `ble_did_discover_device` is called on each advertisement received matching the service UUIDs.
+        Returns a cancel function — call it on stop to deregister.
+        """
+        key = frozenset(service_ids)
+        self._services[key] = listener
+
+        def cancel():
+            self._services.pop(key, None)
+
+        return cancel
+
+    async def start(self):
+        self._is_running = True
+        self._scanner = BleakScanner(detection_callback=self._on_advertisement)
+        # FUTURE: add support for BLE proxies
+        await self._scanner.start()
+        eviction_task = asyncio.create_task(self._eviction_loop())
+        eviction_task.add_done_callback(self._on_task_done)
+        self._tasks = [eviction_task]
+        logger.debug(f"BLE scanner started, {len(self._services)} service(s) registered")
+
+    async def stop(self):
+        self._is_running = False
+        if self._scanner:
+            await self._scanner.stop()
+            self._scanner = None
+        for task in self._tasks:
+            task.cancel()
+        self._tasks.clear()
+        logger.debug(f"BLE scanner stopped, {len(self._services)} service(s) registered")
+
+    def _on_task_done(self, task: asyncio.Task):
+        if not task.cancelled() and (exc := task.exception()):
+            logger.error(f"BLE task crashed: {exc}")
+
+    def _on_advertisement(self, device: BLEDevice, adv_data: AdvertisementData):
+        asyncio.create_task(self._handle_advertisement(device, adv_data))
+
+    async def _handle_advertisement(self, device: BLEDevice, adv_data: AdvertisementData):
+        address = device.address
+        info = BLEDiscoveryInfo(device, adv_data)
+        sig = _adv_signature(adv_data)
+        now = monotonic()
+        prev = self._tracked.get(address)
+        adv_changed = prev is not None and prev.signature != sig
+
+        # update tracking before awaiting listeners — guards against concurrent advertisements
+        # for the same address both appearing as new
+        self._tracked[address] = _BLETrackedDevice(info=info, last_seen_at=now, signature=sig)
+
+        tasks = []
+        for service_ids, listener in self._services.items():
+            if not any(str(sid) in adv_data.service_data or str(sid) in adv_data.service_uuids for sid in service_ids):
+                continue
+            # is_new is per-subscriber match: first time this device matched this filter
+            matched_before = prev is not None and any(
+                str(sid) in prev.info.advertisement.service_data or str(sid) in prev.info.advertisement.service_uuids
+                for sid in service_ids
+            )
+            if not matched_before:
+                tasks.append((True, listener.ble_did_discover_device(self, info)))
+            elif adv_changed:
+                tasks.append((False, listener.ble_did_update_device(self, info)))
+
+        if tasks:
+            is_new = tasks[0][0]
+            logger.debug(f"BLE {'discovered' if is_new else 'updated'}: {device.name} ({address})")
+            await asyncio.gather(*(coro for _, coro in tasks))
+
+    async def _eviction_loop(self):
+        while self._is_running:
+            await asyncio.sleep(self._eviction_interval_sec)
+            await self._evict_stale()
+
+    async def _evict_stale(self):
+        now = monotonic()
+        for address, tracked in list(self._tracked.items()):
+            if now - tracked.last_seen_at < self._removal_grace_sec:
+                continue
+            del self._tracked[address]
+            tasks = []
+            for service_ids, listener in self._services.items():
+                adv_data = tracked.info.advertisement
+                if any(str(sid) in adv_data.service_data or str(sid) in adv_data.service_uuids for sid in service_ids):
+                    tasks.append(listener.ble_did_remove_device(self, tracked.info))
+            if tasks:
+                logger.debug(f"BLE removed: {tracked.info.device.name} ({address})")
+                await asyncio.gather(*tasks)
+
+    async def perform_scan(self):
+        """Triggers an immediate eviction check. Scanner runs continuously — no manual scan needed."""
+        await self._evict_stale()
+
+
+# Example usage
+
+if __name__ == "__main__":
+    # logging.basicConfig()
+    # logger.setLevel(logging.DEBUG)
+
+    async def main():
+        discovery = BLEDiscoveryService()
+
+        class SwitchBotListener:
+            async def ble_did_discover_device(self, ble: BLEDiscoveryService, info: BLEDiscoveryInfo):
+                print(f"Found: {info.device.name} ({info.device.address})")
+
+            async def ble_did_update_device(self, ble: BLEDiscoveryService, info: BLEDiscoveryInfo):
+                print(f"Updated: {info.device.name} ({info.device.address})")
+
+            async def ble_did_remove_device(self, ble: BLEDiscoveryService, info: BLEDiscoveryInfo):
+                print(f"Removed: {info.device.name} ({info.device.address})")
+
+        switchbot_services = {
+            UUID("00000d00-0000-1000-8000-00805f9b34fb"),
+            UUID("0000fd3d-0000-1000-8000-00805f9b34fb"),
+            UUID("cba20d00-224d-11e6-9fb8-0002a5d5c51b"),
+        }
+
+        discovery.register(SwitchBotListener(), switchbot_services)
+        await discovery.start()
+
+        while True:
+            await asyncio.sleep(1)
+
+    asyncio.run(main())
+
+
+================================================================================
+# FILE: majordom_integration_sdk/discovery/ssdp_discovery.py
+================================================================================
+import asyncio
+import logging
+import socket
+import struct
+from collections import defaultdict
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from time import monotonic
+from typing import NamedTuple, Protocol
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class SSDPDiscoveryInfo:
+    addr: str
+    host: str | None
+    search_target: str | None
+    service_name: str | None
+    server: str | None
+    cache_control: str | None
+    location: str | None
+    response: dict[str, str]
+
+
+class SSDPDiscoveryListener(Protocol):
+    async def ssdp_did_discover_service(self, ssdp: "SSDPDiscoveryService", info: "SSDPDiscoveryInfo"): ...
+    async def ssdp_did_update_service(self, ssdp: "SSDPDiscoveryService", info: "SSDPDiscoveryInfo"): ...
+    async def ssdp_did_remove_service(self, ssdp: "SSDPDiscoveryService", info: "SSDPDiscoveryInfo"): ...
+
+
+@dataclass
+class _KnownService:
+    info: SSDPDiscoveryInfo
+    last_seen_at: float  # monotonic — updated on every scan reply
+
+
+@dataclass
+class _Subscriber:
+    listener: SSDPDiscoveryListener
+    search_target: str
+    mcast_group: str
+    port: int
+    socket: socket.socket
+    known: dict[str, _KnownService] = field(default_factory=dict)  # USN -> _KnownService
+
+
+class _Endpoint(NamedTuple):
+    mcast_group: str
+    port: int
+
+
+@dataclass
+class _SocketSubscribers:
+    scan_socket: socket.socket  # ephemeral, unbound — sends M-SEARCH and reads unicast replies (blocking + timeout)
+    search_subscribers: dict[str, list[_Subscriber]] = field(
+        default_factory=lambda: defaultdict(list)
+    )  # search_target -> list of Subscriber
+
+
+class SSDPDiscoveryService:
+    def __init__(self):
+        # Single dict: Endpoint -> SocketSubscribers(socket, [Subscriber])
+        self._endpoints_subscribers: dict[_Endpoint, _SocketSubscribers] = dict()
+        self._is_running = False
+        self._tasks: list[asyncio.Task] = []
+        self._mx = 2  # MX - maximum wait time (timeout) seconds. Used to even scan responses across time and reduce network load.
+        self._scan_interval: float = 10.0  # seconds between M-SEARCH bursts
+        self._missed_scans_evict: int = 3  # evict after this many consecutive scans with no reply
+        self._ignorelist: set[str] = self._local_ips()
+
+    # FUTURE: filter type
+    def register(
+        self,
+        listener: SSDPDiscoveryListener,
+        search_target: str,
+        mcast_group: str = "239.255.255.250",
+        port: int = 1900,
+    ) -> Callable[[], None]:
+        """
+        Args:
+            listener: Object that will receive discovery events.
+            search_target: SSDP ST (Search Target) field to specify the type of device or service to discover.
+                Common ST templates:
+                    - "uuid:<device-UUID>": discover a device by its UUID
+                    - "urn:schemas-upnp-org:device:<DeviceType>:<Version>": discover devices of a specific type
+                    - "urn:schemas-upnp-org:service:<ServiceType>:<Version>": discover specific service types
+                    - "upnp:rootdevice": discover root devices
+                    - "ssdp:all": discover all devices/services
+                Examples:
+                    - "uuid:550e8400-e29b-41d4-a716-446655440000"
+                    - "urn:schemas-upnp-org:device:MediaServer:1"
+            mcast_group: Multicast group address for SSDP (default: "239.255.255.250"). Don't change it unless you know what you're doing.
+            port: Port for SSDP (default: 1900). Don't change it unless you know what you're doing.
+        """
+
+        endpoint = _Endpoint(mcast_group, port)
+        if endpoint not in self._endpoints_subscribers:
+            scan_sock = self._create_scan_socket()
+            self._endpoints_subscribers[endpoint] = _SocketSubscribers(scan_sock)
+
+        subscriber = _Subscriber(
+            listener, search_target, mcast_group, port, self._endpoints_subscribers[endpoint].scan_socket
+        )
+        self._endpoints_subscribers[endpoint].search_subscribers[search_target].append(subscriber)
+
+        def cancel():
+            subscribers = self._endpoints_subscribers.get(endpoint, _SocketSubscribers(None)).search_subscribers  # type: ignore[arg-type]
+            if search_target in subscribers:
+                try:
+                    subscribers[search_target].remove(subscriber)
+                except ValueError:
+                    pass
+
+        return cancel
+
+    # Putting workers together
+
+    async def start(self):
+        self._is_running = True
+        self._tasks = [
+            asyncio.create_task(self._start_scanning()),
+            asyncio.create_task(self._start_expiry_checks()),
+            asyncio.create_task(self._start_listening_notify()),
+        ]
+
+    def perform_scan(self):
+        """Triggers an immediate M-SEARCH burst on all registered endpoints. Use from start_pairing_window."""
+        asyncio.create_task(self._scan_and_read())
+
+    async def stop(self):
+        self._is_running = False
+        for task in self._tasks:
+            task.cancel()
+        await asyncio.gather(*self._tasks, return_exceptions=True)
+        self._tasks.clear()
+        for es in self._endpoints_subscribers.values():
+            es.scan_socket.close()
+
+    # Private
+
+    async def _start_scanning(self):
+        """Send M-SEARCH bursts and collect unicast replies; repeat every scan_interval."""
+        while self._is_running:
+            await self._scan_and_read()
+            await asyncio.sleep(self._scan_interval)
+
+    async def _start_expiry_checks(self):
+        while self._is_running:
+            await asyncio.sleep(self._scan_interval)
+            await self._evict_expired()
+
+    async def _start_listening_notify(self):
+        """Listens for unsolicited SSDP NOTIFY advertisements on the multicast group."""
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(("", 1900))
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, self._get_mreq("239.255.255.250"))
+        sock.setblocking(False)
+        loop = asyncio.get_event_loop()
+        try:
+            while self._is_running:
+                try:
+                    data, addr = await loop.sock_recvfrom(sock, 2048)
+                except (BlockingIOError, OSError):
+                    await asyncio.sleep(0.5)
+                    continue
+
+                if addr[0] in self._ignorelist:
+                    continue
+
+                msg = data.decode(errors="ignore")
+                if not msg.startswith("NOTIFY"):
+                    continue
+
+                response = self._parse_ssdp_response(msg)
+                nts = response.get("NTS", "")
+                usn = response.get("USN")
+                st = response.get("NT")  # NOTIFY uses NT instead of ST
+
+                if usn is None or st is None:
+                    continue
+
+                for es in self._endpoints_subscribers.values():
+                    subscribers = es.search_subscribers.get(st, [])
+                    if not subscribers:
+                        continue
+
+                    if nts == "ssdp:byebye":
+                        for subscriber in subscribers:
+                            if usn in subscriber.known:
+                                ks = subscriber.known.pop(usn)
+                                logger.debug(f"SSDP byebye: {ks.info.service_name} ({ks.info.addr})")
+                                await subscriber.listener.ssdp_did_remove_service(self, ks.info)
+                    elif nts == "ssdp:alive":
+                        info = SSDPDiscoveryInfo(
+                            addr=addr[0],
+                            host=response.get("HOST"),
+                            search_target=st,
+                            service_name=usn,
+                            server=response.get("SERVER"),
+                            cache_control=response.get("CACHE-CONTROL"),
+                            location=response.get("LOCATION"),
+                            response=response,
+                        )
+                        await asyncio.gather(*[self._notify_subscriber(s, usn, info) for s in subscribers])
+        finally:
+            sock.setsockopt(socket.IPPROTO_IP, socket.IP_DROP_MEMBERSHIP, self._get_mreq("239.255.255.250"))
+            sock.close()
+
+    # SSDP Implementation
+
+    def _collect_scan_replies(self, sock: socket.socket, mx: int) -> list[tuple[bytes, tuple[str, int]]]:
+        """Blocking: reads all unicast M-SEARCH replies within the MX window. Runs in executor."""
+        replies: list[tuple[bytes, tuple[str, int]]] = []
+        sock.settimeout(mx + 0.5)  # slightly over MX so we catch late responders
+        deadline = monotonic() + mx + 0.5
+        while True:
+            remaining = deadline - monotonic()
+            if remaining <= 0:
+                break
+            sock.settimeout(remaining)
+            try:
+                data, addr = sock.recvfrom(1024)
+                replies.append((data, addr))
+            except TimeoutError:
+                break
+            except OSError:
+                break
+        return replies
+
+    async def _notify_subscriber(self, subscriber: _Subscriber, usn: str, info: SSDPDiscoveryInfo):
+        now = monotonic()
+        if usn not in subscriber.known:
+            subscriber.known[usn] = _KnownService(info, now)
+            logger.debug(f"SSDP discovered: {info.service_name} ({info.addr})")
+            await subscriber.listener.ssdp_did_discover_service(self, info)
+        else:
+            known = subscriber.known[usn]
+            subscriber.known[usn] = _KnownService(info, now)
+            if info.location != known.info.location or info.server != known.info.server:
+                logger.debug(f"SSDP updated: {info.service_name} ({info.addr})")
+                await subscriber.listener.ssdp_did_update_service(self, info)
+
+    async def _evict_expired(self):
+        now = monotonic()
+        missed_scans_cutoff = now - self._scan_interval * self._missed_scans_evict
+        for es in self._endpoints_subscribers.values():
+            for subscribers in es.search_subscribers.values():
+                for subscriber in subscribers:
+                    expired = [usn for usn, ks in subscriber.known.items() if ks.last_seen_at < missed_scans_cutoff]
+                    for usn in expired:
+                        ks = subscriber.known.pop(usn)
+                        logger.debug(f"SSDP expired: {ks.info.service_name} ({ks.info.addr})")
+                        await subscriber.listener.ssdp_did_remove_service(self, ks.info)
+
+    async def _scan_and_read(self):
+        """Send all M-SEARCH requests then collect replies for each endpoint."""
+        loop = asyncio.get_running_loop()
+        for endpoint, es in self._endpoints_subscribers.items():
+            search_targets = list(es.search_subscribers.keys())
+            for search_target in search_targets:
+                query = self._ssdp_query_template(
+                    ip=endpoint.mcast_group, port=str(endpoint.port), mx=str(self._mx), st=search_target
+                )
+                logger.debug(f"SSDP scan: {search_target} on {endpoint.mcast_group}:{endpoint.port}")
+                es.scan_socket.sendto(query.encode(), (endpoint.mcast_group, endpoint.port))
+            replies = await loop.run_in_executor(None, self._collect_scan_replies, es.scan_socket, self._mx)
+            await self._process_scan_replies(endpoint, search_targets, replies)
+
+    async def _process_scan_replies(
+        self, endpoint: _Endpoint, search_targets: list[str], replies: list[tuple[bytes, tuple[str, int]]]
+    ):
+        for data, addr in replies:
+            if addr[0] in self._ignorelist:
+                continue
+            response = self._parse_ssdp_response(data.decode(errors="ignore"))
+            # 200 OK replies omit ST — fall back to matching against all search targets for this endpoint
+            response_st = response.get("ST")
+            # USN is standard UPnP but Yeelight (and others) omit it — fall back to Location then addr
+            usn = response.get("USN") or response.get("LOCATION") or addr[0]
+            search_subscribers = self._endpoints_subscribers[endpoint].search_subscribers
+            candidates = [response_st] if response_st else search_targets
+            for st in candidates:
+                subscribers = search_subscribers.get(st, [])
+                if not subscribers:
+                    continue
+                info = SSDPDiscoveryInfo(
+                    addr=addr[0],
+                    host=response.get("HOST"),
+                    search_target=st,
+                    service_name=usn,
+                    server=response.get("SERVER"),
+                    cache_control=response.get("CACHE-CONTROL"),
+                    location=response.get("LOCATION"),
+                    response=response,
+                )
+                await asyncio.gather(*[self._notify_subscriber(subscriber, usn, info) for subscriber in subscribers])
+
+    # SSDP config
+
+    def _create_scan_socket(self) -> socket.socket:
+        # Ephemeral unbound socket — OS assigns a random source port.
+        # Devices send M-SEARCH replies back to that source port (unicast),
+        # so we must read replies on the same socket we sent from.
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        return sock
+
+    def _get_mreq(self, mcast_group) -> bytes:
+        return struct.pack("4sL", socket.inet_aton(mcast_group), socket.INADDR_ANY)
+
+    def _ssdp_query_template(self, ip: str, port: str, mx: str, st: str) -> str:
+        return f'M-SEARCH * HTTP/1.1\r\nMAN: "ssdp:discover"\r\nHOST: {ip}:{port}\r\nMX: {mx}\r\nST: {st}\r\n\r\n'
+
+    def _parse_ssdp_response(self, response: str) -> dict[str, str]:
+        lines = response.split("\r\n")
+        data = {}
+        for line in lines:
+            if ":" in line:
+                key, value = line.split(":", 1)
+                data[key.strip().upper()] = value.strip()
+        return data
+
+    # Helpers
+
+    def _local_ips(self) -> set[str]:
+        """Returns all local IPv4 addresses to exclude from discovery responses."""
+        ips: set[str] = {"127.0.0.1"}
+        try:
+            infos = socket.getaddrinfo(None, None, socket.AF_INET, socket.SOCK_DGRAM, 0, socket.AI_PASSIVE)
+            ips.update(str(info[4][0]) for info in infos if info[4][0] != "0.0.0.0")
+        except Exception:
+            pass
+        return ips
+
+
+if __name__ == "__main__":
+    # logging.basicConfig()
+    # logger.setLevel(logging.DEBUG)
+
+    async def main():
+        ssdp = SSDPDiscoveryService()
+
+        class SSDPListener:
+            async def ssdp_did_discover_service(self, ssdp: SSDPDiscoveryService, info: SSDPDiscoveryInfo):
+                print(f"Found: {info.service_name} @ {info.addr} location={info.location}")
+
+            async def ssdp_did_update_service(self, ssdp: SSDPDiscoveryService, info: SSDPDiscoveryInfo):
+                print(f"Updated: {info.service_name} @ {info.addr}")
+
+            async def ssdp_did_remove_service(self, ssdp: SSDPDiscoveryService, info: SSDPDiscoveryInfo):
+                print(f"Removed: {info.service_name} @ {info.addr}")
+
+        ssdp.register(SSDPListener(), "wifi_bulb", port=1982)
+
+        await ssdp.start()
+
+        while True:
+            await asyncio.sleep(1)
+
+    asyncio.run(main())
+
+
+================================================================================
+# FILE: majordom_integration_sdk/discovery/zeroconf_discovery.py
+================================================================================
+import asyncio
+import logging
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Protocol, cast
+
+from zeroconf import BadTypeInNameException, ServiceListener, Zeroconf, current_time_millis
+from zeroconf._dns import DNSPointer
+from zeroconf.asyncio import AsyncServiceBrowser, AsyncServiceInfo, AsyncZeroconf
+from zeroconf.const import _CLASS_IN, _TYPE_A, _TYPE_AAAA, _TYPE_PTR
+
+logger = logging.getLogger(__name__)
+
+_RESOLVE_DELAY = 0.5  # seconds — coalesces burst PTR/SRV/TXT/A packets into one resolve
+_RESOLVE_TIMEOUT_MS = 3_000
+_CACHE_POLL_INTERVAL = 30  # seconds — how often to reconcile our state against zeroconf's PTR cache
+_EVICT_GRACE_MS = 10_000  # ms — grace window after A/AAAA expiry before probing; allows zeroconf to renew
+
+
+@dataclass
+class ZeroconfDiscoveryInfo:
+    """
+    * `type_`: fully qualified service type name
+    * `name`: fully qualified service name
+    * `port`: port that the service runs on
+    * `weight`: weight of the service
+    * `priority`: priority of the service
+    * `properties`: dictionary of properties as raw bytes. Keys with `None` values are value-less attributes.
+    * `decoded_properties`: `properties` decoded to `str` — use this for most integrations.
+    * `text`: raw TXT record bytes — use only if you need to parse the record manually.
+    * `server`: fully qualified name for service host (defaults to name)
+    * `host_ttl`: ttl used for A/SRV records
+    * `other_ttl`: ttl used for PTR/TXT records
+    * `addresses` and `parsed_addresses`: List of IP addresses (either as bytes, network byte order,
+        or in parsed form as text; at most one of those parameters can be provided)
+    * interface_index: scope_id or zone_id for IPv6 link-local addresses i.e. an identifier of the interface
+        where the peer is connected to
+    """
+
+    type_: str
+    name: str
+    server: str | None
+    port: int | None
+    addresses: list[bytes] | None
+    parsed_addresses: list[str] | None
+    weight: int | None
+    priority: int | None
+    properties: dict[bytes, bytes | None]
+    decoded_properties: dict[str, str | None]
+    text: bytes
+    host_ttl: int | None
+    other_ttl: int | None
+    interface_index: int | None
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ZeroconfDiscoveryInfo):
+            return NotImplemented
+        # exclude host_ttl / other_ttl — they change on every re-announcement
+        return (
+            self.type_ == other.type_
+            and self.name == other.name
+            and self.server == other.server
+            and self.port == other.port
+            and self.addresses == other.addresses
+            and self.parsed_addresses == other.parsed_addresses
+            and self.weight == other.weight
+            and self.priority == other.priority
+            and self.properties == other.properties
+            and self.text == other.text
+            and self.interface_index == other.interface_index
+        )
+
+
+class ZeroconfDiscoveryListener(Protocol):
+    async def zeroconf_did_discover_service(
+        self, zeroconf: "ZeroconfDiscoveryService", info: ZeroconfDiscoveryInfo
+    ): ...
+    async def zeroconf_did_update_service(self, zeroconf: "ZeroconfDiscoveryService", info: ZeroconfDiscoveryInfo): ...
+    async def zeroconf_did_remove_service(self, zeroconf: "ZeroconfDiscoveryService", type_: str, name: str):
+        """Fired on mDNS goodbye packets (TTL=0) or when a silent departure is confirmed:
+        A/AAAA records expired (~120s TTL) and a follow-up async_request got no response.
+        For faster detection, implement liveness checks at the pairing/connection layer."""
+        ...
+
+
+class ZeroconfDiscoveryService:
+    @property
+    def async_zeroconf(self) -> AsyncZeroconf | None:
+        return self._async_zeroconf
+
+    def __init__(self):
+        self._async_zeroconf: AsyncZeroconf | None = None
+        self._browsers: set[AsyncServiceBrowser] = set()
+        self._adapters: list[_ServiceListenerAdapter] = []
+        self._poll_task: asyncio.Task | None = None
+        # registrations made before start() — flushed on start
+        self._pending: list[tuple[set[str], ZeroconfDiscoveryListener, int]] = []
+        self._pending_id: int = 0
+
+    # FUTURE: filter type
+    def register(self, listener: ZeroconfDiscoveryListener, services: set[str]) -> Callable[[], None]:
+        if self._async_zeroconf is None:
+            reg_id = self._pending_id
+            self._pending_id += 1
+            self._pending.append((services, listener, reg_id))  # internal order unchanged
+
+            def cancel_pending():
+                for i, (_, _, rid) in enumerate(self._pending):
+                    if rid == reg_id:
+                        del self._pending[i]
+                        break
+
+            return cancel_pending
+
+        browser, adapter = self._make_browser(services, listener)
+
+        def cancel():
+            adapter.cancel_all_pending()
+            self._browsers.discard(browser)
+            self._adapters.remove(adapter)
+            asyncio.create_task(browser.async_cancel())
+
+        return cancel
+
+    async def start(self):
+        self._async_zeroconf = AsyncZeroconf()
+        for services, listener, _ in self._pending:
+            self._make_browser(services, listener)
+        self._pending.clear()
+        self._poll_task = asyncio.create_task(self._cache_poll_loop())
+        logger.debug(f"Zeroconf started, {len(self._browsers)} browser(s) active")
+
+    async def stop(self):
+        if self._poll_task:
+            self._poll_task.cancel()
+            self._poll_task = None
+        for adapter in self._adapters:
+            adapter.cancel_all_pending()
+        for browser in list(self._browsers):
+            await browser.async_cancel()
+        self._browsers.clear()
+        self._adapters.clear()
+        if self._async_zeroconf is not None:
+            await self._async_zeroconf.async_close()
+            self._async_zeroconf = None
+        logger.debug("Zeroconf stopped")
+
+    async def _cache_poll_loop(self):
+        while True:
+            await asyncio.sleep(_CACHE_POLL_INTERVAL)
+            if self._async_zeroconf is None:
+                continue
+            zc = self._async_zeroconf.zeroconf
+            now = current_time_millis()
+            for adapter in list(self._adapters):
+                adapter.sync_with_cache(zc, now)
+
+    def _make_browser(
+        self, services: set[str], listener: ZeroconfDiscoveryListener
+    ) -> tuple[AsyncServiceBrowser, "_ServiceListenerAdapter"]:
+        assert self._async_zeroconf is not None
+        adapter = _ServiceListenerAdapter(self, listener, services)
+        browser = AsyncServiceBrowser(
+            self._async_zeroconf.zeroconf,
+            list(services),
+            listener=adapter,
+        )
+        self._browsers.add(browser)
+        self._adapters.append(adapter)
+        return browser, adapter
+
+
+class _ServiceListenerAdapter(ServiceListener):
+    def __init__(
+        self, zeroconf_discovery: ZeroconfDiscoveryService, listener: ZeroconfDiscoveryListener, services: set[str]
+    ):
+        self._zc_service = zeroconf_discovery
+        self._listener = listener
+        self._services = services
+        self._loop = asyncio.get_running_loop()
+        self._resolve_later_queue: dict[str, asyncio.TimerHandle] = {}
+        self._known_names: dict[str, ZeroconfDiscoveryInfo] = {}  # name → last known info
+
+    def add_service(self, zc: Zeroconf, type_: str, name: str):
+        self._schedule_resolve(type_, name)
+
+    def update_service(self, zc: Zeroconf, type_: str, name: str):
+        self._schedule_resolve(type_, name)
+
+    def remove_service(self, zc: Zeroconf, type_: str, name: str):
+        # goodbye packet — cancel pending resolve and notify immediately
+        if handle := self._resolve_later_queue.pop(name, None):
+            handle.cancel()
+        self._known_names.pop(name, None)
+        logger.debug(f"Zeroconf goodbye received: {name}")
+        asyncio.create_task(self._listener.zeroconf_did_remove_service(self._zc_service, type_, name))
+
+    def cancel_all_pending(self):
+        while self._resolve_later_queue:
+            _, handle = self._resolve_later_queue.popitem()
+            handle.cancel()
+
+    def sync_with_cache(self, zc: Zeroconf, now: float):
+        """Reconcile _known_names against the live cache.
+
+        When A/AAAA records expire, we confirm via async_request before evicting —
+        expiry alone is unreliable (device may have just re-announced). A failed
+        async_request is the definitive "no goodbye" departure signal.
+        Rediscovery scans live PTR records for names we don't know yet.
+        """
+        # confirm-evict: A/AAAA expired → probe network; evict only if unreachable
+        for name, last_info in list(self._known_names.items()):
+            if last_info.server is None:
+                continue
+            a_records = list(zc.cache.get_all_by_details(last_info.server, _TYPE_A, _CLASS_IN))
+            aaaa_records = list(zc.cache.get_all_by_details(last_info.server, _TYPE_AAAA, _CLASS_IN))
+            all_address_records = a_records + aaaa_records
+            if not all_address_records or all(
+                r.get_expiration_time(100) + _EVICT_GRACE_MS <= now for r in all_address_records
+            ):
+                if name not in self._resolve_later_queue:
+                    logger.debug(f"Zeroconf A/AAAA expired, confirming: {name}")
+                    asyncio.create_task(self._confirm_evict(name, last_info.type_))
+
+        # rediscover: scan live PTR records for unknown names
+        for type_ in self._services:
+            for record in zc.cache.get_all_by_details(type_, _TYPE_PTR, _CLASS_IN):
+                ptr = cast(DNSPointer, record)
+                if (
+                    not ptr.is_expired(now)
+                    and ptr.alias not in self._known_names
+                    and ptr.alias not in self._resolve_later_queue
+                ):
+                    logger.debug(f"Zeroconf cache rediscovery: {ptr.alias}")
+                    self._schedule_resolve(type_, ptr.alias)
+
+    async def _confirm_evict(self, name: str, type_: str):
+        """Probe the network for a device whose A/AAAA records expired. Evict only if unreachable."""
+        assert self._zc_service._async_zeroconf is not None
+        zc = self._zc_service._async_zeroconf.zeroconf
+        info = AsyncServiceInfo(type_, name)
+        if await info.async_request(zc, _RESOLVE_TIMEOUT_MS):
+            # device responded — it's alive, update via normal resolve path
+            logger.debug(f"Zeroconf confirm-evict: {name} is alive, refreshing")
+            discovery_info = _build_info(info)
+            if discovery_info and name in self._known_names:
+                if discovery_info != self._known_names[name]:
+                    self._known_names[name] = discovery_info
+                    await self._listener.zeroconf_did_update_service(self._zc_service, discovery_info)
+                else:
+                    self._known_names[name] = discovery_info  # refresh server silently
+        else:
+            # no response — confirmed departed
+            if name in self._known_names:
+                self._known_names.pop(name)
+                logger.debug(f"Zeroconf eviction confirmed (no response): {name}")
+                await self._listener.zeroconf_did_remove_service(self._zc_service, type_, name)
+
+    def _schedule_resolve(self, type_: str, name: str):
+        # already queued — let the existing timer fire, burst coalescing
+        if name in self._resolve_later_queue:
+            return
+        try:
+            info = AsyncServiceInfo(type_, name)
+        except BadTypeInNameException as ex:
+            logger.debug(f"Ignoring record with bad type in name: {name}: {ex}")
+            return
+        handle = self._loop.call_later(
+            _RESOLVE_DELAY,
+            lambda: asyncio.create_task(self._do_resolve(name, info)),
+        )
+        self._resolve_later_queue[name] = handle
+
+    async def _do_resolve(self, name: str, info: AsyncServiceInfo):
+        self._resolve_later_queue.pop(name, None)
+
+        assert self._zc_service._async_zeroconf is not None
+        zc = self._zc_service._async_zeroconf.zeroconf
+
+        # cache-first: free if warm, network round-trip only if cold
+        if not info.load_from_cache(zc):
+            if not await info.async_request(zc, _RESOLVE_TIMEOUT_MS):
+                logger.debug(f"Zeroconf resolve failed (no data): {name}")
+                return
+
+        discovery_info = _build_info(info)
+        if discovery_info is None:
+            return
+
+        if name in self._known_names:
+            if discovery_info != self._known_names[name]:
+                self._known_names[name] = discovery_info
+                await self._listener.zeroconf_did_update_service(self._zc_service, discovery_info)
+            else:
+                self._known_names[name] = discovery_info  # refresh silently
+        else:
+            self._known_names[name] = discovery_info
+            await self._listener.zeroconf_did_discover_service(self._zc_service, discovery_info)
+
+
+def _build_info(info: AsyncServiceInfo) -> ZeroconfDiscoveryInfo | None:
+    if info.port is None:
+        return None
+    return ZeroconfDiscoveryInfo(
+        type_=info.type,
+        name=info.name,
+        server=info.server,
+        port=info.port,
+        addresses=list(info.addresses),
+        parsed_addresses=info.parsed_addresses(),
+        weight=info.weight,
+        priority=info.priority,
+        properties=info.properties,
+        decoded_properties=info.decoded_properties,
+        text=info.text,
+        host_ttl=info.host_ttl,
+        other_ttl=info.other_ttl,
+        interface_index=info.interface_index,
+    )
+
+
+if __name__ == "__main__":
+    logging.basicConfig()
+    logger.setLevel(logging.DEBUG)
+
+    async def main():
+        discovery = ZeroconfDiscoveryService()
+
+        class HAPListener:
+            async def zeroconf_did_discover_service(
+                self, zeroconf: ZeroconfDiscoveryService, info: ZeroconfDiscoveryInfo
+            ):
+                print(f"Found: {info.name} @ {info.parsed_addresses}:{info.port}")
+
+            async def zeroconf_did_update_service(
+                self, zeroconf: ZeroconfDiscoveryService, info: ZeroconfDiscoveryInfo
+            ):
+                print(f"Updated: {info.name} @ {info.parsed_addresses}:{info.port}")
+
+            async def zeroconf_did_remove_service(self, zeroconf: ZeroconfDiscoveryService, type_: str, name: str):
+                print(f"Removed: {name}")
+
+        discovery.register(HAPListener(), {"_hap._tcp.local."})
+        await discovery.start()
+
+        while True:
+            await asyncio.sleep(1)
+
+    asyncio.run(main())
+
+
+================================================================================
+# FILE: majordom_integration_sdk/parameter_audit.py
+================================================================================
+"""Dev/pairing-time sanity checks on a device's mapped parameters — protocol-neutral, so every
+integration (and the audit tools) share one implementation. See the "Parameter Visibility & UX"
+recipe in the docs. All checks are advisory: they return human-readable warnings, never raise.
+"""
+
+from __future__ import annotations
+
+from collections import defaultdict
+from collections.abc import Iterable, Sequence
+from difflib import SequenceMatcher
+
+from .schemas.parameter import Parameter, ParameterUnit, ParameterVisibility
+
+# A device's `user` bucket is the everyday device screen; more than this is a strong
+# over-exposure smell (usually uncurated read-only attrs leaking through).
+MAX_USER_PARAMETERS = 8
+
+# Name-similarity ratio (0..1) above which two `user` params look like near-duplicates.
+NAME_SIMILARITY_THRESHOLD = 0.86
+
+
+def _name_similarity(a: str, b: str) -> float:
+    return SequenceMatcher(None, a, b).ratio()
+
+
+def audit_device_parameters(
+    device_name: str,
+    parameters: Iterable[Parameter],
+    *,
+    max_user: int = MAX_USER_PARAMETERS,
+    similarity_threshold: float = NAME_SIMILARITY_THRESHOLD,
+    ignore_similar_pairs: Sequence[tuple[str, str]] = (),
+) -> list[str]:
+    """Return advisory warnings about a device's parameter mapping.
+
+    Checks:
+      * too many `user`-visible parameters (over-exposure),
+      * near-duplicate names in the `user` bucket (a normalized string-similarity ratio —
+        `difflib`, close to a Levenshtein signal without a dependency),
+      * same-unit + same-role duplicates in the `user` bucket (catches redundant *representations*
+        of one quantity even when the names differ, e.g. colour `hue/sat` and `x/y`).
+
+    `ignore_similar_pairs` whitelists legitimately-similar name pairs (order-insensitive), e.g.
+    `("occupied_heating_setpoint", "occupied_cooling_setpoint")`.
+    """
+    warnings: list[str] = []
+    user = [p for p in parameters if p.visibility == ParameterVisibility.user]
+
+    if len(user) > max_user:
+        names = ", ".join(p.name for p in user[:12])
+        warnings.append(
+            f"{device_name}: {len(user)} user-visible parameters (> {max_user}) — likely "
+            f"over-exposed; review visibility curation. [{names}{' …' if len(user) > 12 else ''}]"
+        )
+
+    # Near-duplicate names among user params (a Levenshtein-like signal).
+    whitelist = {frozenset(pair) for pair in ignore_similar_pairs}
+    for i in range(len(user)):
+        for j in range(i + 1, len(user)):
+            a, b = user[i], user[j]
+            if frozenset((a.name, b.name)) in whitelist:
+                continue
+            ratio = _name_similarity(a.name, b.name)
+            if ratio >= similarity_threshold:
+                warnings.append(
+                    f"{device_name}: user params {a.name!r} and {b.name!r} have near-duplicate "
+                    f"names (similarity {ratio:.2f}) — is one redundant?"
+                )
+
+    # Redundant *representations* of one quantity — several user params sharing a specific
+    # (non-plain) unit + role + type, even with different names (e.g. colour hue/sat AND x/y).
+    # Grouped and thresholded so ordinary multi-sensor devices don't trip it.
+    groups: dict[tuple, list[str]] = defaultdict(list)
+    for p in user:
+        if p.unit != ParameterUnit.plain:
+            groups[(p.unit, p.role, p.data_type)].append(p.name)
+    for (unit, role, _dt), group_names in groups.items():
+        if len(group_names) >= 3:
+            warnings.append(
+                f"{device_name}: {len(group_names)} user params share {unit.value}/{role.value} "
+                f"({', '.join(group_names)}) — possible redundant representations."
+            )
+
+    return warnings
+
+
+================================================================================
+# FILE: majordom_integration_sdk/repository/__init__.py
+================================================================================
+"""Device persistence for integrations — one protocol, two standalone implementations."""
+
+from .memory import DeviceRepositoryMemory
+from .protocol import DeviceRepositoryProtocol
+from .sqlite import SqliteDeviceRepository
+
+__all__ = ["DeviceRepositoryProtocol", "DeviceRepositoryMemory", "SqliteDeviceRepository"]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/repository/_record.py
+================================================================================
+"""Internal record helpers shared by the SDK's repository implementations.
+
+A stored record is one JSON-safe dict per device holding *everything* known about it —
+info, ``integration_data`` (from a :class:`Device`) and ``parameters`` (from a
+:class:`DeviceState`). ``Device`` and ``DeviceState`` are siblings off ``DeviceInfo``, so
+neither alone is a complete record; merging keeps both halves and lets a read deserialize
+into whichever view (``as_``) the caller asks for.
+"""
+
+from __future__ import annotations
+
+import json
+from typing import Any
+
+from pydantic import BaseModel
+
+from majordom_integration_sdk.schemas.device import Device, DeviceState
+
+type Record = dict[str, Any]
+
+
+def dump(device: BaseModel) -> Record:
+    """JSON-safe dump, so records round-trip identically through memory or SQLite.
+
+    Goes through ``model_dump_json`` rather than ``model_dump(mode="json")`` — the JSON
+    serializer is the one these models are actually exercised against (``ParameterState``
+    base64-encodes its ``bytes`` value there), so it's what the SQLite rows already store.
+    """
+    return json.loads(device.model_dump_json())
+
+
+def merge(base: Record | None, device: Device | DeviceState) -> Record:
+    """Merge a device into an existing record without clobbering the other view's fields."""
+    return {**(base or {}), **dump(device)}
+
+
+__all__ = ["Record", "dump", "merge"]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/repository/memory.py
+================================================================================
+"""In-memory :class:`DeviceRepositoryProtocol` implementation.
+
+A legitimate, lightweight persistence choice for standalone/dev runs and tests — not a
+mock. State lives in a dict for the process lifetime; use :class:`SqliteDeviceRepository`
+when you need it to survive a restart.
+"""
+
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from uuid import UUID
+
+from majordom_integration_sdk.repository._record import Record, dump, merge
+from majordom_integration_sdk.schemas.device import Device, DeviceState
+from majordom_integration_sdk.schemas.parameter import ParameterState, ParameterVisibility
+
+
+class DeviceRepositoryMemory:
+    """Stores device records in a dict shared across sessions.
+
+    Pass ``integration`` to scope every operation to that integration's devices (the guard
+    the Hub sets when handing a repository to a controller). ``None`` gives full access.
+    """
+
+    def __init__(self, integration: str | None = None, store: dict[UUID, Record] | None = None):
+        self.integration = integration
+        self._store: dict[UUID, Record] = store if store is not None else {}
+
+    @asynccontextmanager
+    async def session(self) -> AsyncIterator[DeviceRepositoryMemory]:
+        """Async-context-manager factory to pass as ``make_device_repository``."""
+        yield self
+
+    def _in_scope(self, record: Record) -> bool:
+        return self.integration is None or record.get("integration") == self.integration
+
+    def _owned(self, device_id: UUID) -> Record | None:
+        record = self._store.get(device_id)
+        return record if record is not None and self._in_scope(record) else None
+
+    async def get_all[T: Device](self, as_: type[T] = Device) -> list[T]:
+        return [as_.model_validate(r) for r in self._store.values() if self._in_scope(r)]
+
+    async def get[T: Device](self, device_id: UUID, as_: type[T] = Device) -> T | None:
+        record = self._owned(device_id)
+        return as_.model_validate(record) if record else None
+
+    async def state[T: DeviceState](self, device_id: UUID, as_: type[T] = DeviceState) -> T | None:
+        record = self._owned(device_id)
+        return as_.model_validate(record) if record else None
+
+    async def get_parameter_state(self, device_id: UUID, parameter_id: UUID) -> ParameterState | None:
+        record = self._owned(device_id)
+        if not record:
+            return None
+        return next(
+            (ParameterState.model_validate(p) for p in record.get("parameters", []) if p["id"] == str(parameter_id)),
+            None,
+        )
+
+    async def save(self, device: Device | DeviceState, previous_id: UUID | None = None) -> None:
+        if self.integration is not None and device.integration != self.integration:
+            raise PermissionError(f"Device {device.id} is outside integration scope {self.integration!r}")
+        base = self._store.pop(previous_id, None) if previous_id is not None and previous_id != device.id else None
+        self._store[device.id] = merge(base if base is not None else self._store.get(device.id), device)
+
+    async def save_parameter_state(self, device_id: UUID, parameter_state: ParameterState) -> None:
+        record = self._owned(device_id)
+        if not record:
+            raise KeyError(f"Unknown or out-of-scope device {device_id}")
+        updated = dump(parameter_state)
+        record["parameters"] = [
+            updated if p["id"] == str(parameter_state.id) else p for p in record.get("parameters", [])
+        ]
+
+    # Hub-internal (not on DeviceRepositoryProtocol); still scope-checked.
+
+    async def update_parameter_visibility(self, parameter_id: UUID, visibility: ParameterVisibility) -> None:
+        for record in self._store.values():
+            if not self._in_scope(record):
+                continue
+            for parameter in record.get("parameters", []):
+                if parameter["id"] == str(parameter_id):
+                    parameter["visibility"] = visibility.value
+                    return
+
+    async def delete(self, device_id: UUID) -> None:
+        if self._owned(device_id):
+            self._store.pop(device_id, None)
+
+
+__all__ = ["DeviceRepositoryMemory"]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/repository/protocol.py
+================================================================================
+"""The device-repository interface a controller talks to.
+
+A controller never touches a database directly — it goes through this protocol, obtained
+from ``dependencies.make_device_repository()`` (an async context manager scoping one unit
+of work). The Hub backs it with its shared SQLAlchemy database; the SDK ships two
+first-class implementations for standalone/dev use — :class:`DeviceRepositoryMemory` and
+:class:`SqliteDeviceRepository`.
+
+**Integration scope.** The repository is bound to one integration at construction, so there
+is no ``integration`` argument on the reads: an integration only ever sees its own devices.
+Out-of-scope reads come back ``None``/empty and out-of-scope writes raise — a guard against
+carelessness, not a security boundary. Constructing with ``integration=None`` gives full
+access (the Hub's own higher-level use).
+
+**Typed reads.** ``as_`` deserializes into your own ``Device``/``DeviceState`` subclass, so
+``integration_data`` comes back typed instead of a bare dict::
+
+    async with self.dependencies.make_device_repository() as repo:
+        device = await repo.get(device_id, as_=MyDevice)  # device.integration_data: MyData
+
+**Not here on purpose:** ``delete`` and ``update_parameter_visibility`` are Hub-internal
+lifecycle operations. They exist on the concrete implementations, but are kept off this
+protocol so an integration can't reach past its scope.
+"""
+
+from __future__ import annotations
+
+from typing import Protocol, runtime_checkable
+from uuid import UUID
+
+from majordom_integration_sdk.schemas.device import Device, DeviceState
+from majordom_integration_sdk.schemas.parameter import ParameterState
+
+
+@runtime_checkable
+class DeviceRepositoryProtocol(Protocol):
+    """Persistence for one integration's paired devices and their parameter states."""
+
+    async def get_all[T: Device](self, as_: type[T] = Device) -> list[T]:
+        """Every paired device in scope, deserialized as ``as_``."""
+        ...
+
+    async def get[T: Device](self, device_id: UUID, as_: type[T] = Device) -> T | None:
+        """The device (info + ``integration_data``) as ``as_``, or ``None`` if unknown/out of scope."""
+        ...
+
+    async def state[T: DeviceState](self, device_id: UUID, as_: type[T] = DeviceState) -> T | None:
+        """The device with its parameter states as ``as_``, or ``None`` if unknown/out of scope."""
+        ...
+
+    async def get_parameter_state(self, device_id: UUID, parameter_id: UUID) -> ParameterState | None:
+        """One parameter's current state, or ``None`` if the device/parameter is unknown/out of scope."""
+        ...
+
+    async def save(self, device: Device | DeviceState, previous_id: UUID | None = None) -> None:
+        """Insert or update a device, merging into whatever is already stored.
+
+        Saving a ``Device`` updates its info/``integration_data``; saving a ``DeviceState``
+        updates its info/``parameters`` — neither clobbers the other's fields. ``previous_id``
+        renames an existing record before the write (pairing turning a provisional discovery
+        id into the device's final id), carrying its stored data over. Rejects a device
+        outside the bound integration's scope.
+        """
+        ...
+
+    async def save_parameter_state(self, device_id: UUID, parameter_state: ParameterState) -> None:
+        """Update a single parameter's value/state on an existing in-scope device."""
+        ...
+
+
+__all__ = ["DeviceRepositoryProtocol"]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/repository/sqlite.py
+================================================================================
+"""File-backed :class:`DeviceRepositoryProtocol` on the standard-library ``sqlite3``.
+
+No third-party dependency: each device is stored as one row of JSON (the record already
+stores pythonic parameter values as JSON via Pydantic). Suitable
+for a standalone integration that needs its paired devices to survive a restart; the Hub
+uses its own SQLAlchemy-backed repository instead.
+
+``sqlite3`` is synchronous; calls are cheap and local, so the async methods invoke it
+directly. Obtain a session with :meth:`session` (opens a connection, commits on clean exit).
+"""
+
+from __future__ import annotations
+
+import json
+import sqlite3
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from pathlib import Path
+from uuid import UUID
+
+from majordom_integration_sdk.repository._record import Record, dump, merge
+from majordom_integration_sdk.schemas.device import Device, DeviceState
+from majordom_integration_sdk.schemas.parameter import ParameterState, ParameterVisibility
+
+
+class SqliteDeviceRepository:
+    """Persists device records as JSON rows in a SQLite file.
+
+    Pass ``integration`` to scope every operation to that integration's devices (the guard
+    the Hub sets when handing a repository to a controller). ``None`` gives full access.
+    """
+
+    def __init__(self, path: str | Path, integration: str | None = None):
+        self.path = str(path)
+        self.integration = integration
+        conn = self._connect()
+        try:
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS devices ("
+                "  id INTEGER PRIMARY KEY, uuid TEXT UNIQUE NOT NULL,"
+                "  integration TEXT NOT NULL, data TEXT NOT NULL)"
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    def _connect(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(self.path)
+        conn.row_factory = sqlite3.Row
+        return conn
+
+    @asynccontextmanager
+    async def session(self) -> AsyncIterator[SqliteDeviceRepository]:
+        """Async-context-manager factory to pass as ``make_device_repository``."""
+        # A fresh connection per unit of work; sharing one across concurrent tasks is unsafe.
+        self._conn = self._connect()
+        try:
+            yield self
+            self._conn.commit()
+        finally:
+            self._conn.close()
+            del self._conn
+
+    def _cursor(self) -> sqlite3.Connection:
+        conn = getattr(self, "_conn", None)
+        if conn is None:
+            raise RuntimeError("Use `async with repo.session():` before calling repository methods")
+        return conn
+
+    def _record(self, device_id: UUID) -> Record | None:
+        """The stored record for an in-scope device, or None."""
+        if self.integration is None:
+            row = self._cursor().execute("SELECT data FROM devices WHERE uuid = ?", (str(device_id),)).fetchone()
+        else:
+            row = (
+                self._cursor()
+                .execute(
+                    "SELECT data FROM devices WHERE uuid = ? AND integration = ?",
+                    (str(device_id), self.integration),
+                )
+                .fetchone()
+            )
+        return json.loads(row["data"]) if row else None
+
+    def _write(self, record: Record) -> None:
+        self._cursor().execute(
+            "INSERT INTO devices (uuid, integration, data) VALUES (?, ?, ?) "
+            "ON CONFLICT(uuid) DO UPDATE SET integration = excluded.integration, data = excluded.data",
+            (record["id"], record["integration"], json.dumps(record)),
+        )
+
+    async def get_all[T: Device](self, as_: type[T] = Device) -> list[T]:
+        if self.integration is None:
+            rows = self._cursor().execute("SELECT data FROM devices").fetchall()
+        else:
+            rows = (
+                self._cursor().execute("SELECT data FROM devices WHERE integration = ?", (self.integration,)).fetchall()
+            )
+        return [as_.model_validate(json.loads(row["data"])) for row in rows]
+
+    async def get[T: Device](self, device_id: UUID, as_: type[T] = Device) -> T | None:
+        record = self._record(device_id)
+        return as_.model_validate(record) if record else None
+
+    async def state[T: DeviceState](self, device_id: UUID, as_: type[T] = DeviceState) -> T | None:
+        record = self._record(device_id)
+        return as_.model_validate(record) if record else None
+
+    async def get_parameter_state(self, device_id: UUID, parameter_id: UUID) -> ParameterState | None:
+        record = self._record(device_id)
+        if not record:
+            return None
+        return next(
+            (ParameterState.model_validate(p) for p in record.get("parameters", []) if p["id"] == str(parameter_id)),
+            None,
+        )
+
+    async def save(self, device: Device | DeviceState, previous_id: UUID | None = None) -> None:
+        if self.integration is not None and device.integration != self.integration:
+            raise PermissionError(f"Device {device.id} is outside integration scope {self.integration!r}")
+        base: Record | None = None
+        if previous_id is not None and previous_id != device.id:
+            base = self._record(previous_id)
+            self._cursor().execute("DELETE FROM devices WHERE uuid = ?", (str(previous_id),))
+        self._write(merge(base if base is not None else self._record(device.id), device))
+
+    async def save_parameter_state(self, device_id: UUID, parameter_state: ParameterState) -> None:
+        record = self._record(device_id)
+        if not record:
+            raise KeyError(f"Unknown or out-of-scope device {device_id}")
+        updated = dump(parameter_state)
+        record["parameters"] = [
+            updated if p["id"] == str(parameter_state.id) else p for p in record.get("parameters", [])
+        ]
+        self._write(record)
+
+    # Hub-internal (not on DeviceRepositoryProtocol); still scope-checked.
+
+    async def update_parameter_visibility(self, parameter_id: UUID, visibility: ParameterVisibility) -> None:
+        for device in await self.get_all():
+            record = self._record(device.id)
+            if not record:
+                continue
+            if any(p["id"] == str(parameter_id) for p in record.get("parameters", [])):
+                for parameter in record["parameters"]:
+                    if parameter["id"] == str(parameter_id):
+                        parameter["visibility"] = visibility.value
+                self._write(record)
+                return
+
+    async def delete(self, device_id: UUID) -> None:
+        if self._record(device_id) is None:
+            return
+        self._cursor().execute("DELETE FROM devices WHERE uuid = ?", (str(device_id),))
+
+
+__all__ = ["SqliteDeviceRepository"]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/schemas/__init__.py
+================================================================================
+"""The MajorDom wire protocol — the device/parameter models shared between an integration
+and the Hub.
+
+Scope is deliberately the device domain: devices, parameters, pairing/discovery, commands,
+and parameter-change reports. Hub-only concerns (rooms, houses, users, the websocket
+protocol) and the automation event bus live in the Hub, not here.
+"""
+
+from .base import Base, NonEmptyStr, StrEnum, StrIdentifiable, UUIdentifable
+from .command import DeviceCommand
+from .device import (
+    CredentialsType,
+    CredentialsValue,
+    Device,
+    DeviceCreate,
+    DeviceDataModel,
+    DeviceInfo,
+    DevicePair,
+    DevicePatch,
+    DeviceState,
+    Discovery,
+    ProvidedCredentials,
+)
+from .event import DeviceParameterChange, Event
+from .parameter import (
+    Parameter,
+    ParameterDataType,
+    ParameterRole,
+    ParameterState,
+    ParameterUnit,
+    ParameterVisibility,
+    ParameterVisibilityPatch,
+)
+
+__all__ = [
+    # base
+    "Base",
+    "NonEmptyStr",
+    "StrEnum",
+    "StrIdentifiable",
+    "UUIdentifable",
+    # command / events
+    "DeviceCommand",
+    "Event",
+    "DeviceParameterChange",
+    # device
+    "CredentialsType",
+    "CredentialsValue",
+    "Device",
+    "DeviceCreate",
+    "DeviceDataModel",
+    "DeviceInfo",
+    "DevicePair",
+    "DevicePatch",
+    "DeviceState",
+    "Discovery",
+    "ProvidedCredentials",
+    # parameter
+    "Parameter",
+    "ParameterDataType",
+    "ParameterRole",
+    "ParameterState",
+    "ParameterUnit",
+    "ParameterVisibility",
+    "ParameterVisibilityPatch",
+]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/schemas/base.py
+================================================================================
+from __future__ import annotations
+
+from enum import Enum
+from typing import Any
+from uuid import UUID
+
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import GetJsonSchemaHandler
+from pydantic_core import core_schema as cs
+
+
+class StrEnum(str, Enum):
+    pass
+
+
+class Base(PydanticBaseModel):  # TODO: make sure all models use it
+    model_config = {
+        "from_attributes": True,
+        "validate_assignment": True,
+    }
+
+
+class NonEmptyStr(str):
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source: Any, _handler) -> cs.CoreSchema:
+        # Create a core schema of type string with a validator function
+        return cs.str_schema(
+            min_length=1,
+            strict=True,
+            # You can add custom validation here if needed, but min_length=1 ensures non-empty
+        )
+
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls,
+        core_schema: cs.CoreSchema,
+        handler: GetJsonSchemaHandler,
+    ) -> dict:
+        json_schema = handler(core_schema)
+        json_schema.update(
+            title="NonEmptyStr",
+            description="A non-empty string",
+            examples=["example text"],
+        )
+        return json_schema
+
+
+class UUIdentifable(Base):  # TODO: review
+    id: UUID
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+
+class StrIdentifiable(Base):
+    id: str
+
+
+================================================================================
+# FILE: majordom_integration_sdk/schemas/command.py
+================================================================================
+from typing import Any
+from uuid import UUID
+
+from .base import Base
+
+
+class DeviceCommand(Base):
+    device_id: UUID
+    parameter_id: UUID
+    value: Any
+
+
+================================================================================
+# FILE: majordom_integration_sdk/schemas/device.py
+================================================================================
+from __future__ import annotations
+
+from datetime import datetime
+from enum import Enum
+from uuid import UUID
+
+from pydantic import Field, SerializeAsAny
+
+from .base import Base, NonEmptyStr
+from .parameter import Parameter, ParameterState
+
+# TODO: split the file
+
+# Pairing
+
+
+class CredentialsType(str, Enum):
+    code = "code"  # e.g. 1234-123-1234 (matter) or 123-45-678 (homekit) # TODO: rename to pin
+    qr = "qr"  # raw qr data; TODO: decode to see what data is inside some protocols
+    secret = "secret"  # AES key like in esphome
+    none = "none"  # like yeelight classic LAN
+
+    def with_mask(self, code_mask: str) -> CredentialsType:
+        """
+        mask format: D as digit placeholder, other symbols remain unchanged e.g. dashes,
+        for example "DDD-DD-DDD" for "123-45-678"
+        """
+        self.code_mask = code_mask
+        return self
+
+
+# FUTURE:
+# @dataclass
+# class CredentialsCode:
+#     code: str
+
+# @dataclass
+# class CredentialsSecret:
+#     secret: str
+
+# Credentials = Union[CredentialsCode]
+
+type CredentialsValue = str
+
+
+class ProvidedCredentials(Base):
+    """What a pairing request actually supplies — paired with its type, so pairing can
+    validate it against Discovery.expected_credentials_options instead of trusting
+    whatever the integration guessed at discovery time."""
+
+    type: CredentialsType
+    value: CredentialsValue | None = None
+
+
+class Discovery(Base):
+    # technical
+    id: UUID
+    integration: NonEmptyStr
+    expected_credentials_options: list[CredentialsType]  # TODO: pass code mask and other things
+    expiration: datetime | None = None
+    # for UX
+    transport: NonEmptyStr
+    device_manufacturer: str | None
+    device_name: NonEmptyStr
+    device_category: str | None
+    device_icon: str | None  # TODO: icon system
+    last_error: str | None = None
+    # device_model_id: UUID | None = None # is it still relevant?
+    # TODO: room hint?
+    # TODO: integration_data
+
+    # TODO: handle devices with multiple transports or multiple integrations, show options, add priority, allow choosing
+
+
+# Device
+
+
+class DevicePatch(Base):
+    name: str
+    note: str = ""
+    icon: str | None = None
+    category: str | None = None
+    room_id: UUID
+    main_parameter: UUID | None = None
+
+
+class DeviceCreate(DevicePatch):
+    discovery_id: UUID  # | None = None
+    credentials: ProvidedCredentials | None = None
+
+
+class DevicePair(Base):
+    """Re-pair discovery to the existing device."""
+
+    device_id: UUID
+    discovery_id: UUID
+    credentials: ProvidedCredentials | None = None
+
+
+class DeviceInfo(DevicePatch):
+    id: UUID  # NOTE: moved from DeviceCreate, check whether it's correct
+    transport: str
+    integration: str
+    manufacturer: str | None
+    # Manufacturer-provided, read-only description of the device (a model blurb / product name).
+    # Integrations set it when the protocol exposes one; the Hub never edits it. (User-editable
+    # free text is `note`, on DevicePatch.)
+    description: str | None = None
+    main_parameter: UUID | None = None  # for the tap action on the room view, toggle in most cases
+
+    last_seen: datetime | None = None
+    available: bool = False
+    last_error: str | None = None
+    # model_id: UUID | None = None
+    # model: DeviceModel - is it needed here?
+    # merlin24: DeviceMerlin24 | None # DEPRECATED
+
+
+class Device(DeviceInfo):  # TODO: review models
+    integration_data: SerializeAsAny[dict | Base] = Field(default_factory=Base)
+
+
+class DeviceDataModel(DeviceInfo):
+    parameters: list[Parameter]
+
+
+class DeviceState(DeviceInfo):
+    parameters: list[ParameterState]
+
+    @property
+    def parameters_dict(self):
+        return {param.id: param for param in self.parameters}
+
+    def can_set_main_parameter(self, parameter_id: UUID | None) -> bool:
+        """Whether `parameter_id` may be this device's main (one-tap) parameter: clearing it
+        (None) is always allowed, otherwise it must be one of this device's parameters and
+        satisfy ParameterState.can_be_main_parameter."""
+        if parameter_id is None:
+            return True
+        parameter = self.parameters_dict.get(parameter_id)
+        return parameter is not None and parameter.can_be_main_parameter
+
+
+# Device Model TODO: review usage;
+# Current idea is to store more metadata that can't be accessed from the device itself,
+# for example, manufacturer's website, preview picture, 3d model, specs, etc
+
+# class DeviceModelInfo(Base):
+#     id: UUID
+#     name: NonEmptyStr
+#     transports: list[str]
+#     integration: NonEmptyStr
+#     manufacturer: str | None
+#     category: str | None
+#     icon: str | None
+#     is_custom: bool = False # TODO: DEPRECATE?
+#     # picture: str | None # TODO: resolve
+
+# class DeviceModel(DeviceModelInfo):
+#     parameters: list[Parameter]
+
+
+================================================================================
+# FILE: majordom_integration_sdk/schemas/event.py
+================================================================================
+from typing import Any
+from uuid import UUID
+
+from .base import Base
+
+
+class Event(Base):
+    """Base class for device-domain events a controller reports to the Hub.
+
+    Delivered through :meth:`ControllerOutput.controller_did_receive_events`. A parameter
+    change is the first concrete kind; more (button presses, device online/offline, …) can
+    extend this without changing the callback. Kept device-domain and distinct from the
+    Hub's automation event bus, which wraps these on its side.
+    """
+
+
+class DeviceParameterChange(Event):
+    """A device reported that one of its parameters changed to a new value.
+
+    Mirrors :class:`DeviceCommand`'s shape (``device_id``, ``parameter_id``, ``value``) but
+    flows the other direction — device → Hub.
+    """
+
+    device_id: UUID
+    parameter_id: UUID
+    value: Any
+
+
+================================================================================
+# FILE: majordom_integration_sdk/schemas/notification.py
+================================================================================
+from .base import Base, StrEnum
+
+
+class NotificationType(StrEnum):
+    """The callout style the app renders the notification with."""
+
+    info = "info"
+    warning = "warning"
+    error = "error"
+
+
+class NotificationPriority(StrEnum):
+    """How insistently the notification is delivered (maps to the OS interruption levels)."""
+
+    silent = "silent"  # appears in the list, no alert
+    normal = "normal"  # default banner
+    time_sensitive = "time_sensitive"  # breaks through focus/quiet modes
+    urgent = "urgent"  # demands attention
+
+
+class Notification(Base):
+    """A general user-facing message an integration surfaces to the user as a floating tile in the
+    app. Distinct from ``controller_did_encounter_error`` (which is specifically for integration
+    failures/health) — use this for anything informational or advisory the user should see.
+
+    ``ttl`` is how many seconds the tile stays before auto-dismissing; ``None`` keeps it until the
+    user dismisses it.
+    """
+
+    message: str
+    type: NotificationType = NotificationType.info
+    priority: NotificationPriority = NotificationPriority.normal
+    ttl: int | None = None
+
+
+================================================================================
+# FILE: majordom_integration_sdk/schemas/parameter.py
+================================================================================
+from collections.abc import Sequence
+from typing import Any
+from uuid import UUID
+
+from pydantic import field_validator
+
+from .base import Base, StrEnum, UUIdentifable
+
+# TODO: consider adding clusters / groups / endpoints to the device model to group parameters like in zigbee
+
+# OLD (Merlin-alpha):
+# class ParameterDataType(StrEnum):
+#     integer = "integer"  # uint8
+#     decimal = "decimal"  # uint8 to be casted to [0...1] decimal range
+#     bool = "bool"        # one-bit integer
+#     enum = "enum"        # uint8 with string_representation
+#     string = "string"    # string
+# class ParameterUnit(StrEnum):
+#     plain = "plain"                # any
+#     humidity = "humidity"          # decimal;
+#     temperature_c = "temperature_c" # float32;
+#     color_temperature = "color_temperature"  # Kelvin, decimal; 0.5 is white
+#     rgb = "rgb"                    # hue wheel angle, decimal;
+#     volume = "volume"              # decimal;
+#     button = "button"              # None, just a button
+#     timeinterval = "timeinterval"  # seconds, int32;
+
+
+class ParameterDataType(StrEnum):
+    none = "none"  # e.g. button
+    # numeric
+    bool = "bool"
+    integer = "integer"
+    decimal = "decimal"  # python float
+    enum = "enum"  # integer with string_representation
+    # data
+    string = "string"
+    struct = "struct"  # multi-field object for things like Metter command arguments or just complex Parameters; Value format: {<child Parameter id>:<value>}
+    data = "data"  # freeform binary data, base64 encoded at high level, for documents and extensions' internal usage
+    # homekit also has array and dict
+    # can be extended if needed
+
+
+class ParameterUnit(StrEnum):
+    plain = "plain"  # raw data type
+    percentage = "percentage"
+    # time
+    second = "second"
+    hertz = "hertz"
+    # kinematic
+    kilogram = "kilogram"
+    arcdegree = "arcdegree"
+    meters = "meters"
+    mps = "mps"  # meters per second, speed
+    mps2 = "mps2"  # meters per second squared, acceleration
+    m3h = "m3h"  # cubic meters per hour, volumetric flow
+    rpm = "rpm"  # revolutions per minute
+    newton = "newton"  # force
+    joule = "joule"  # energy
+    kwh = "kwh"  # kilowatt-hour, energy (metering display unit)
+    watt = "watt"  # power
+    # temperature
+    celsius = "celsius"
+    kelvin = "kelvin"
+    mired = "mired"  # reciprocal megakelvin, color temperature
+    # electricity
+    volt = "volt"
+    ampere = "ampere"
+    # light
+    # check if lumen or candela are needed
+    lux = "lux"
+    # rgb = "rgb" # hex str; UPD: homekit implements color as separate simple HSV parameters w/o adding complex data structs
+    # air
+    pascal = "pascal"
+    ppm = "ppm"  # parts per million, air quality
+    ugm3 = "ugm3"  # micrograms per cubic meter, particulate matter (PM2.5/PM10)
+    # informatics
+    bytes = "bytes"  # data size
+    bps = "bps"  # bytes per second, data rate
+    json = "json"  # freeform json with code snippet display
+    document = "document"  # upload/download files
+
+
+class ParameterRole(StrEnum):
+    sensor = "sensor"  # get-only
+    control = "control"  # get-set
+    event = "event"
+
+
+class ParameterVisibility(StrEnum):
+    user = "user"  # main, everyday interaction, device screen widgets (on/off, brightness, volume)
+    setting = "setting"  # user-configurable but behind am extra "settings"/"advanced" tap: configured once and rarely touched again; or diagnostic readings (RSSI, firmware version)
+    system = "system"  # hidden under-the-hood wirings; not visible to the user
+
+
+def next_main_parameter_value(
+    current: int | float | str | bool | None,
+    cycle: Sequence[int | float | str] | None,
+) -> int | float | str | None:
+    """The value a one-tap (cycle/toggle) main parameter should send next.
+
+    ``cycle`` is the ordered set of values to rotate through — the parameter's ``default_value``
+    values (a set), or its ``valid_values`` keys when no ``default_value`` is set. A single-element
+    cycle is a "set to this value" button. Returns the element after ``current`` (wrapping), or the
+    first element when ``current`` isn't in the set (or is unknown). ``None`` for an empty cycle.
+    """
+    if not cycle:
+        return None
+    if len(cycle) == 1 or current not in cycle:
+        return cycle[0]
+    return cycle[(cycle.index(current) + 1) % len(cycle)]
+
+
+def _sorted_values(values) -> list:
+    """Cycle values in a deterministic order — numeric where the values are numbers. (Accepts a
+    ``valid_values`` dict, iterating its keys, or any iterable of values, e.g. a decoded set.)"""
+    try:
+        return sorted(values, key=float)
+    except (TypeError, ValueError):
+        return list(values)
+
+
+class Parameter[V](UUIdentifable):
+    """A device parameter. Generic over its value type ``V`` — ``value``, the keys of
+    ``valid_values``, and ``default_value`` all share ``V`` (an ``int`` parameter has ``int``
+    labels and an ``int`` default, a ``str`` parameter has ``str`` throughout, etc.)."""
+
+    id: UUID
+    name: str
+    # Manufacturer-provided, read-only description (for display / tooltips). Integrations set it
+    # when the protocol exposes one; the Hub never edits it.
+    description: str | None = None
+    # User-editable free-text note, stored MajorDom-side only (never sent to the device).
+    note: str | None = None
+    data_type: ParameterDataType
+    unit: ParameterUnit = ParameterUnit.plain  # TODO: consider making str in case of an unsupported value (e.g. version mismatch). Alternativelely, consider adding a case like unknown<foobar>
+    role: ParameterRole
+    visibility: ParameterVisibility  # mainly for UX
+
+    # value constraints (value for nubmers, char length for string, byte length for data)
+    min_value: int | float | None = None
+    max_value: int | float | None = None
+    min_step: int | float | None = None
+
+    # Allowed values -> display labels (an enum's members, or labelled presets). Keys are the same
+    # type V as `value`. Mostly for enums; numeric parameters usually use min/max/step instead.
+    valid_values: dict[V, str] | None = None
+    fields: list[Any] | None = None  # sub-parameters (Parameter instances) for data_type=struct
+    # Integrations that expose commands with arguments (e.g. Matter) model the command itself as a
+    # Parameter and each of its arguments as a nested Parameter in `fields` — command=parameter, arg=sub-parameter.
+
+    # The main-parameter tap value(s): one value is a button, a set is a cycle (2 = toggle,
+    # 3+ = cycle). Same value type V as `value`. See `main_cycle` / `can_be_main_parameter`.
+    default_value: set[V] | V | None = None
+
+    integration_data: Any
+
+    @field_validator("valid_values", mode="before")
+    @classmethod
+    def _coerce_valid_values_keys(cls, v, info):
+        """Coerce `valid_values` keys to the parameter's value type. JSON object keys are always
+        strings, so a stored ``{0: "off"}`` (int enum) comes back as ``{"0": "off"}`` — without a
+        concrete ``V`` (heterogeneous parameter lists are used unparametrized) Pydantic can't
+        recover the type. Drive it off ``data_type`` instead, so keys match ``value``."""
+        if not isinstance(v, dict):
+            return v
+        coerce = {
+            ParameterDataType.integer: int,
+            ParameterDataType.enum: int,
+            ParameterDataType.decimal: float,
+            ParameterDataType.bool: bool,
+        }.get(info.data.get("data_type"))
+        if coerce is None:
+            return v
+        out = {}
+        for key, label in v.items():
+            try:
+                out[coerce(key)] = label
+            except (TypeError, ValueError):
+                out[key] = label
+        return out
+
+    @property
+    def can_be_main_parameter(self) -> bool:
+        """Whether this parameter can be a device's one-tap ``main_parameter`` (the room-tile
+        shortcut). Requires ``user`` visibility — the main action is the most exposed control of
+        all, so a settings/system parameter is never a candidate. Beyond that, eligible when a
+        tap can do something meaningful:
+
+        - ``bool`` — a toggle (each tap flips it); ``none`` — a button (fires the command);
+        - ``valid_values`` set (an enum) — a **cycle** through its values;
+        - ``default_value`` set — one value is a button, a set is a cycle (2 = toggle, 3+ = cycle)
+          for ANY data type (see :func:`next_main_parameter_value`).
+        """
+        return self.visibility == ParameterVisibility.user and bool(
+            self.data_type in (ParameterDataType.bool, ParameterDataType.none)
+            or self.default_value is not None
+            or self.valid_values
+        )
+
+    @property
+    def main_cycle(self) -> list | None:
+        """The ordered values a main-parameter tap cycles through, or ``None`` when a tap isn't
+        a cycle (a ``none`` command button, or nothing to derive from). Derivation, first match:
+
+        - ``default_value`` -> its values (a set is a cycle; a single value is a one-element button);
+        - ``valid_values`` -> its keys;
+        - ``bool`` -> ``[False, True]`` (a toggle).
+
+        Values are ordered numerically where possible, so e.g. off(0) -> on(4) -> wraps.
+        """
+        if self.default_value is not None:
+            if isinstance(self.default_value, set):
+                return _sorted_values(self.default_value)
+            return [self.default_value]
+        if self.valid_values:
+            return _sorted_values(self.valid_values)
+        if self.data_type == ParameterDataType.bool:
+            return [False, True]
+        return None
+
+    # @classmethod
+    # def from_orm(cls, obj):
+    #     if isinstance(obj, DeviceModelParameter):
+    #         return super().model_validate(obj.parameter)
+    #     else:
+    #         return super().model_validate(obj)
+
+
+class ParameterVisibilityPatch(Base):
+    visibility: ParameterVisibility
+
+
+class ParameterState[V](Parameter[V]):
+    """A parameter plus its current ``value`` (same type ``V`` as the parameter's labels/default).
+
+    Values are pythonic and serialize natively (Pydantic handles JSON — a ``set`` default_value
+    becomes an array, etc.). The Hub persists them as JSON; integrations set ``value`` directly.
+    """
+
+    value: V | None = None
+    # device_id: UUID
+
+
+================================================================================
+# FILE: majordom_integration_sdk/spec_drift.py
+================================================================================
+"""Source-agnostic spec-drift diffing — the shared engine behind the MVD canary and the zha /
+matter-HA harvest refreshers.
+
+A "spec" here is any ``dict`` keyed by an identity (e.g. ``(cluster_id, attribute_id)``) whose
+values are the harvested judgment. :func:`diff_specs` compares a freshly-produced spec against the
+committed baseline and tiers every change by risk, mirroring how Dependabot tiers a version bump:
+
+    ADD          a key that didn't exist          — low risk (reveals a previously-uncurated item)
+    REMOVE       a key that disappeared            — medium (something we surfaced may vanish)
+    RECLASSIFY   an existing key's value changed   — HIGH (changes what current users already see)
+
+CI runs the harvester, calls :func:`diff_specs` against the vendored artifact, and opens a
+Dependabot-style PR when anything changed — highlighting RECLASSIFY at the top for human review.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Hashable, Mapping
+from dataclasses import dataclass
+from typing import Any
+
+
+# Generic over the key type — `Mapping` is invariant in its key, so a plain
+# `Mapping[Hashable, Any]` would reject perfectly valid concrete specs like
+# `dict[tuple[int, int], str]`.
+@dataclass(frozen=True)
+class DriftReport[K: Hashable]:
+    added: dict[K, Any]
+    removed: dict[K, Any]
+    reclassified: dict[K, tuple[Any, Any]]  # key -> (old, new)
+
+    @property
+    def is_empty(self) -> bool:
+        return not (self.added or self.removed or self.reclassified)
+
+    @property
+    def has_high_risk(self) -> bool:
+        """RECLASSIFY changes an existing item's judgment — the only tier that can silently alter
+        what current users already see, so it always warrants human review."""
+        return bool(self.reclassified)
+
+    def render(self, *, source: str = "spec", key_label: Callable[[K], str] | None = None) -> str:
+        """Render a human-readable drift summary.
+
+        ``key_label`` optionally resolves a key to a human name (e.g. a raw ``(cluster_id,
+        attribute_id)`` -> ``"Chime.SelectedChime"``) so a reviewer reading the PR body sees what
+        actually changed, not just numeric ids. It's kept out of the engine because the mapping is
+        integration-specific (chip bindings for matter, zigpy for zha); each canary passes its own.
+        A resolver that raises or returns falsy for a key falls back to the bare id.
+        """
+
+        def tag(key: K) -> str:
+            label = None
+            if key_label is not None:
+                try:
+                    label = key_label(key)
+                except Exception:  # noqa: BLE001 - a name lookup must never break the drift report
+                    label = None
+            return f"{label}  {key!r}" if label else f"{key!r}"
+
+        if self.is_empty:
+            return f"[{source}] no drift"
+        lines = [
+            f"[{source}] drift: +{len(self.added)} added  -{len(self.removed)} removed  "
+            f"~{len(self.reclassified)} reclassified"
+        ]
+        # RECLASSIFY first — it's the high-risk tier.
+        for key, (old, new) in sorted(self.reclassified.items(), key=lambda kv: repr(kv[0])):
+            lines.append(f"  ~ RECLASSIFY {tag(key)}: {old!r} -> {new!r}")
+        for key, val in sorted(self.added.items(), key=lambda kv: repr(kv[0])):
+            lines.append(f"  + ADD        {tag(key)}: {val!r}")
+        for key, val in sorted(self.removed.items(), key=lambda kv: repr(kv[0])):
+            lines.append(f"  - REMOVE     {tag(key)}: {val!r}")
+        return "\n".join(lines)
+
+
+def diff_specs[K: Hashable](current: Mapping[K, Any], baseline: Mapping[K, Any]) -> DriftReport[K]:
+    """Diff a freshly-harvested ``current`` spec against the committed ``baseline``."""
+    added = {k: current[k] for k in current if k not in baseline}
+    removed = {k: baseline[k] for k in baseline if k not in current}
+    reclassified = {
+        k: (baseline[k], current[k]) for k in current if k in baseline and current[k] != baseline[k]
+    }
+    return DriftReport(added=added, removed=removed, reclassified=reclassified)
+
+
+================================================================================
+# FILE: majordom_integration_sdk/testing/__init__.py
+================================================================================
+"""Shared test doubles for integration test suites.
+
+Both the Hub's own integration tests and third-party ``integration-*`` packages import these
+instead of reinventing them, so every integration is exercised through the same harness:
+
+- :class:`RecordingControllerOutput` — a spy implementing every ``ControllerOutput``
+  callback, capturing what a controller reports back to the Hub.
+- Offline discovery-service doubles (no radios/sockets touched).
+- :func:`build_test_dependencies` — assembles an ``AbstractController.Dependencies`` wired
+  with the recording output, an in-memory device repository, temp-dir storage, and the
+  discovery doubles, so a test can drive a controller exactly as the Hub would.
+"""
+
+from __future__ import annotations
+
+import tempfile
+from collections.abc import Iterable
+from pathlib import Path
+from typing import TYPE_CHECKING
+from uuid import UUID
+
+from majordom_integration_sdk.controller.abstract_controller import AbstractController, ControllerOutput
+from majordom_integration_sdk.discovery.ble_discovery import BLEDiscoveryService
+from majordom_integration_sdk.discovery.ssdp_discovery import SSDPDiscoveryService
+from majordom_integration_sdk.discovery.zeroconf_discovery import ZeroconfDiscoveryService
+from majordom_integration_sdk.repository.memory import DeviceRepositoryMemory
+from majordom_integration_sdk.schemas.device import Discovery
+from majordom_integration_sdk.schemas.event import Event
+from majordom_integration_sdk.schemas.notification import Notification
+
+if TYPE_CHECKING:
+    from majordom_integration_sdk.controller.abstract_controller import AbstractController as _Controller
+
+
+class RecordingControllerOutput(ControllerOutput):
+    """Captures every callback a controller makes, for assertions in tests."""
+
+    def __init__(self):
+        self.received_discoveries: list[Discovery] = []
+        self.updated_discoveries: list[Discovery] = []
+        self.lost_discoveries: list[UUID] = []
+        self.connected_devices: list[UUID] = []
+        self.lost_devices: list[UUID] = []
+        self.events: list[Event] = []
+        self.errors: list[tuple[str, bool]] = []  # (message, still_running)
+        self.notifications: list[Notification] = []
+
+    async def controller_did_receive_discovery(self, controller: _Controller, discovery: Discovery):
+        self.received_discoveries.append(discovery)
+
+    async def controller_did_update_discovery(self, controller: _Controller, discovery: Discovery):
+        self.updated_discoveries.append(discovery)
+
+    async def controller_did_lose_discovery(self, controller: _Controller, discovery_id: UUID):
+        self.lost_discoveries.append(discovery_id)
+
+    async def controller_did_connect_device(self, controller: _Controller, device_id: UUID):
+        self.connected_devices.append(device_id)
+
+    async def controller_did_lose_device(self, controller: _Controller, device_id: UUID):
+        self.lost_devices.append(device_id)
+
+    async def controller_did_receive_events(self, controller: _Controller, events: Iterable[Event]):
+        self.events.extend(events)
+
+    async def controller_did_encounter_error(self, controller: _Controller, message: str, still_running: bool):
+        self.errors.append((message, still_running))
+
+    async def controller_did_emit_notification(self, controller: _Controller, notification: Notification):
+        self.notifications.append(notification)
+
+
+class FakeZeroconfDiscoveryService(ZeroconfDiscoveryService):
+    """Real registration bookkeeping, but ``start``/``stop`` touch no network."""
+
+    async def start(self):
+        pass
+
+    async def stop(self):
+        pass
+
+
+class FakeSSDPDiscoveryService(SSDPDiscoveryService):
+    async def start(self):
+        pass
+
+    async def stop(self):
+        pass
+
+
+class FakeBLEDiscoveryService(BLEDiscoveryService):
+    async def start(self):
+        pass
+
+    async def stop(self):
+        pass
+
+
+def build_test_dependencies(
+    documents_folder: Path | None = None,
+    integration: str | None = None,
+) -> AbstractController.Dependencies:
+    """Assemble controller ``Dependencies`` wired entirely with offline test doubles.
+
+    Pass ``documents_folder`` to control where the controller writes files; a fresh temp dir
+    is used otherwise. Pass ``integration`` to scope the in-memory repository to that
+    integration's devices (access-control guard), mirroring how the Hub injects it. The
+    recording output is reachable as ``deps.output``.
+    """
+    repository = DeviceRepositoryMemory(integration=integration)
+    folder = documents_folder or Path(tempfile.mkdtemp(prefix="majordom-sdk-test-"))
+    folder.mkdir(parents=True, exist_ok=True)
+    return AbstractController.Dependencies(
+        output=RecordingControllerOutput(),
+        make_device_repository=repository.session,
+        documents_folder=folder,
+        zeroconf_discovery_service=FakeZeroconfDiscoveryService(),
+        ssdp_discovery_service=FakeSSDPDiscoveryService(),
+        ble_discovery_service=FakeBLEDiscoveryService(),
+    )
+
+
+__all__ = [
+    "RecordingControllerOutput",
+    "FakeZeroconfDiscoveryService",
+    "FakeSSDPDiscoveryService",
+    "FakeBLEDiscoveryService",
+    "build_test_dependencies",
+]
+
+
+================================================================================
+# FILE: pyproject.toml
+================================================================================
+[project]
+name = "majordom-integration-sdk"
+version = "0.1.6"
+description = "Models, protocols, and tooling for building MajorDom integrations."
+authors = [{ name = "Mark Parker", email = "mark@parker-programs.com" }]
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+keywords = ["majordom", "smart-home", "home-automation", "iot", "integration", "sdk", "device-controller", "matter", "zigbee", "homekit"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Home Automation",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic (>=2.0,<3.0)",
+    "python-slugify",
+    "zeroconf (>=0.130)",
+    "bleak (>=0.22)",
+]
+
+[project.optional-dependencies]
+# Interactive standalone runner: `majordom_integration_sdk.dev.run_cli`. Kept out of the base
+# install (the SDK is a runtime dep of every integration) — `pip install "majordom-integration-sdk[cli]"`.
+cli = ["typer-shell (>=0.2)", "rich (>=13)"]
+
+[project.urls]
+Homepage = "https://majordom.io"
+Documentation = "https://docs.majordom.io/device-integration"
+Repository = "https://github.com/MajorDom-Systems/integration-sdk"
+Issues = "https://github.com/MajorDom-Systems/integration-sdk/issues"
+
+[dependency-groups]
+dev = [
+    "poethepoet (>=0.36.0,<1.0.0)",
+    "ty",             # type checker; swap for mypy/pyright by editing the `check` task below
+    "ruff",
+    "pip-audit",      # dependency vuln scan — gates release (not everyday CI); run locally with `poetry run pip-audit`
+    "pytest>=9.0.3",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-timeout",
+    "pytest-repeat",
+    "pytest-benchmark",
+    "pytest-profiling",
+    "pytest-resource-usage",
+    "coverage",
+    "pympler",        # object memory introspection, leak hunting
+    "psutil",         # process/system resource usage
+    "faker",          # realistic fake data for tests
+    "typer-shell",    # the `cli` extra — installed in dev so ty/ruff check dev/cli.py
+    "rich",
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+packages = [{ include = "majordom_integration_sdk" }]
+
+# schemas/ and discovery/ are lifted verbatim from the Hub, which type-checks them under
+# mypy (they carry mypy-style `# type: ignore` comments ty doesn't read). Exempt just those
+# rules for just those paths — all SDK-native code stays fully checked. Re-home in the Hub.
+[[tool.ty.overrides]]
+include = ["majordom_integration_sdk/schemas/**", "majordom_integration_sdk/discovery/**"]
+
+[tool.ty.overrides.rules]
+invalid-return-type = "ignore"
+invalid-assignment = "ignore"
+invalid-argument-type = "ignore"
+unsupported-base = "ignore"
+
+# The repository's typed reads use the `as_: type[T] = Device` idiom (same as the Hub's own
+# repository) so callers get `get(id, as_=MyDevice) -> MyDevice` while the bare `get(id)`
+# still returns a Device. ty rejects a concrete default for a TypeVar-typed parameter; the
+# alternative is @overload on every read across the protocol and both implementations.
+[[tool.ty.overrides]]
+include = ["majordom_integration_sdk/repository/**"]
+
+[tool.ty.overrides.rules]
+invalid-parameter-default = "ignore"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+filterwarnings = ["once"]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I",   # isort
+]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = true
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["E402"]
+# schemas/ and discovery/ are lifted verbatim from the Hub and maintained under its lint
+# rules; abstract_controller.py keeps the Hub's long-form docstrings. Exempt only the
+# house-style rules for these paths — SDK-native code stays fully linted.
+"majordom_integration_sdk/schemas/*" = ["E501", "UP042"]
+"majordom_integration_sdk/discovery/*" = ["E501", "SIM102", "SIM105"]
+"majordom_integration_sdk/controller/abstract_controller.py" = ["E501"]
+
+[tool.poe.tasks.install]
+shell = """
+poetry install
+echo '#!/bin/sh\npoetry run poe check' > .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+echo "Pre-commit hook installed."
+"""
+
+[tool.poe.tasks.check]
+shell = """
+code=0
+
+echo "\nRunning ruff lint:"
+poetry run ruff check --fix || code=1
+
+echo "\nRunning ruff format:"
+poetry run ruff format || code=1
+
+echo "\nRunning ty:"
+poetry run ty check || code=1
+
+echo "\nRunning pytest:"
+poetry run pytest --cov=majordom_integration_sdk --cov-report=xml || code=1
+
+echo "\nRunning poetry build:"
+poetry build || code=1
+
+echo "\nRunning poetry check:"
+poetry check || code=1
+
+${ci:+git diff --exit-code}
+
+exit $code
+"""
+args = [{ name = "ci", type = "boolean" }]
+
+
+================================================================================
+# FILE: tests/conftest.py
+================================================================================
+"""Shared fixtures + factories for the SDK's own test suite."""
+
+from uuid import UUID, uuid4
+
+import pytest
+
+from majordom_integration_sdk.schemas.device import DeviceState
+from majordom_integration_sdk.schemas.parameter import (
+    ParameterDataType,
+    ParameterRole,
+    ParameterState,
+    ParameterVisibility,
+)
+
+
+def make_parameter_state(
+    *,
+    id: UUID | None = None,
+    name: str = "Power",
+    data_type: ParameterDataType = ParameterDataType.bool,
+    role: ParameterRole = ParameterRole.control,
+    visibility: ParameterVisibility = ParameterVisibility.user,
+) -> ParameterState:
+    state = ParameterState(
+        id=id or uuid4(),
+        name=name,
+        data_type=data_type,
+        role=role,
+        visibility=visibility,
+        integration_data=None,
+    )
+    if data_type is ParameterDataType.bool:
+        state.value = True
+    return state
+
+
+def make_device_state(
+    *,
+    id: UUID | None = None,
+    integration: str = "example",
+    name: str = "Lamp",
+    parameters: list[ParameterState] | None = None,
+) -> DeviceState:
+    return DeviceState(
+        id=id or uuid4(),
+        name=name,
+        room_id=uuid4(),
+        transport="wifi",
+        integration=integration,
+        manufacturer="ACME",
+        parameters=parameters if parameters is not None else [make_parameter_state()],
+    )
+
+
+@pytest.fixture
+def device_state() -> DeviceState:
+    return make_device_state()
+
+
+================================================================================
+# FILE: tests/test_cli.py
+================================================================================
+"""Exercises the interactive CLI's controller-driving core (`_CliSession`) against a fake
+controller wired with the offline test dependencies — no REPL, no network. The typer-shell
+wiring on top is a thin layer over these same calls."""
+
+from __future__ import annotations
+
+from uuid import UUID, uuid4
+
+import pytest
+
+from majordom_integration_sdk.controller import AbstractController
+from majordom_integration_sdk.dev.cli import _CliControllerOutput, _CliSession, _print
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import (
+    CredentialsType,
+    Device,
+    DeviceState,
+    Discovery,
+    ProvidedCredentials,
+)
+from majordom_integration_sdk.schemas.event import DeviceParameterChange
+from majordom_integration_sdk.schemas.parameter import (
+    ParameterDataType,
+    ParameterRole,
+    ParameterState,
+    ParameterVisibility,
+)
+from majordom_integration_sdk.testing import build_test_dependencies
+
+INTEGRATION = "Fake"
+
+
+def _param(role: ParameterRole = ParameterRole.control) -> ParameterState:
+    return ParameterState(
+        id=uuid4(),
+        name="On",
+        data_type=ParameterDataType.bool,
+        role=role,
+        visibility=ParameterVisibility.user,
+        integration_data=None,
+    )
+
+
+class FakeController(AbstractController):
+    """Minimal controller: pairing persists a device with one control parameter; every other
+    method just records that it was called with the resolved object."""
+
+    name = INTEGRATION
+
+    def __init__(self, dependencies, *, param_role: ParameterRole = ParameterRole.control):
+        super().__init__(dependencies)
+        self._discoveries: dict[UUID, Discovery] = {}
+        self._param_role = param_role
+        self.paired: list[UUID] = []
+        self.sent: list[tuple] = []
+        self.identified: list[UUID] = []
+        self.fetched: list[UUID] = []
+        self.unpaired: list[UUID] = []
+
+    @property
+    def discoveries(self) -> dict[UUID, Discovery]:
+        return self._discoveries
+
+    async def start(self):
+        pass
+
+    async def stop(self):
+        pass
+
+    async def pair_device(self, discovery: Discovery, credentials: ProvidedCredentials | None):
+        device_id = uuid4()
+        state = DeviceState(
+            id=device_id,
+            name=discovery.device_name,
+            room_id=uuid4(),
+            transport=discovery.transport,
+            integration=self.name,
+            manufacturer=None,
+            parameters=[_param(self._param_role)],
+        )
+        async with self.dependencies.make_device_repository() as repo:
+            await repo.save(state)
+        self.paired.append(device_id)
+        return device_id
+
+    async def unpair(self, device: Device):
+        self.unpaired.append(device.id)
+
+    async def identify(self, device: Device):
+        self.identified.append(device.id)
+
+    async def fetch(self, device: Device):
+        self.fetched.append(device.id)
+
+    async def send_command(self, command: DeviceCommand, device: Device, parameter):
+        self.sent.append((command.device_id, command.parameter_id, command.value))
+
+
+def _discovery() -> Discovery:
+    return Discovery(
+        id=uuid4(),
+        integration=INTEGRATION,
+        expected_credentials_options=[CredentialsType.none],
+        transport="test",
+        device_manufacturer=None,
+        device_name="Bulb",
+        device_category=None,
+        device_icon=None,
+    )
+
+
+@pytest.fixture
+def session_and_controller():
+    deps = build_test_dependencies(integration=INTEGRATION)
+    controller = FakeController(deps)
+    return _CliSession(controller), controller
+
+
+async def test_pair_list_control_unpair_flow(session_and_controller):
+    session, controller = session_and_controller
+
+    discovery = _discovery()
+    controller.discoveries[discovery.id] = discovery
+
+    # pair -> persists a device
+    device_id = await session.pair(discovery.id, "none", "")
+    assert device_id in controller.paired
+
+    # devices -> lists it
+    devices = await session.list_devices()
+    assert [d.id for d in devices] == [device_id]
+
+    # device -> shows its (single control) parameter
+    state = await session.device_state(device_id)
+    assert state is not None
+    assert len(state.parameters) == 1
+    parameter = state.parameters[0]
+    assert parameter.role == ParameterRole.control
+
+    # control -> resolves device+parameter and reaches the controller
+    assert await session.control(device_id, parameter.id, True) == "Command sent"
+    assert controller.sent == [(device_id, parameter.id, True)]
+
+    # identify / fetch reach the controller with the resolved device
+    assert await session.identify(device_id) is True
+    assert await session.fetch(device_id) is True
+    assert controller.identified == [device_id]
+    assert controller.fetched == [device_id]
+
+    # unpair
+    assert await session.unpair(device_id) is True
+    assert controller.unpaired == [device_id]
+
+
+async def test_pair_unknown_discovery_returns_none(session_and_controller):
+    session, _ = session_and_controller
+    assert await session.pair(uuid4()) is None
+
+
+async def test_actions_on_missing_device(session_and_controller):
+    session, controller = session_and_controller
+    missing = uuid4()
+    assert (await session.control(missing, uuid4(), True)).startswith("No device")
+    assert await session.identify(missing) is False
+    assert await session.fetch(missing) is False
+    assert await session.unpair(missing) is False
+    assert controller.sent == controller.identified == []
+
+
+async def test_control_rejects_non_control_parameter():
+    deps = build_test_dependencies(integration=INTEGRATION)
+    controller = FakeController(deps, param_role=ParameterRole.sensor)
+    session = _CliSession(controller)
+
+    discovery = _discovery()
+    controller.discoveries[discovery.id] = discovery
+    device_id = await session.pair(discovery.id)
+    parameter = (await session.device_state(device_id)).parameters[0]
+
+    message = await session.control(device_id, parameter.id, True)
+    assert "not controllable" in message
+    assert controller.sent == []  # never reached the controller
+
+
+async def test_output_delegate_persists_event_values():
+    deps = build_test_dependencies(integration=INTEGRATION)
+    controller = FakeController(deps)
+    session = _CliSession(controller)
+
+    discovery = _discovery()
+    controller.discoveries[discovery.id] = discovery
+    device_id = await session.pair(discovery.id)
+    parameter = (await session.device_state(device_id)).parameters[0]
+
+    output = _CliControllerOutput(deps.make_device_repository)
+    await output.controller_did_receive_events(
+        controller, [DeviceParameterChange(device_id=device_id, parameter_id=parameter.id, value=True)]
+    )
+
+    async with deps.make_device_repository() as repo:
+        stored = await repo.get_parameter_state(device_id, parameter.id)
+    assert stored is not None
+    assert stored.value  # a (non-empty, encoded) value was written back by the event
+
+
+def test_prompt_safe_print_is_a_noop_safe_call(capsys):
+    # Not a TTY under pytest, so _print falls back to a plain print (no escape codes leaking).
+    _print("hello", "world")
+    out = capsys.readouterr().out
+    assert "hello" in out and "world" in out
+    assert "\x1b[" not in out  # no cursor-magic when stdout isn't a terminal
+
+
+def test_run_cli_is_lazily_exported():
+    from majordom_integration_sdk import dev
+
+    assert callable(dev.run_cli)
+
+
+def test_capturing_handler_buffers_then_dumps(capsys):
+    import logging
+
+    from majordom_integration_sdk.dev.cli import _CapturingHandler
+
+    handler = _CapturingHandler()
+    handler.setFormatter(logging.Formatter("%(levelname)s %(message)s"))
+    log = logging.getLogger("test.capture")
+    log.addHandler(handler)
+    log.setLevel(logging.DEBUG)
+    log.propagate = False
+
+    log.warning("chatty controller noise")
+
+    # buffered, not printed — the TUI stays clean during the session
+    assert capsys.readouterr().err == ""
+    assert len(handler.records) == 1
+
+    # dumped to stderr on exit for debugging
+    handler.dump()
+    err = capsys.readouterr().err
+    assert "chatty controller noise" in err
+    assert "captured logs" in err
+
+
+================================================================================
+# FILE: tests/test_controller.py
+================================================================================
+"""A minimal concrete controller exercises the framework end to end with test doubles."""
+
+from uuid import UUID
+
+from conftest import make_device_state
+
+from majordom_integration_sdk.controller import AbstractController
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import Device, Discovery, Parameter, ProvidedCredentials
+from majordom_integration_sdk.schemas.event import DeviceParameterChange
+from majordom_integration_sdk.testing import RecordingControllerOutput, build_test_dependencies
+
+
+class _MinimalController(AbstractController[Device, Parameter]):
+    name = "Example Protocol"
+
+    @property
+    def discoveries(self) -> dict[UUID, Discovery]:
+        return {}
+
+    async def start(self):
+        pass
+
+    async def stop(self):
+        pass
+
+    async def pair_device(self, discovery: Discovery, credentials: ProvidedCredentials | None):
+        pass
+
+    async def unpair(self, device: Device):
+        pass
+
+    async def identify(self, device: Device):
+        pass
+
+    async def fetch(self, device: Device):
+        pass
+
+    async def send_command(self, command: DeviceCommand, device: Device, parameter: Parameter):
+        pass
+
+
+def test_name_slug_and_uuid_helpers():
+    controller = _MinimalController(build_test_dependencies())
+    assert controller.name_slug == "example-protocol"
+    # Deterministic, namespaced, and hierarchical.
+    device_uuid = controller.device_uuid("abc")
+    assert controller.device_uuid("abc") == device_uuid
+    assert controller.parameter_uuid(device_uuid, "p1") != device_uuid
+
+
+def test_documents_folder_is_the_injected_path(tmp_path):
+    deps = build_test_dependencies(documents_folder=tmp_path)
+    controller = _MinimalController(deps)
+    assert controller.documents_folder == tmp_path
+    assert controller.documents_folder.exists()
+
+
+async def test_controller_can_use_injected_repository():
+    deps = build_test_dependencies()
+    controller = _MinimalController(deps)
+    device = make_device_state(integration=controller.name_slug)
+    async with controller.dependencies.make_device_repository() as repo:
+        await repo.save(device)
+        stored = await repo.state(device.id)
+        assert stored is not None and stored.id == device.id
+
+
+async def test_recording_output_captures_reports():
+    deps = build_test_dependencies()
+    controller = _MinimalController(deps)
+    output = deps.output
+    assert isinstance(output, RecordingControllerOutput)
+
+    device = make_device_state()
+    change = DeviceParameterChange(device_id=device.id, parameter_id=device.parameters[0].id, value=1)
+    await output.controller_did_connect_device(controller, device.id)
+    await output.controller_did_receive_events(controller, [change])
+
+    assert output.connected_devices == [device.id]
+    assert output.events == [change]
+
+
+def test_name_is_autoderived_from_class_name():
+    """`name` defaults to the class name (CamelCase → spaced), overridable with an explicit `name`."""
+
+    class HueController(AbstractController[Device, Parameter]):
+        pass
+
+    class ZigBeeController(AbstractController[Device, Parameter]):
+        name = "ZigBee"  # override the "Zig Bee" default
+
+    assert HueController.name == "Hue"
+    assert HueController.slug() == "hue"
+    assert ZigBeeController.name == "ZigBee"
+    assert ZigBeeController.slug() == "zigbee"
+
+
+================================================================================
+# FILE: tests/test_dev.py
+================================================================================
+"""Smoke tests for the standalone dev runner (``majordom_integration_sdk.dev``).
+
+``run_controller`` wires real, network-live discovery services and then blocks forever, so it is
+never run whole in CI. These tests cover the parts that can break without a device on the
+network: ``build_dependencies`` assembles a correctly-scoped dependency set, and
+``run_controller`` starts and stops a controller cleanly (discovery services faked out).
+"""
+
+from uuid import UUID
+
+from conftest import make_device_state
+
+import majordom_integration_sdk.dev as dev
+from majordom_integration_sdk.controller import AbstractController
+from majordom_integration_sdk.dev import LoggingControllerOutput, build_dependencies, run_controller
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import Device, Discovery, Parameter, ProvidedCredentials
+from majordom_integration_sdk.testing import (
+    FakeBLEDiscoveryService,
+    FakeSSDPDiscoveryService,
+    FakeZeroconfDiscoveryService,
+)
+
+
+class _RecordingController(AbstractController[Device, Parameter]):
+    """Minimal controller that records that it was started and stopped."""
+
+    name = "Dev Example"
+    instances: list["_RecordingController"] = []
+
+    def __init__(self, deps):
+        super().__init__(deps)
+        self.started = False
+        self.stopped = False
+        _RecordingController.instances.append(self)
+
+    @property
+    def discoveries(self) -> dict[UUID, Discovery]:
+        return {}
+
+    async def start(self):
+        self.started = True
+
+    async def stop(self):
+        self.stopped = True
+
+    async def pair_device(self, discovery: Discovery, credentials: ProvidedCredentials | None):
+        pass
+
+    async def unpair(self, device: Device):
+        pass
+
+    async def identify(self, device: Device):
+        pass
+
+    async def fetch(self, device: Device):
+        pass
+
+    async def send_command(self, command: DeviceCommand, device: Device, parameter: Parameter):
+        pass
+
+
+# --- build_dependencies -------------------------------------------------------------------
+
+
+def test_build_dependencies_defaults_to_memory_and_logging_output(tmp_path):
+    deps = build_dependencies(storage_root=tmp_path, integration="Example")
+
+    assert isinstance(deps.output, LoggingControllerOutput)
+    # Real (network-live) discovery services are wired for a standalone run.
+    assert isinstance(deps.zeroconf_discovery_service, dev.ZeroconfDiscoveryService)
+    assert isinstance(deps.ssdp_discovery_service, dev.SSDPDiscoveryService)
+    assert isinstance(deps.ble_discovery_service, dev.BLEDiscoveryService)
+
+
+def test_build_dependencies_scopes_documents_folder(tmp_path):
+    # slug wins over integration for the subfolder name; the folder is created eagerly.
+    deps = build_dependencies(storage_root=tmp_path, integration="Example", slug="example-protocol")
+    assert deps.documents_folder == tmp_path / "example-protocol"
+    assert deps.documents_folder.is_dir()
+
+
+def test_build_dependencies_honors_custom_output(tmp_path):
+    from majordom_integration_sdk.testing import RecordingControllerOutput
+
+    output = RecordingControllerOutput()
+    deps = build_dependencies(storage_root=tmp_path, output=output)
+    assert deps.output is output
+
+
+async def test_build_dependencies_memory_repository_round_trips(tmp_path):
+    deps = build_dependencies(storage_root=tmp_path, integration="example")
+    device = make_device_state(integration="example")
+    async with deps.make_device_repository() as repo:
+        await repo.save(device)
+        assert (await repo.state(device.id)) is not None
+
+
+async def test_build_dependencies_sqlite_persists_to_file(tmp_path):
+    db_path = tmp_path / "dev.sqlite"
+    device = make_device_state(integration="example")
+
+    deps = build_dependencies(storage_root=tmp_path, db_path=db_path, integration="example")
+    async with deps.make_device_repository() as repo:
+        await repo.save(device)
+
+    assert db_path.exists(), "a db_path should select the file-backed sqlite repository"
+    # A fresh dependency set over the same file sees the persisted device (survives 'restarts').
+    deps2 = build_dependencies(storage_root=tmp_path, db_path=db_path, integration="example")
+    async with deps2.make_device_repository() as repo:
+        assert (await repo.state(device.id)) is not None
+
+
+# --- run_controller -----------------------------------------------------------------------
+
+
+async def test_run_controller_starts_and_stops_cleanly(tmp_path, monkeypatch):
+    """run_controller should start the controller + discovery services and, on cancellation,
+    stop everything without raising. Discovery services are faked so nothing touches the network."""
+    import asyncio
+
+    monkeypatch.setattr(dev, "ZeroconfDiscoveryService", FakeZeroconfDiscoveryService)
+    monkeypatch.setattr(dev, "SSDPDiscoveryService", FakeSSDPDiscoveryService)
+    monkeypatch.setattr(dev, "BLEDiscoveryService", FakeBLEDiscoveryService)
+    _RecordingController.instances.clear()
+
+    task = asyncio.create_task(run_controller(_RecordingController, storage_root=tmp_path))
+
+    async with asyncio.timeout(5):
+        while not (_RecordingController.instances and _RecordingController.instances[-1].started):
+            await asyncio.sleep(0.01)
+
+    task.cancel()
+    await task  # run_controller swallows the cancellation after cleaning up
+
+    controller = _RecordingController.instances[-1]
+    assert controller.started and controller.stopped
+    assert task.done() and task.exception() is None
+
+
+================================================================================
+# FILE: tests/test_main_parameter.py
+================================================================================
+from uuid import uuid4
+
+from majordom_integration_sdk.schemas.parameter import (
+    Parameter,
+    ParameterDataType,
+    ParameterRole,
+    ParameterVisibility,
+    next_main_parameter_value,
+)
+
+
+def _p(*, data_type, valid_values=None, default_value=None):
+    return Parameter(
+        id=uuid4(),
+        name="p",
+        data_type=data_type,
+        role=ParameterRole.control,
+        visibility=ParameterVisibility.user,
+        valid_values=valid_values,
+        default_value=default_value,
+        integration_data=None,
+    )
+
+
+def test_cycle_toggles_between_two_values():
+    assert next_main_parameter_value(0, [0, 4]) == 4
+    assert next_main_parameter_value(4, [0, 4]) == 0
+
+
+def test_cycle_rotates_and_wraps():
+    assert next_main_parameter_value(1, [0, 1, 2]) == 2
+    assert next_main_parameter_value(2, [0, 1, 2]) == 0
+
+
+def test_single_value_cycle_is_a_button():
+    assert next_main_parameter_value(99, [3]) == 3  # always sets to 3 regardless of current
+
+
+def test_unknown_current_starts_at_first():
+    assert next_main_parameter_value(None, [0, 4]) == 0
+    assert next_main_parameter_value(7, [0, 4]) == 0
+
+
+def test_empty_cycle_returns_none():
+    assert next_main_parameter_value(0, []) is None
+    assert next_main_parameter_value(0, None) is None
+
+
+def test_enum_with_valid_values_can_be_main():
+    assert _p(data_type=ParameterDataType.enum, valid_values={0: "off", 4: "on"}).can_be_main_parameter
+
+
+def test_enum_without_valid_values_cannot_be_main():
+    assert not _p(data_type=ParameterDataType.enum).can_be_main_parameter
+
+
+def test_default_value_makes_any_type_main():
+    assert _p(data_type=ParameterDataType.integer, default_value=5).can_be_main_parameter
+
+
+def test_valid_values_makes_any_type_main():
+    assert _p(data_type=ParameterDataType.integer, valid_values={0: "off", 80: "bright"}).can_be_main_parameter
+
+
+def test_main_cycle_from_valid_values():
+    p = _p(data_type=ParameterDataType.integer, valid_values={80: "bright", 0: "off"})
+    assert p.main_cycle == [0, 80]  # numeric order
+
+
+def test_main_cycle_from_set_default_value():
+    p = _p(data_type=ParameterDataType.integer, valid_values={0: "off", 40: "dim", 80: "bright"}, default_value={0, 80})
+    assert p.main_cycle == [0, 80]  # the curated default_value subset wins over full valid_values
+    assert p.default_value == {0, 80}  # a pythonic set (serializes to a JSON array)
+
+
+def test_main_cycle_single_default_is_button():
+    p = _p(data_type=ParameterDataType.integer, default_value=5)
+    assert p.main_cycle == [5]
+
+
+def test_main_cycle_bool_toggles():
+    assert _p(data_type=ParameterDataType.bool).main_cycle == [False, True]
+
+
+def test_main_cycle_none_command_is_not_a_cycle():
+    assert _p(data_type=ParameterDataType.none).main_cycle is None
+
+
+def test_value_is_pythonic():
+    from majordom_integration_sdk.schemas.parameter import ParameterState
+
+    p = _p(data_type=ParameterDataType.integer)
+    state = ParameterState.model_validate(p, from_attributes=True)
+    state.value = 42
+    assert state.value == 42
+    assert ParameterState.model_validate_json(state.model_dump_json()).value == 42
+
+
+def test_non_user_visibility_cannot_be_main():
+    p = _p(data_type=ParameterDataType.bool)
+    p.visibility = ParameterVisibility.setting
+    assert not p.can_be_main_parameter
+    p.visibility = ParameterVisibility.system
+    assert not p.can_be_main_parameter
+
+
+================================================================================
+# FILE: tests/test_notification.py
+================================================================================
+import asyncio
+from typing import Any, cast
+
+from majordom_integration_sdk.schemas.notification import Notification, NotificationPriority, NotificationType
+from majordom_integration_sdk.testing import RecordingControllerOutput
+
+
+def test_notification_defaults():
+    n = Notification(message="Firmware update available")
+    assert n.type is NotificationType.info
+    assert n.priority is NotificationPriority.normal
+    assert n.ttl is None
+
+
+def test_output_records_notification():
+    out = RecordingControllerOutput()
+    n = Notification(
+        message="Re-plug the radio",
+        type=NotificationType.warning,
+        priority=NotificationPriority.urgent,
+        ttl=30,
+    )
+    asyncio.run(out.controller_did_emit_notification(cast(Any, None), n))
+    assert out.notifications == [n]
+
+
+================================================================================
+# FILE: tests/test_parameter_audit.py
+================================================================================
+from uuid import uuid4
+
+from majordom_integration_sdk.parameter_audit import audit_device_parameters
+from majordom_integration_sdk.schemas.parameter import (
+    Parameter,
+    ParameterDataType,
+    ParameterRole,
+    ParameterUnit,
+    ParameterVisibility,
+)
+
+
+def _p(name, *, vis=ParameterVisibility.user, unit=ParameterUnit.plain, role=ParameterRole.sensor):
+    return Parameter(
+        id=uuid4(),
+        name=name,
+        data_type=ParameterDataType.integer,
+        unit=unit,
+        role=role,
+        visibility=vis,
+        integration_data=None,
+    )
+
+
+def test_clean_device_has_no_warnings():
+    params = [
+        _p("temperature", unit=ParameterUnit.celsius),
+        _p("humidity", unit=ParameterUnit.percentage),
+        _p("battery", unit=ParameterUnit.percentage, role=ParameterRole.sensor),
+    ]
+    assert audit_device_parameters("Sensor", params) == []
+
+
+def test_flags_over_exposure():
+    params = [_p(f"attr_{i}") for i in range(12)]
+    warnings = audit_device_parameters("Flooded", params)
+    assert any("over-exposed" in w for w in warnings)
+
+
+def test_ignores_non_user_params_in_count():
+    params = [_p(f"attr_{i}", vis=ParameterVisibility.system) for i in range(20)] + [_p("on_off")]
+    assert audit_device_parameters("Lean", params) == []
+
+
+def test_flags_near_duplicate_names():
+    params = [_p("current_x", unit=ParameterUnit.percentage), _p("current_y", unit=ParameterUnit.percentage)]
+    assert any("near-duplicate" in w for w in audit_device_parameters("Light", params))
+
+
+def test_similar_name_whitelist_suppresses():
+    params = [
+        _p("occupied_heating_setpoint", unit=ParameterUnit.celsius, role=ParameterRole.control),
+        _p("occupied_cooling_setpoint", unit=ParameterUnit.celsius, role=ParameterRole.control),
+    ]
+    warnings = audit_device_parameters(
+        "Thermostat",
+        params,
+        ignore_similar_pairs=[("occupied_heating_setpoint", "occupied_cooling_setpoint")],
+    )
+    assert not any("near-duplicate" in w for w in warnings)
+
+
+def test_flags_redundant_representation_group():
+    params = [
+        _p("current_hue", unit=ParameterUnit.percentage),
+        _p("current_saturation", unit=ParameterUnit.percentage),
+        _p("current_x", unit=ParameterUnit.percentage),
+        _p("current_y", unit=ParameterUnit.percentage),
+    ]
+    assert any("redundant representations" in w for w in audit_device_parameters("Light", params))
+
+
+================================================================================
+# FILE: tests/test_repository.py
+================================================================================
+"""Both first-class repositories must satisfy the same protocol behaviour."""
+
+from uuid import uuid4
+
+import pytest
+from conftest import make_device_state
+
+from majordom_integration_sdk.repository import (
+    DeviceRepositoryMemory,
+    DeviceRepositoryProtocol,
+    SqliteDeviceRepository,
+)
+from majordom_integration_sdk.schemas.base import Base
+from majordom_integration_sdk.schemas.device import Device
+from majordom_integration_sdk.schemas.parameter import ParameterVisibility
+
+
+class _PairingData(Base):
+    """An integration's own typed `integration_data` (e.g. HomeKit pairing data)."""
+
+    token: str
+
+
+class _MyDevice(Device):
+    integration_data: _PairingData
+
+
+def make_my_device(device_id=None, token: str = "secret", integration: str = "example") -> _MyDevice:
+    return _MyDevice(
+        id=device_id or uuid4(),
+        name="Lamp",
+        room_id=uuid4(),
+        transport="wifi",
+        integration=integration,
+        manufacturer="ACME",
+        integration_data=_PairingData(token=token),
+    )
+
+
+@pytest.fixture(params=["memory", "sqlite"])
+def repository(request, tmp_path) -> DeviceRepositoryProtocol:
+    if request.param == "memory":
+        return DeviceRepositoryMemory()
+    return SqliteDeviceRepository(tmp_path / "devices.db")
+
+
+async def test_save_and_read_back(repository, device_state):
+    async with repository.session() as repo:
+        await repo.save(device_state)
+
+        state = await repo.state(device_state.id)
+        got = await repo.get(device_state.id)
+        assert state is not None and state.id == device_state.id
+        assert got is not None and got.id == device_state.id
+        assert [d.id for d in await repo.get_all()] == [device_state.id]
+
+
+async def test_get_unknown_is_none(repository):
+    async with repository.session() as repo:
+        assert await repo.state(uuid4()) is None
+        assert await repo.get(uuid4()) is None
+
+
+async def test_parameter_state_round_trip(repository, device_state):
+    parameter = device_state.parameters[0]
+    async with repository.session() as repo:
+        await repo.save(device_state)
+
+        fetched = await repo.get_parameter_state(device_state.id, parameter.id)
+        assert fetched is not None and fetched.id == parameter.id
+
+        parameter.value = 7
+        await repo.save_parameter_state(device_state.id, parameter)
+        updated = await repo.get_parameter_state(device_state.id, parameter.id)
+        assert updated is not None and updated.value == 7
+
+
+async def test_update_visibility(repository, device_state):
+    parameter = device_state.parameters[0]
+    async with repository.session() as repo:
+        await repo.save(device_state)
+        await repo.update_parameter_visibility(parameter.id, ParameterVisibility.system)
+        fetched = await repo.get_parameter_state(device_state.id, parameter.id)
+        assert fetched is not None and fetched.visibility is ParameterVisibility.system
+
+
+async def test_save_with_previous_id_renames_row(repository):
+    provisional = make_device_state(id=uuid4())
+    final_id = uuid4()
+    async with repository.session() as repo:
+        await repo.save(provisional)
+        renamed = provisional.model_copy(update={"id": final_id})
+        await repo.save(renamed, previous_id=provisional.id)
+
+        assert await repo.state(provisional.id) is None
+        renamed_state = await repo.state(final_id)
+        assert renamed_state is not None and renamed_state.id == final_id
+
+
+async def test_delete(repository, device_state):
+    async with repository.session() as repo:
+        await repo.save(device_state)
+        await repo.delete(device_state.id)
+        assert await repo.state(device_state.id) is None
+
+
+async def test_typed_read_returns_typed_integration_data(repository):
+    device = make_my_device(token="secret")
+    async with repository.session() as repo:
+        await repo.save(device)
+
+        got = await repo.get(device.id, as_=_MyDevice)
+        assert got is not None
+        assert isinstance(got.integration_data, _PairingData)
+        assert got.integration_data.token == "secret"
+
+        listed = await repo.get_all(as_=_MyDevice)
+        assert [d.integration_data.token for d in listed] == ["secret"]
+
+
+async def test_device_and_state_views_merge(repository, device_state):
+    """Device carries integration_data, DeviceState carries parameters — they're siblings, so
+    saving one must not clobber the other's half of the record."""
+    device = make_my_device(device_id=device_state.id, token="t", integration=device_state.integration)
+    async with repository.session() as repo:
+        await repo.save(device_state)  # info + parameters
+        await repo.save(device)  # info + integration_data
+
+        state = await repo.state(device_state.id)
+        typed = await repo.get(device_state.id, as_=_MyDevice)
+        assert state is not None and len(state.parameters) == 1, "parameters must survive a Device save"
+        assert typed is not None and typed.integration_data.token == "t"
+
+        # ...and the reverse order.
+        await repo.save(device_state)
+        typed_again = await repo.get(device_state.id, as_=_MyDevice)
+        assert typed_again is not None, "integration_data must survive a DeviceState save"
+        assert typed_again.integration_data.token == "t"
+
+
+@pytest.fixture(params=["memory", "sqlite"])
+def make_scoped(request, tmp_path):
+    """Factory building repositories that share one backing store, scoped per call."""
+    store: dict = {}
+    path = tmp_path / "scoped.db"
+
+    def make(integration):
+        if request.param == "memory":
+            return DeviceRepositoryMemory(integration=integration, store=store)
+        return SqliteDeviceRepository(path, integration=integration)
+
+    return make
+
+
+async def test_scope_limits_get_all(make_scoped):
+    admin = make_scoped(None)  # full access
+    async with admin.session() as repo:
+        await repo.save(make_device_state(integration="mine"))
+        await repo.save(make_device_state(integration="other"))
+
+    async with make_scoped("mine").session() as repo:
+        assert {d.integration for d in await repo.get_all()} == {"mine"}
+    async with make_scoped(None).session() as repo:
+        assert {d.integration for d in await repo.get_all()} == {"mine", "other"}
+
+
+async def test_scope_rejects_foreign_save(make_scoped):
+    async with make_scoped("mine").session() as repo:
+        with pytest.raises(PermissionError):
+            await repo.save(make_device_state(integration="other"))
+
+
+async def test_scope_hides_foreign_reads(make_scoped):
+    foreign = make_device_state(integration="other")
+    async with make_scoped(None).session() as repo:
+        await repo.save(foreign)
+    async with make_scoped("mine").session() as repo:
+        assert await repo.state(foreign.id) is None
+        assert await repo.get(foreign.id) is None
+        assert await repo.get_parameter_state(foreign.id, foreign.parameters[0].id) is None
+
+
+async def test_sqlite_persists_across_sessions(tmp_path, device_state):
+    repo = SqliteDeviceRepository(tmp_path / "devices.db")
+    async with repo.session() as session:
+        await session.save(device_state)
+    # A brand-new repository object over the same file still sees the device.
+    reopened = SqliteDeviceRepository(tmp_path / "devices.db")
+    async with reopened.session() as session:
+        persisted = await session.state(device_state.id)
+        assert persisted is not None and persisted.id == device_state.id
+
+
+================================================================================
+# FILE: tests/test_schemas.py
+================================================================================
+"""Schema behaviour that the SDK owns — pythonic parameter values, generic over the value type V."""
+
+from uuid import uuid4
+
+from majordom_integration_sdk.schemas.parameter import (
+    ParameterDataType,
+    ParameterRole,
+    ParameterState,
+    ParameterVisibility,
+)
+
+
+def _state(data_type: ParameterDataType, **kw) -> ParameterState:
+    return ParameterState(
+        id=uuid4(),
+        name="p",
+        data_type=data_type,
+        role=ParameterRole.control,
+        visibility=ParameterVisibility.user,
+        integration_data=None,
+        **kw,
+    )
+
+
+def test_scalar_value_is_pythonic_and_roundtrips():
+    for dt, v in [
+        (ParameterDataType.integer, 5),
+        (ParameterDataType.bool, True),
+        (ParameterDataType.decimal, 1.5),
+        (ParameterDataType.string, "hi"),
+    ]:
+        s = _state(dt, value=v)
+        assert s.value == v
+        assert ParameterState.model_validate_json(s.model_dump_json()).value == v
+
+
+def test_struct_value_is_a_plain_dict():
+    s = _state(ParameterDataType.struct, value={"a": 1, "b": [2, 3]})
+    assert s.value == {"a": 1, "b": [2, 3]}
+    assert ParameterState.model_validate_json(s.model_dump_json()).value == {"a": 1, "b": [2, 3]}
+
+
+def test_value_valid_values_and_default_share_one_type():
+    # An int parameter: int value, int valid_values keys, int default_value — all V=int.
+    s = _state(ParameterDataType.enum, value=0, valid_values={0: "off", 4: "on"}, default_value={0, 4})
+    assert (s.value, s.valid_values, s.default_value) == (0, {0: "off", 4: "on"}, {0, 4})
+
+    rt = ParameterState.model_validate_json(s.model_dump_json())
+    assert rt.default_value == {0, 4}  # a set survives the JSON-array round-trip
+    assert rt.valid_values == {0: "off", 4: "on"}  # int keys survive
+
+
+def test_single_default_value_stays_scalar():
+    s = _state(ParameterDataType.integer, default_value=5)
+    assert s.default_value == 5  # a lone value is the scalar branch of `set[V] | V`, not a set
+
+
+================================================================================
+# FILE: tests/test_spec_drift.py
+================================================================================
+from majordom_integration_sdk.spec_drift import diff_specs
+
+
+def test_detects_each_tier():
+    baseline = {(1, 1): "user", (1, 2): "setting", (1, 3): "system"}
+    current = {(1, 1): "user", (1, 2): "user", (1, 4): "setting"}  # 1,2 reclassified; 1,3 removed; 1,4 added
+    r = diff_specs(current, baseline)
+    assert r.added == {(1, 4): "setting"}
+    assert r.removed == {(1, 3): "system"}
+    assert r.reclassified == {(1, 2): ("setting", "user")}
+
+
+def test_reclassify_is_high_risk():
+    r = diff_specs({(1, 1): "user"}, {(1, 1): "setting"})
+    assert r.has_high_risk
+    assert not r.is_empty
+
+
+def test_add_only_is_not_high_risk():
+    r = diff_specs({(1, 1): "user", (2, 2): "setting"}, {(1, 1): "user"})
+    assert not r.has_high_risk
+    assert r.added == {(2, 2): "setting"}
+
+
+def test_identical_is_empty():
+    spec = {(1, 1): "user"}
+    r = diff_specs(spec, dict(spec))
+    assert r.is_empty
+    assert "no drift" in r.render(source="zha")
+
+
+def test_render_lists_reclassify_first():
+    r = diff_specs({(1, 1): "user", (9, 9): "user"}, {(1, 1): "setting"})
+    out = r.render(source="zha")
+    assert out.index("RECLASSIFY") < out.index("ADD")
+
+
+def test_render_key_label_annotates_each_change():
+    r = diff_specs({(0x0556, 1): "user"}, {})
+    out = r.render(source="matter-ha", key_label=lambda k: f"Chime.Attr{k[1]}")
+    # the human name appears alongside the raw id on the change line
+    assert "Chime.Attr1" in out
+    assert "(1366, 1)" in out
+
+
+def test_render_key_label_failure_falls_back_to_id():
+    def boom(_key: object) -> str:
+        raise KeyError("unknown")
+
+    r = diff_specs({(0x0556, 1): "user"}, {})
+    out = r.render(source="matter-ha", key_label=boom)  # must not raise
+    assert "(1366, 1)" in out
+

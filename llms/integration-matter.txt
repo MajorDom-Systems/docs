@@ -1,0 +1,4320 @@
+# integration-matter — full source
+# repo: https://github.com/MajorDom-Systems/integration-matter  branch: master  commit: 15613a8ebaa8e53ad43b963878eca14ee5de31f6
+# generated: 2026-08-01 — AUTO-GENERATED, do not edit by hand
+
+## File tree
+  .gitignore
+  LICENSE
+  README.md
+  docker/Dockerfile.test
+  docker-compose.matter-tests.mac.yml
+  docker-compose.matter-tests.yml
+  majordom_matter/__init__.py
+  majordom_matter/config.py
+  majordom_matter/controller.py
+  majordom_matter/exceptions.py
+  majordom_matter/mapper.py
+  majordom_matter/matter_spec.py
+  majordom_matter/matter_spec_ha.py
+  majordom_matter/model.py
+  majordom_matter/readme.md
+  majordom_matter/testing/__init__.py
+  majordom_matter/testing/fixtures/on_off_light_node.json
+  pyproject.toml
+  scripts/check_matter_ha_drift.py
+  scripts/fetch_mvd.sh
+  scripts/fetch_paa_certs.py
+  scripts/harvest_matter_ha.py
+  scripts/param_ux_audit.py
+  tests/conftest.py
+  tests/test_controller.py
+  tests/test_controller_stub.py
+  tests/test_param_ux.py
+  tests/test_smoke.py
+
+
+================================================================================
+# FILE: .gitignore
+================================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+.hypothesis/
+
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+
+# Poetry
+# poetry.lock  # uncomment for applications, keep commented for libraries
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# Tools
+.ruff_cache/
+.ropeproject
+
+# mkdocs (only relevant if you kept mkdocs.yml + docs/)
+/site
+.cache/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Matter Virtual Device (MVD) `chef` binaries + PAA certificates — NOT committed (they were
+# 77MB of opaque blobs in the Hub). CI fetches them as a versioned artifact and the test
+# jobs download that; see .github/workflows/mvd-artifact.yml (plan §3.5).
+tests/mvd/
+tests/mvd-artifact/
+
+# matter-server storage + PAA certs (fetched by CI, §3.5)
+matter_data/
+paa/            # fetch_paa_certs.py / mvd-artifact.yml default cert output dir
+
+
+================================================================================
+# FILE: LICENSE
+================================================================================
+# PolyForm Noncommercial License 1.0.0
+
+<https://polyformproject.org/licenses/noncommercial/1.0.0>
+
+## Acceptance
+
+In order to get any license under these terms, you must agree to them as both strict obligations and conditions to all your licenses.
+
+## Copyright License
+
+The licensor grants you a copyright license for the software to do everything you might do with the software that would otherwise infringe the licensor's copyright in it for any permitted purpose.  However, you may only distribute the software according to [Distribution License](#distribution-license) and make changes or new works based on the software according to [Changes and New Works License](#changes-and-new-works-license).
+
+## Distribution License
+
+The licensor grants you an additional copyright license to distribute copies of the software.  Your license to distribute covers distributing the software with changes and new works permitted by [Changes and New Works License](#changes-and-new-works-license).
+
+## Notices
+
+You must ensure that anyone who gets a copy of any part of the software from you also gets a copy of these terms or the URL for them above, as well as copies of any plain-text lines beginning with `Required Notice:` that the licensor provided with the software.  For example:
+
+> Required Notice: Copyright Yoyodyne, Inc. (http://example.com)
+
+## Changes and New Works License
+
+The licensor grants you an additional copyright license to make changes and new works based on the software for any permitted purpose.
+
+## Patent License
+
+The licensor grants you a patent license for the software that covers patent claims the licensor can license, or becomes able to license, that you would infringe by using the software.
+
+## Noncommercial Purposes
+
+Any noncommercial purpose is a permitted purpose.
+
+## Personal Uses
+
+Personal use for research, experiment, and testing for the benefit of public knowledge, personal study, private entertainment, hobby projects, amateur pursuits, or religious observance, without any anticipated commercial application, is use for a permitted purpose.
+
+## Noncommercial Organizations
+
+Use by any charitable organization, educational institution, public research organization, public safety or health organization, environmental protection organization, or government institution is use for a permitted purpose regardless of the source of funding or obligations resulting from the funding.
+
+## Fair Use
+
+You may have "fair use" rights for the software under the law. These terms do not limit them.
+
+## No Other Rights
+
+These terms do not allow you to sublicense or transfer any of your licenses to anyone else, or prevent the licensor from granting licenses to anyone else.  These terms do not imply any other licenses.
+
+## Patent Defense
+
+If you make any written claim that the software infringes or contributes to infringement of any patent, your patent license for the software granted under these terms ends immediately. If your company makes such a claim, your patent license ends immediately for work on behalf of your company.
+
+## Violations
+
+The first time you are notified in writing that you have violated any of these terms, or done anything with the software not covered by your licenses, your licenses can nonetheless continue if you come into full compliance with these terms, and take practical steps to correct past violations, within 32 days of receiving notice.  Otherwise, all your licenses end immediately.
+
+## No Liability
+
+***As far as the law allows, the software comes as is, without any warranty or condition, and the licensor will not be liable to you for any damages arising out of these terms or the use or nature of the software, under any kind of legal claim.***
+
+## Definitions
+
+The **licensor** is the individual or entity offering these terms, and the **software** is the software the licensor makes available under these terms.
+
+**You** refers to the individual or entity agreeing to these terms.
+
+**Your company** is any legal entity, sole proprietorship, or other kind of organization that you work for, plus all organizations that have control over, are under the control of, or are under common control with that organization.  **Control** means ownership of substantially all the assets of an entity, or the power to direct its management and policies by vote, contract, or otherwise.  Control can be direct or indirect.
+
+**Your licenses** are all the licenses granted to you for the software under these terms.
+
+**Use** means anything you do with the software requiring one of your licenses.
+
+
+================================================================================
+# FILE: README.md
+================================================================================
+# integration-matter
+
+A [MajorDom](https://majordom.io) integration — bridges **Matter** (CSA Connectivity Standard)
+devices into the MajorDom language.
+
+Built for the **MajorDom Hub**, but it doesn't need it: this is a standalone, standardized
+library for Matter that you can use on its own (see **Run it standalone** below). Built on the
+[MajorDom Integration SDK](https://github.com/MajorDom-Systems/integration-sdk). The entry point
+is `MatterController` (`majordom_matter/controller.py`), which the Hub — or the SDK's dev runner —
+instantiates and drives through its lifecycle: discovery → pairing → commands → teardown.
+
+- **Other protocols:** browse the [MajorDom integrations](https://github.com/orgs/MajorDom-Systems/repositories?q=integration-).
+- **Create your own:** start from the [integration template](https://github.com/MajorDom-Systems/integration-template).
+
+## Documentation
+
+Full integration-author docs — the controller lifecycle, data models, storing data, discovery,
+and a worked example — live at **[docs.majordom.io](https://docs.majordom.io/device-integration)**.
+
+## Development
+
+```sh
+poetry install && poetry run poe install
+```
+
+| Task | Description |
+|------|-------------|
+| `poe check` | Full quality pipeline (ruff, ty, pytest, poetry build/check) |
+| `poe check --ci` | Same, plus `git diff --exit-code` |
+
+Work lands on `develop`; `master` is protected and released via **Actions → Release**. The default
+suite drives the controller against a canned node with the SDK's test doubles — no matter-server,
+no docker (`tests/test_controller_stub.py`). The exhaustive real-device coverage commissions
+Google's Matter Virtual Devices in a dockerized matter-server (`tests/test_controller.py`, see
+`docker-compose.matter-tests.yml`); the MVD binaries + PAA certs are fetched, not committed.
+
+## Run it standalone (without the Hub)
+
+`majordom-matter` is a standalone library — import it into your own app, or run **just this
+integration** interactively (discover, pair, control, and inspect devices from a prompt) with no Hub.
+It needs a running [python-matter-server](https://github.com/home-assistant-libs/python-matter-server)
+reachable over its WebSocket (`MATTER_SERVER_URL`, default `ws://localhost:5580/ws`); Thread devices
+also need an OpenThread Border Router.
+
+See **[Standalone mode](https://docs.majordom.io/device-integration/standalone)** for the interactive
+CLI, watch mode, and the programmatic API.
+
+## About this integration
+
+- **Protocol / platform:** Matter (Connectivity Standards Alliance) via `python-matter-server` + `chip`.
+- **Transport(s):** IP over Thread / Wi-Fi / Ethernet; BLE for commissioning.
+- **Supported devices:** any Matter-certified device — lights, plugs, switches, sensors, locks,
+  thermostats, covers, fans, appliances (verified against 30 Matter Virtual Device types).
+- **Credentials needed to pair:** `code` (manual pairing code) or `qr`.
+
+### Required harness
+
+- **Hardware adapters:** an 802.15.4 radio (e.g. a SkyConnect / Thread dongle) for Thread devices —
+  driven by matter-server / the OTBR, not this package directly.
+- **Third-party software services:** a **matter-server** instance reachable over WebSocket
+  (`MATTER_SERVER_URL`), and an **OpenThread Border Router (OTBR)** for Thread devices.
+- **OS / permissions:** BLE access for commissioning; mDNS on the LAN for on-network discovery.
+
+### Protocol stack (OSI)
+
+| OSI layer | Protocol | Implemented by |
+|-----------|----------|----------------|
+| Application (7) | Matter clusters / data model | **this integration** (via `chip` lib) |
+| Session (5) | CASE / PASE secure session | library (matter-server) |
+| Transport (4) | UDP | OS |
+| Network (3) | IPv6 · 6LoWPAN | OS · OTBR (harness) |
+| Data link / Physical (1–2) | Thread · IEEE 802.15.4 (or Wi-Fi / Ethernet) | radio adapter (harness) |
+
+### Progress
+
+- [x] Discovery services registered (mDNS on-network via matter-server; BLE for commissionable devices); cancel closures called in `stop`
+- [x] Discovery listeners fire and call `controller_did_receive_discovery`
+- [x] Re-discovery of already-paired devices on reconnect (`controller_did_connect_device`)
+- [x] Device pairing (BLE→Thread and on-network commissioning)
+- [x] Device schema mapped: device info, parameter list, per-parameter metadata → MajorDom's domain model
+- [x] Hub → Device control (`send_command`)
+- [x] Device → Hub event subscription (`controller_did_receive_events`)
+- [x] `identify`
+- [x] `unpair`
+- [x] `fetch`
+- [x] Availability tracking while running (`controller_did_lose_device` / `last_error`)
+- [x] Graceful shutdown in `stop`
+- [x] Tests pass against virtual/simulated devices (stub + dockerized MVD suite)
+
+### Parameter metadata sources & priority
+
+Every parameter's UX metadata is resolved from several sources.
+See also the [parameter-ux recipe](https://docs.majordom.io/device-integration/parameter-ux).
+
+**Visibility / role / unit** — resolved by `classify_attribute()` in `matter_spec.py` (first match wins):
+
+| # | Source | What it is |
+|---|--------|-----------|
+| — | system cluster / sensitive (`Aliro*` crypto) | forced **system** (safety, top priority) |
+| 1 | `OUR_ATTRIBUTE_UX` (`USER_READINGS`, `EVERYDAY_CONTROL_ATTRIBUTES`) | our hand curation |
+| 2 | `MATTER_HA_ATTRIBUTE_UX` | judgment **harvested** from Home Assistant's Matter discovery (`scripts/harvest_matter_ha.py`, AST-parsed, vendored — no `homeassistant` dep) |
+| 3 | **fallback policy** | writable → setting, else system; **logs a warning** on uncurated attrs. Flip `_FALLBACK_HIDE_UNCURATED` once coverage is validated. |
+
+Matter has no runtime quirk layer, so (unlike zigbee) there is no v2-quirk tier. The Matter Data
+Model (`chip`) already supplies names/types/bounds; the harvest adds only the `entity_category`
+(user/config/diagnostic) judgment the spec doesn't dictate.
+
+**Bounds** come from the device's own limit attributes (runtime) > spec tables > wire-type range —
+see `resolve_runtime_bounds()` / `METADATA_SOURCES`.
+
+**Drift.** `scripts/check_matter_ha_drift.py` re-runs the AST harvest against home-assistant/core and
+diffs vs the vendored artifact via the SDK's `diff_specs`, tiering ADD / REMOVE / **RECLASSIFY**.
+
+### Notes
+
+The MVD `chef` binaries are x86-64 Linux only, so the real-device suite runs in an amd64 container
+(Rosetta on Apple Silicon). A monthly canary fetches the *latest* upstream MVD release and fails if
+it ships something unsupported — the signal to add support. The same drift machinery (the SDK's
+`diff_specs`) now also watches the harvested HA-Matter judgment.
+
+## License
+
+See [LICENSE](LICENSE). For commercial licensing or partnership inquiries regarding MajorDom,
+contact us via [parker-industries.org/partnership](https://parker-industries.org/partnership).
+
+
+================================================================================
+# FILE: docker/Dockerfile.test
+================================================================================
+# Runs the Matter integration's virtual-device suite against real MVD `chef` binaries.
+# Build context is the repo root; the SDK is a published PyPI dependency
+# (majordom-integration-sdk), resolved by `poetry install` — nothing is copied from outside the repo.
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential gcc python3-dev git \
+    avahi-daemon avahi-utils libavahi-client3 libavahi-common3 \
+    dbus libdbus-1-3 libdbus-1-dev libglib2.0-0 libglib2.0-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN sed -i 's/#enable-dbus=yes/enable-dbus=no/g;  s/use-ipv6=no/use-ipv6=yes/g; s/#enable-chroot=yes/enable-chroot=no/g' \
+    /etc/avahi/avahi-daemon.conf
+
+RUN pip install poetry && poetry config virtualenvs.create false
+
+COPY pyproject.toml poetry.lock /app/
+RUN poetry install --no-root
+
+COPY . /app/
+RUN pip install -e . --no-deps
+
+CMD avahi-daemon --daemonize && sleep 2 && \
+    chmod +x tests/mvd/* && \
+    poetry run pytest tests/ -v
+
+
+================================================================================
+# FILE: docker-compose.matter-tests.mac.yml
+================================================================================
+# macOS (Apple-silicon) override: the MVD binaries are Linux x86-64, so pin the test
+# container to linux/amd64 and let Docker Desktop's Rosetta run them.
+# One-time: Docker Desktop -> Settings -> General -> "Use Rosetta for x86/amd64 emulation".
+#   docker compose -f docker-compose.matter-tests.yml -f docker-compose.matter-tests.mac.yml \
+#     up --build --exit-code-from matter-integration-tests
+# matter-server runs no x86-64 binary (just mDNS/network), so it stays native arm64.
+services:
+  matter-integration-tests:
+    platform: linux/amd64
+    environment:
+      - MATTER_DISCOVERY_WARMUP_S=180
+
+
+================================================================================
+# FILE: docker-compose.matter-tests.yml
+================================================================================
+# Matter integration test stack: python-matter-server + a container that runs the
+# integration's virtual-device suite against real MVD `chef` binaries.
+#
+# Run:  docker compose -f docker-compose.matter-tests.yml up --build \
+#         --exit-code-from matter-integration-tests
+# On Apple Silicon add the mac override (Rosetta):  -f docker-compose.matter-tests.mac.yml
+services:
+  matter-server:
+    image: ghcr.io/matter-js/python-matter-server:stable
+    restart: unless-stopped
+    privileged: true
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv6.conf.all.forwarding=1
+    volumes:
+      - ./matter_data:/data
+    command: --storage-path /data --paa-root-cert-dir /data/credentials --primary-interface eth0
+    networks: [matter-net]
+
+  matter-integration-tests:
+    build:
+      context: .             # repo root; the SDK is a published PyPI dependency
+      dockerfile: docker/Dockerfile.test
+    privileged: true
+    depends_on: [matter-server]
+    environment:
+      - MATTER_SERVER_URL=ws://matter-server:5580/ws
+      - MATTER_DISCOVERY_TIMEOUT_S=12
+      - MATTER_INTEGRATION_TESTS=1
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    networks: [matter-net]
+
+networks:
+  matter-net:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: 172.16.238.0/24
+        - subnet: fd00:db8:1::/64
+
+
+================================================================================
+# FILE: majordom_matter/__init__.py
+================================================================================
+"""Matter integration for MajorDom.
+
+Bridges Matter devices into the MajorDom language via python-matter-server.
+`MatterController` is the entry point the Hub (or the SDK's standalone dev runner)
+instantiates and drives.
+"""
+
+from majordom_matter.controller import MatterController
+
+__all__ = ["MatterController"]
+
+
+================================================================================
+# FILE: majordom_matter/config.py
+================================================================================
+import os
+
+# The MajorDom Matter integration talks to a python-matter-server instance over WebSocket.
+# Point it at yours via MATTER_SERVER_URL; the default matches a `matter-server` service on
+# the same Docker network.
+matter_server_url = os.environ.get("MATTER_SERVER_URL", "ws://matter-server:5580/ws")
+
+
+================================================================================
+# FILE: majordom_matter/controller.py
+================================================================================
+import asyncio
+import contextlib
+import inspect
+import logging
+from typing import override
+from uuid import UUID
+
+from aiohttp import ClientSession
+from chip.clusters.ClusterObjects import ClusterAttributeDescriptor, ClusterCommand
+from chip.clusters.Objects import Identify
+from majordom_integration_sdk.controller import AbstractController
+from majordom_integration_sdk.discovery.ble_discovery import BLEDiscoveryInfo, BLEDiscoveryService
+from majordom_integration_sdk.schemas.base import NonEmptyStr
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import CredentialsType, Discovery, ProvidedCredentials
+from majordom_integration_sdk.schemas.event import DeviceParameterChange
+from majordom_integration_sdk.schemas.parameter import ParameterRole
+from matter_server.client import MatterClient
+from matter_server.client.models.node import MatterNode
+from matter_server.common.errors import UnknownError
+from matter_server.common.models import CommissionableNodeData, EventType
+
+from majordom_matter.config import matter_server_url
+
+from .exceptions import (
+    MatterConnectionError,
+    MatterNotFoundParameter,
+    MatterUnexpectedError,
+    MatterUnsupportedParameter,
+)
+from .mapper import MatterMapper
+from .matter_spec import MAIN_PARAMETER_BY_CLUSTER, DefaultParams
+from .model import (
+    MatterDevice,
+    MatterDeviceIntegrationData,
+    MatterDeviceState,
+    MatterParameter,
+    MatterParameterState,
+    MatterParameterTypeEnum,
+)
+
+
+class MatterController(AbstractController):
+    """Bridges the Hub to Matter devices through a Matter controller server (matter-server).
+
+    matter-server owns the Matter fabric, the Thread/BLE radios, and commissioning; this
+    controller adapts it to the Hub's AbstractController contract, talking to it over its
+    WebSocket API. On-network devices are discovered via matter-server; BLE-only commissionable
+    devices are discovered via the Hub's shared BLE service. See readme.md.
+    """
+
+    _matter_client: MatterClient
+    _matter_client_session: ClientSession
+    _majordom_descoveries: dict[UUID, Discovery]
+    _mapper: MatterMapper
+
+    # Matter commissionable BLE service (spec 5.4.2.5.6) — devices in commissioning mode advertise
+    # this service + its service-data payload. discover_commissionable_nodes only surfaces IP/mDNS
+    # devices, so BLE-only devices (a factory-fresh bulb not yet on any network) are discovered here
+    # via the shared BLE scanner instead.
+    _MATTER_COMMISSIONABLE_SERVICE = UUID("0000fff6-0000-1000-8000-00805f9b34fb")
+
+    def __init__(self, dependencies: AbstractController.Dependencies):
+        super().__init__(dependencies)
+        # Instance state (not class-level): the mapper is wired with the framework's UUID
+        # generators, and the discoveries dict must not be shared across instances.
+        self._mapper = MatterMapper(self.device_uuid, self.parameter_uuid)
+        self._majordom_descoveries = dict()
+
+    # -------------------------------------------------------------------------
+    # AbstractController interface
+    # -------------------------------------------------------------------------
+
+    @property
+    def discoveries(self) -> dict[UUID, Discovery]:
+        return self._majordom_descoveries
+
+    @property
+    @override
+    def device_type(self) -> type[MatterDevice]:
+        return MatterDevice
+
+    @property
+    @override
+    def parameter_type(self) -> type[MatterParameter]:
+        return MatterParameter
+
+    # -------------------------------------------------------------------------
+    # Lifecycle
+    # -------------------------------------------------------------------------
+
+    async def start(self):
+        self._background_tasks: list[asyncio.Task] = []
+        self._node_availability: dict[UUID, bool] = {}
+        self._matter_client_session = ClientSession()
+        self._matter_client = MatterClient(matter_server_url, self._matter_client_session)
+        await self._matter_client.connect()
+
+        init_ready = asyncio.Event()
+        self._background_tasks.append(asyncio.create_task(self._matter_client.start_listening(init_ready=init_ready)))
+        await init_ready.wait()
+
+        self._background_tasks.append(asyncio.create_task(self._matter_discovery_loop()))
+
+        # BLE discovery for commissionable devices not yet on any IP network (the mDNS-based
+        # discovery loop above can't see them). No-op in virtual mode where the BLE service is off.
+        self._ble_addresses: dict[UUID, set[str]] = {}  # discovery_id -> live BLE addresses
+        self._ble_cancel = self.dependencies.ble_discovery_service.register(self, {self._MATTER_COMMISSIONABLE_SERVICE})
+
+        device_nodes: list[int] = []
+        async with self.dependencies.make_device_repository() as device_repository:
+            for device in await device_repository.get_all(as_=MatterDevice):
+                if node := self._matter_client.get_node(device.integration_data.node_id):
+                    self._subscription(device.id, node)
+                    device_nodes.append(device.integration_data.node_id)
+                else:
+                    device.available = False
+                    device.last_error = f"Device {device.name} is no longer connected to the Matter network"
+                    await device_repository.save(device, device.id)
+
+            for node in self._matter_client.get_nodes():
+                if node.node_id in device_nodes:
+                    continue
+                discovery_id = self._mapper.device_uuid(node.node_id, node.device_info.productName)
+                discovery = Discovery(
+                    id=discovery_id,
+                    integration=NonEmptyStr(self.name),
+                    expected_credentials_options=[CredentialsType.none],
+                    expiration=None,
+                    transport=NonEmptyStr("IP"),
+                    device_name=NonEmptyStr(node.device_info.productName or "Unknown"),
+                    device_manufacturer=node.device_info.vendorName or str(node.device_info.vendorID),
+                    device_category=None,
+                    device_icon=None,
+                )
+                self._majordom_descoveries[discovery_id] = discovery
+                await self.dependencies.output.controller_did_receive_discovery(self, discovery)
+
+    async def stop(self):
+        self._majordom_descoveries.clear()
+
+        if cancel := getattr(self, "_ble_cancel", None):
+            cancel()
+            self._ble_cancel = None
+
+        try:
+            running_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            running_loop = None
+
+        # Cancel the discovery loop and listener started in start() — otherwise they keep
+        # running against a matter client/event loop that stop() is about to tear down,
+        # which surfaces as "Future attached to a different loop" once the next test/run
+        # starts a fresh event loop. cancel() is safe to call across loops.
+        #
+        # Whether we then AWAIT them — and tear the matter client down — depends on the
+        # loop. If stop() runs on a different loop than start() did (e.g. invoked via a sync
+        # TestClient, whose portal runs on its own loop), awaiting any of these loop-bound
+        # futures (the tasks, or the ws client's disconnect/close, which awaits the same
+        # loop-A websocket) itself raises "attached to a different loop". There, cancel()
+        # above is the meaningful cleanup and we skip the awaits; the normal same-loop
+        # lifecycle does the full teardown.
+        background_tasks = getattr(self, "_background_tasks", [])
+        for task in background_tasks:
+            task.cancel()
+        on_owning_loop = running_loop is not None and (
+            not background_tasks or background_tasks[0].get_loop() is running_loop
+        )
+        self._background_tasks = []
+
+        if not on_owning_loop:
+            return
+
+        for task in background_tasks:
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+
+        if not self._matter_client_session or not self._matter_client:
+            return
+        await self._matter_client.disconnect()
+        await self._matter_client_session.close()
+
+    # -------------------------------------------------------------------------
+    # Hub -> device operations
+    # -------------------------------------------------------------------------
+
+    async def pair_device(self, discovery: Discovery, credentials: ProvidedCredentials | None):
+        self._require_matter_client()
+
+        if not credentials or credentials.type not in discovery.expected_credentials_options:
+            raise MatterUnexpectedError(
+                f"Credentials type {credentials.type if credentials else None!r} is not one of the "
+                f"types this discovery advertised: {discovery.expected_credentials_options}"
+            )
+
+        # Every commissioning path below needs the pairing code/QR payload; a missing value is an
+        # unexpected caller error, not something to stringify into "None" or crash on int(None).
+        if credentials.value is None:
+            raise MatterUnexpectedError("Matter commissioning requires a pairing code, but none was provided")
+
+        # Compare by value (==), not identity (is): `credentials.type` can arrive through a
+        # schema layer that resolved CredentialsType via a different import path, yielding a
+        # distinct enum class where `is` would never match. `==` on a str-enum compares the
+        # underlying value and is robust to that (and semantically what we want anyway).
+        if credentials.type == CredentialsType.qr:
+            commission_node = await self._matter_client.commission_with_code(str(credentials.value))
+        elif credentials.type == CredentialsType.code:
+            if discovery.transport == "BLE":
+                # commission_on_network only works for devices already reachable over IP
+                # (matter-server's own docstring: "for advanced usecases only, use
+                # commission_with_code for regular commissioning") — a BLE-discovered
+                # device has no IP yet, so it must go through commission_with_code instead,
+                # which chip-tool routes over BLE automatically based on the code.
+                commission_node = await self._matter_client.commission_with_code(str(credentials.value))
+            else:
+                commission_node = await self._matter_client.commission_on_network(int(credentials.value))
+        else:
+            raise MatterUnexpectedError("This credentials type is not supported")
+
+        self._majordom_descoveries.pop(discovery.id)
+        node = self._matter_client.get_node(commission_node.node_id)
+        device_id = self._mapper.device_uuid(node.node_id, node.device_info.productName)
+
+        async with self.dependencies.make_device_repository() as device_repository:
+            device = await device_repository.state(discovery.id, MatterDeviceState)
+            assert device
+            device.id = device_id
+            # Manufacturer-provided, read-only description (BasicInformation product label).
+            device.description = getattr(node.device_info, "productLabel", None) or None
+
+            # Persist the commissioned node id — the Hub seeds a provisional device whose
+            # integration_data already exists (so it's never falsy), and later reconnects look
+            # the node up by this id, so set it unconditionally rather than only when absent.
+            if device.integration_data:
+                device.integration_data.node_id = node.node_id
+            else:
+                device.integration_data = MatterDeviceIntegrationData(node_id=node.node_id)
+
+            for endpoint_id, endpoint in node.endpoints.items():
+                for cluster_id, cluster in endpoint.clusters.items():
+                    if hasattr(cluster, "Commands"):
+                        for parameter in self._mapper.parse_commands(device_id, endpoint_id, cluster_id, cluster, node):
+                            device.parameters.append(MatterParameterState(**parameter.__dict__, value=None))
+
+                    if hasattr(cluster, "Attributes"):
+                        for parameter in self._mapper.parse_attributes(
+                            device_id, endpoint_id, cluster_id, cluster, endpoint, node
+                        ):
+                            attribute_id = parameter.integration_data.attribute_id
+                            if attribute_id is None:
+                                raise MatterUnexpectedError(
+                                    f"Attribute parameter {parameter.name!r} has no attribute_id "
+                                    f"(endpoint {endpoint_id}, cluster {cluster_id})"
+                                )
+                            value = node.get_attribute_value(endpoint_id, cluster_id, attribute_id)
+                            value = self._mapper.apply_attribute_scale(cluster_id, attribute_id, value)
+                            device.parameters.append(
+                                MatterParameterState(
+                                    **parameter.__dict__, value=self._mapper.normalize_value(value)
+                                )
+                            )
+
+            main_parameter_id, default_value = self._get_main_parameter(device.id, node)
+            device.main_parameter = main_parameter_id
+            if main_parameter_id and default_value is not None:
+                main_parameter = next((p for p in device.parameters if p.id == main_parameter_id), None)
+                if main_parameter is None:
+                    device.main_parameter = None
+                elif main_parameter.integration_data.type is MatterParameterTypeEnum.attribute:
+                    main_parameter.default_value = self._mapper.normalize_value(default_value)
+                elif isinstance(default_value, dict):
+                    # A command main parameter is tapped with a fixed argument set (a dict).
+                    main_parameter.integration_data.default_arguments = default_value
+                else:
+                    raise MatterUnexpectedError(
+                        f"Command main parameter {main_parameter_id} expected dict default arguments, "
+                        f"got {type(default_value).__name__}: {default_value!r}"
+                    )
+
+            await device_repository.save(device, discovery.id)
+
+        await self.dependencies.output.controller_did_connect_device(self, device_id)
+        self._subscription(device_id, node)
+        return device_id
+
+    async def unpair(self, device: MatterDevice):
+        await self._require_matter_client().remove_node(device.node_id)
+
+    async def identify(self, device: MatterDevice):
+        command = Identify.Commands.Identify()
+        node = self._require_node(device)
+        for endpoint_id in node.endpoints:
+            if node.has_cluster(3, endpoint_id):
+                await self._matter_client.send_device_command(device.node_id, endpoint_id, command)
+
+    async def fetch(self, device: MatterDevice):
+        node = self._require_node(device)
+
+        events = []
+        for endpoint_id, endpoint in node.endpoints.items():
+            for cluster_id, cluster in endpoint.clusters.items():
+                if not hasattr(cluster, "Attributes"):
+                    continue
+                for _, attribute in inspect.getmembers(cluster.Attributes, inspect.isclass):
+                    if not issubclass(attribute, ClusterAttributeDescriptor):
+                        continue
+                    attribute_id = getattr(attribute, "attribute_id", -1)
+                    value = node.get_attribute_value(endpoint_id, cluster_id, attribute_id)
+                    value = self._mapper.apply_attribute_scale(cluster_id, attribute_id, value)
+                    parameter_id = self._mapper.attribute_parameter_uuid(
+                        device.id, endpoint_id, cluster_id, attribute_id
+                    )
+                    events.append(
+                        DeviceParameterChange(
+                            device_id=device.id,
+                            parameter_id=parameter_id,
+                            value=value if isinstance(value, str | int | float | bool) else None,
+                        )
+                    )
+
+        await self.dependencies.output.controller_did_receive_events(self, events)
+
+    async def send_command(self, command: DeviceCommand, device: MatterDevice, parameter: MatterParameter):
+        try:
+            node = self._require_node(device)
+
+            endpoint_id = parameter.integration_data.endpoint_id
+            endpoint = node.endpoints.get(endpoint_id)
+            if not endpoint:
+                raise MatterUnexpectedError(f"Endpoint {endpoint_id} not found on node {node.node_id}")
+
+            cluster_id = parameter.integration_data.cluster_id
+            cluster = endpoint.clusters.get(cluster_id)
+            if not cluster:
+                raise MatterUnexpectedError(f"Cluster {cluster_id} not found on endpoint {endpoint_id}")
+
+            if parameter.integration_data.type is MatterParameterTypeEnum.command:
+                await self._execute_cluster_command(node, endpoint_id, cluster, parameter, command)
+            elif parameter.integration_data.type is MatterParameterTypeEnum.attribute:
+                await self._write_cluster_attribute(node, endpoint_id, cluster_id, parameter, command)
+        except UnknownError as e:
+            error = str(e)
+
+            error_map = {
+                "0x8b": (MatterNotFoundParameter, "not found on device"),
+                "0x81": (MatterUnsupportedParameter, "not supported by device"),
+            }
+
+            match = next(((exc, msg) for code, (exc, msg) in error_map.items() if code in error), None)
+            if match is None:
+                # Unknown/unmapped Matter error (e.g. Busy 0x9c) — don't swallow it
+                logging.error(f"Command '{parameter.name}' failed with unmapped error: {error}")
+                raise
+
+            exception_class, message = match
+            async with self.dependencies.make_device_repository() as device_repository:
+                device_state = await device_repository.state(device.id, MatterDeviceState)
+                if device_state is not None:
+                    # state() returns None only if the device was unpaired/removed out from under us;
+                    # nothing to prune then — just surface the original command error below.
+                    device_state.parameters = [p for p in device_state.parameters if p.id != parameter.id]
+                    device.integration_data.black_list.append(parameter.id)
+                    await device_repository.save(device, device.id)
+                else:
+                    logging.warning(f"Device {device.id} is gone; skipped blacklisting parameter {parameter.id}")
+
+            logging.error(f"Command '{parameter.name}' is {message} and will be removed")
+            raise exception_class(f"Command '{parameter.name}' failed: {message}") from None
+
+    # -------------------------------------------------------------------------
+    # Device -> Hub: discovery (mDNS / on-network)
+    # -------------------------------------------------------------------------
+
+    async def _matter_discovery_loop(self, interval: int = 5):
+        # On-network (mDNS) discovery is polled from matter-server rather than routed through the
+        # Hub's shared Zeroconf service on purpose: matter-server already parses the Matter `_matterc`
+        # TXT records into clean, structured CommissionableNodeData (discriminator, vendor/product,
+        # commissioning mode, pairing hints). Re-deriving that on the raw Zeroconf service would just
+        # duplicate matter-server's parser. BLE-only devices, which mDNS can't see, ARE discovered via
+        # the Hub's shared BLE service instead (see the BLE discovery section below) — so the "our
+        # discovery + SDK for pairing" split is used exactly where it adds value.
+        while True:
+            try:
+                nodes: list[CommissionableNodeData] = await self._matter_client.discover_commissionable_nodes()
+                for node in nodes:
+                    await self._async_matter_did_discover(node)
+            except Exception as e:
+                logging.error(f"[{self.name}] discovery error: {e}")
+            await asyncio.sleep(interval)
+
+    async def _async_matter_did_discover(self, node: CommissionableNodeData):
+        discovery_id = self._mapper.discovery_uuid(
+            node.instance_name
+            or f"{node.vendor_id}_{node.product_id}_{node.addresses[0] if node.addresses else 'unknown'}"
+        )
+        discovery = Discovery(
+            id=discovery_id,
+            integration=NonEmptyStr(self.name),
+            expected_credentials_options=self._mapper.define_credentials_options(
+                node.commissioning_mode, node.pairing_hint, node.pairing_instruction, bool(node.addresses)
+            ),
+            expiration=None,
+            transport=NonEmptyStr("IP" if node.addresses else "BLE"),
+            device_name=NonEmptyStr(node.device_name or node.instance_name or "Unknown"),
+            device_manufacturer=f"Vendor {node.vendor_id}" if node.vendor_id else None,
+            device_category=str(node.device_type),
+            device_icon=None,
+        )
+        self._majordom_descoveries[discovery_id] = discovery
+        await self.dependencies.output.controller_did_receive_discovery(self, discovery)
+
+    # -------------------------------------------------------------------------
+    # Device -> Hub: BLE discovery (BLEDiscoveryListener) — commissionable devices not yet on IP
+    # -------------------------------------------------------------------------
+
+    async def ble_did_discover_device(self, ble: BLEDiscoveryService, info: BLEDiscoveryInfo):
+        await self._matter_did_discover_ble(info)
+
+    async def ble_did_update_device(self, ble: BLEDiscoveryService, info: BLEDiscoveryInfo):
+        await self._matter_did_discover_ble(info)
+
+    async def ble_did_remove_device(self, ble: BLEDiscoveryService, info: BLEDiscoveryInfo):
+        # Intentionally keep the discovery. Commissionable devices rotate their BLE address while the
+        # window is open (~minutes), so the scanner's short not-seen eviction (~11s) fires constantly
+        # even while the device is very much present — dropping the discovery here would race
+        # commissioning. pair_device removes it on success; stop() clears the rest.
+        return
+
+    async def _matter_did_discover_ble(self, info: BLEDiscoveryInfo):
+        parsed = self._parse_commissionable_ble(info)
+        if not parsed:
+            return
+        discriminator, vendor_id, product_id = parsed
+        discovery_id = self._ble_discovery_id(discriminator, vendor_id, product_id)
+        self._ble_addresses.setdefault(discovery_id, set()).add(info.device.address)
+        if discovery_id in self._majordom_descoveries:
+            return  # already advertised; the device keeps beaconing while its window is open
+        discovery = Discovery(
+            id=discovery_id,
+            integration=NonEmptyStr(self.name),
+            # A commissionable device accepts its manual pairing code (or QR). pair_device's BLE
+            # branch feeds the code to commission_with_code, which does its own BLE scan by discriminator.
+            expected_credentials_options=[CredentialsType.code.with_mask("DDDD-DDD-DDDD"), CredentialsType.qr],
+            expiration=None,
+            transport=NonEmptyStr("BLE"),
+            device_name=NonEmptyStr(info.advertisement.local_name or f"Matter {vendor_id:04x}:{product_id:04x}"),
+            device_manufacturer=f"Vendor {vendor_id}",
+            device_category=None,
+            device_icon=None,
+        )
+        self._majordom_descoveries[discovery_id] = discovery
+        await self.dependencies.output.controller_did_receive_discovery(self, discovery)
+
+    @staticmethod
+    def _parse_commissionable_ble(info: BLEDiscoveryInfo) -> tuple[int, int, int] | None:
+        """Decode a Matter commissionable BLE advert's service-data payload → (discriminator, vid, pid).
+
+        Payload (Matter spec 5.4.2.5.6): [0]=opcode(0x00 Commissionable), [1:3]=discriminator (u16 LE,
+        low 12 bits), [3:5]=vendor id (u16 LE), [5:7]=product id (u16 LE), [7]=additional-data flag.
+        """
+        data = info.advertisement.service_data.get("0000fff6-0000-1000-8000-00805f9b34fb")
+        if not data or len(data) < 7 or data[0] != 0x00:
+            return None
+        discriminator = (data[1] | (data[2] << 8)) & 0x0FFF
+        vendor_id = data[3] | (data[4] << 8)
+        product_id = data[5] | (data[6] << 8)
+        return discriminator, vendor_id, product_id
+
+    def _ble_discovery_id(self, discriminator: int, vendor_id: int, product_id: int) -> UUID:
+        # Stable across the device's (possibly changing) BLE address and across mDNS re-discovery
+        # after it joins Thread — keyed on the commissioning identity, not the transport address.
+        return self._mapper.discovery_uuid(f"ble_{vendor_id:04x}_{product_id:04x}_{discriminator:03x}")
+
+    # -------------------------------------------------------------------------
+    # Device -> Hub: subscriptions & availability
+    # -------------------------------------------------------------------------
+
+    def _subscription(self, device_id: UUID, node: MatterNode):
+        """
+        Registers attribute-change callbacks for every attribute on the node.
+        Uses _make_callback to capture (device_id, parameter_id) by value —
+        without it all callbacks would share the last loop iteration's values.
+        """
+        for endpoint_id, endpoint in node.endpoints.items():
+            for cluster_id, cluster in endpoint.clusters.items():
+                if not hasattr(cluster, "Attributes"):
+                    continue
+                for _, attribute in inspect.getmembers(cluster.Attributes, inspect.isclass):
+                    if not issubclass(attribute, ClusterAttributeDescriptor):
+                        continue
+                    attribute_path = f"{endpoint_id}/{cluster_id}/{attribute.attribute_id}"
+                    parameter_id = self._mapper.attribute_parameter_uuid(
+                        device_id, endpoint_id, cluster_id, attribute.attribute_id
+                    )
+                    self._matter_client.subscribe_events(
+                        self._make_callback(device_id, parameter_id, cluster_id, attribute.attribute_id),
+                        EventType.ATTRIBUTE_UPDATED,
+                        node.node_id,
+                        attribute_path,
+                    )
+
+        # node.available flips when the device drops off/rejoins the Matter fabric while
+        # the Hub keeps running (not just at Hub startup) — NODE_UPDATED fires on that and
+        # other node-info changes, so track the last known value and only act on a real
+        # transition instead of re-signalling on every unrelated update.
+        self._node_availability[device_id] = node.available
+        self._matter_client.subscribe_events(
+            self._make_availability_callback(device_id),
+            EventType.NODE_UPDATED,
+            node.node_id,
+        )
+
+    def _make_callback(self, device_id: UUID, parameter_id: UUID, cluster_id: int, attribute_id: int):
+        def callback(event_type, new_value):
+            event = DeviceParameterChange(
+                device_id=device_id,
+                parameter_id=parameter_id,
+                value=self._mapper.normalize_value(
+                    self._mapper.apply_attribute_scale(cluster_id, attribute_id, new_value)
+                ),
+            )
+            asyncio.create_task(self.dependencies.output.controller_did_receive_events(self, [event]))
+
+        return callback
+
+    def _make_availability_callback(self, device_id: UUID):
+        def callback(event_type, updated_node: MatterNode):
+            was_available = self._node_availability.get(device_id)
+            is_available = updated_node.available
+            if is_available == was_available:
+                return
+            self._node_availability[device_id] = is_available
+            if is_available:
+                asyncio.create_task(self.dependencies.output.controller_did_connect_device(self, device_id))
+            else:
+                asyncio.create_task(self.dependencies.output.controller_did_lose_device(self, device_id))
+
+        return callback
+
+    # -------------------------------------------------------------------------
+    # Private helpers
+    # -------------------------------------------------------------------------
+
+    def _require_matter_client(self) -> MatterClient:
+        if not self._matter_client:
+            raise MatterConnectionError("Matter client is not started")
+        return self._matter_client
+
+    def _require_node(self, device: MatterDevice) -> MatterNode:
+        node = self._require_matter_client().get_node(device.node_id)
+        if not node:
+            raise MatterUnexpectedError(f"Node for device {device.node_id} not found")
+        return node
+
+    async def _execute_cluster_command(
+        self, node, endpoint_id: int, cluster, parameter: MatterParameter, command: DeviceCommand
+    ):
+        command_id = parameter.integration_data.command_id
+        time_requested_timeout = None
+        if command_id is None or command_id < 0:
+            raise MatterUnexpectedError(f"Invalid command_id: {command_id}")
+
+        if not hasattr(cluster, "Commands"):
+            return
+
+        # A value-less send (e.g. tapping the main parameter) falls back to the arguments this
+        # command was set up with as a main parameter — see integration_data.default_arguments.
+        arguments = command.value if command.value is not None else parameter.integration_data.default_arguments
+
+        for _, cmd_class in inspect.getmembers(cluster.Commands, inspect.isclass):
+            if not issubclass(cmd_class, ClusterCommand):
+                continue
+            if getattr(cmd_class, "command_id", -1) != command_id:
+                continue
+
+            # Only send client-side commands
+            if not getattr(cmd_class, "is_client", True):
+                continue
+
+            if cluster.id == 0x00000101:  # DoorLock
+                time_requested_timeout = 1000
+            if isinstance(arguments, dict):
+                data = self._mapper.parse_data_for_command(cmd_class, arguments)
+                await self._matter_client.send_device_command(
+                    node.node_id, endpoint_id, cmd_class(**data), timed_request_timeout_ms=time_requested_timeout
+                )
+            else:
+                await self._matter_client.send_device_command(
+                    node.node_id, endpoint_id, cmd_class(), timed_request_timeout_ms=time_requested_timeout
+                )
+            return
+
+    async def _write_cluster_attribute(
+        self, node, endpoint_id: int, cluster_id: int, parameter: MatterParameter, command: DeviceCommand
+    ):
+        if parameter.role != ParameterRole.control:
+            raise MatterUnexpectedError(f"Parameter '{parameter.name}' is not writable")
+
+        attribute_path = f"{endpoint_id}/{cluster_id}/{parameter.integration_data.attribute_id}"
+        if attribute_path not in node.node_data.attributes:
+            return
+
+        endpoint = node.endpoints[endpoint_id]
+        cluster = endpoint.clusters[cluster_id]
+        attribute_cls = next(
+            (
+                a
+                for _, a in inspect.getmembers(cluster.Attributes, inspect.isclass)
+                if issubclass(a, ClusterAttributeDescriptor)
+                and getattr(a, "attribute_id", -1) == parameter.integration_data.attribute_id
+            ),
+            None,
+        )
+
+        value = self._mapper.parse_data_for_attribute(attribute_cls, command.value) if attribute_cls else command.value
+        await self._matter_client.write_attribute(node.node_id, attribute_path, value)
+
+    def _get_main_parameter(self, device_id: UUID, node: MatterNode) -> tuple[UUID | None, DefaultParams]:
+        for endpoint_id, endpoint in node.endpoints.items():
+            for cluster_id, spec in MAIN_PARAMETER_BY_CLUSTER.items():
+                if cluster_id not in endpoint.clusters:
+                    continue
+
+                if cluster_id == 0x00000202:  # FanControl
+                    supported_attribute_ids: list[int] = node.get_attribute_value(endpoint_id, cluster_id, 0xFFFB) or []
+                    if supported_attribute_ids and spec.command_or_attribute_id not in supported_attribute_ids:
+                        continue
+                    return (
+                        self._mapper.attribute_parameter_uuid(
+                            device_id, endpoint_id, cluster_id, spec.command_or_attribute_id
+                        ),
+                        spec.default_params,
+                    )
+
+                accepted_command_ids: list[int] = node.get_attribute_value(endpoint_id, cluster_id, 0xFFF9) or []
+                if accepted_command_ids and spec.command_or_attribute_id not in accepted_command_ids:
+                    continue
+
+                return (
+                    self._mapper.command_parameter_uuid(
+                        device_id, endpoint_id, cluster_id, spec.command_or_attribute_id
+                    ),
+                    spec.default_params,
+                )
+        return None, None
+
+
+================================================================================
+# FILE: majordom_matter/exceptions.py
+================================================================================
+class MatterConnectionError(Exception):
+    """Raised when Matter client is not started or not available."""
+
+
+class MatterUnexpectedError(Exception):
+    """Raised when an unexpected internal error occurs."""
+
+
+class MatterUnsupportedParameter(Exception):
+    """Raised when a parameter is not supported by the device."""
+
+
+class MatterNotFoundParameter(Exception):
+    """Raised when a parameter was not found on the device."""
+
+
+================================================================================
+# FILE: majordom_matter/mapper.py
+================================================================================
+import base64
+import enum
+import inspect
+import logging
+from collections.abc import Callable
+from dataclasses import fields, is_dataclass
+from typing import Any, get_args, get_origin, get_type_hints
+from uuid import UUID
+
+from chip.clusters.CHIPClusters import ChipClusters
+from chip.clusters.ClusterObjects import ClusterAttributeDescriptor, ClusterCommand
+from chip.clusters.Types import Nullable, NullValue
+from chip.tlv import TLVReader
+from majordom_integration_sdk.schemas.device import CredentialsType
+from majordom_integration_sdk.schemas.parameter import (
+    Parameter,
+    ParameterDataType,
+    ParameterRole,
+    ParameterUnit,
+    ParameterVisibility,
+)
+from matter_server.client.models.node import MatterNode
+
+from .matter_spec import (
+    ATTRIBUTE_MIN_STEPS,
+    ATTRIBUTE_SCALE,
+    ATTRIBUTE_UNITS,
+    EVERYDAY_COMMANDS,
+    FIELD_TYPE_TO_DATA_TYPE,
+    METADATA_SOURCES,
+    MIN_MAX_VALUE,
+    SYSTEM_ATTRIBUTES,
+    SYSTEM_CLUSTERS,
+    AttributeKey,
+    classify_attribute,
+)
+from .model import MatterParameter, MatterParameterIntegrationData, MatterParameterTypeEnum
+
+
+class MatterMapper:
+    def __init__(
+        self,
+        device_uuid: Callable[[str], UUID],
+        parameter_uuid: Callable[[UUID, str], UUID],
+    ):
+        # The controller's framework UUID generators (see AbstractController). Every Matter id —
+        # a device from its node/product, a discovery from its commissioning identity, a parameter
+        # from its endpoint/cluster/attribute path — is derived through these, so parameters are
+        # namespaced under the device and stay identical across pairing, fetch, and live reports.
+        self._device_uuid = device_uuid
+        self._parameter_uuid = parameter_uuid
+
+    # -------------------------------------------------------------------------
+    # Identity: Matter identifiers -> MajorDom UUIDs.
+    # Single source of truth for the id string formats — keep every call site going through
+    # these instead of formatting the f-strings inline.
+    # -------------------------------------------------------------------------
+
+    def discovery_uuid(self, matter_id: str) -> UUID:
+        """UUID for a discovery, keyed on its (pre-commissioning) Matter identity string."""
+        return self._device_uuid(matter_id)
+
+    def device_uuid(self, node_id: int, product_name: str | None) -> UUID:
+        return self._device_uuid(f"{node_id}_{product_name}")
+
+    def attribute_parameter_uuid(self, device_id: UUID, endpoint_id: int, cluster_id: int, attribute_id: int) -> UUID:
+        return self._parameter_uuid(device_id, f"attribute_{endpoint_id}/{cluster_id}/{attribute_id}")
+
+    def command_parameter_uuid(self, device_id: UUID, endpoint_id: int, cluster_id: int, command_id: int) -> UUID:
+        return self._parameter_uuid(device_id, f"command_{endpoint_id}/{cluster_id}/{command_id}")
+
+    def command_field_uuid(
+        self, device_id: UUID, endpoint_id: int, cluster_id: int, command_id: int, field_name: str
+    ) -> UUID:
+        return self._parameter_uuid(device_id, f"field_{endpoint_id}/{cluster_id}/{command_id}/{field_name}")
+
+    def define_credentials_options(
+        self,
+        commissioning_mode: int | None = None,
+        pairing_hint: int | None = None,
+        pairing_instruction: str | None = None,
+        is_on_network: bool = False,
+    ) -> list[CredentialsType]:
+        """Every credentials type this node's pairing hint bitmap says it supports —
+        a device can advertise more than one simultaneously (e.g. QR and a manual code),
+        so this returns all of them instead of picking just one."""
+        if not commissioning_mode or commissioning_mode == 0:
+            return [CredentialsType.none]
+
+        hint = pairing_hint or 0
+        instruction = (pairing_instruction or "").lower()
+        options: list[CredentialsType] = []
+
+        # Bitmask checks based on the Matter spec pairing hint bitmap.
+        if is_on_network:
+            options.append(CredentialsType.code.with_mask("DDD-DD-DDD"))
+        if hint & (0x0004 | 0x0020 | 0x0008):
+            options.append(CredentialsType.qr)
+        if (
+            hint & (0x0002 | 0x0010) or "code" in instruction or "pin" in instruction
+        ) and CredentialsType.code not in options:
+            options.append(CredentialsType.code.with_mask("DDD-DD-DDD"))
+        # bit 0x0001 (Power Cycle Commissioning Mode) isn't representable as a
+        # CredentialsType — there's no code/QR/secret majordom can collect for it —
+        # so it doesn't contribute an option here.
+
+        return options or [CredentialsType.none]
+
+    def normalize_value(self, value: Any):
+        """Convert a chip runtime value to a plain, JSON-serializable python value.
+
+        Parameter values are pythonic now (not byte-encoded), so anything the Hub stores/sends
+        must serialize cleanly — recurse into lists/dicts and drop chip's ``Nullable``/``NullValue``
+        sentinels (→ ``None``); chip enums are ``IntEnum`` and already serialize as their int.
+        """
+        if value is NullValue or isinstance(value, Nullable):
+            return None
+        if isinstance(value, (list, tuple)):
+            return [self.normalize_value(v) for v in value]
+        if isinstance(value, dict):
+            return {k: self.normalize_value(v) for k, v in value.items()}
+        if is_dataclass(value) and not isinstance(value, type):
+            return {f.name: self.normalize_value(getattr(value, f.name)) for f in fields(value)}
+        if isinstance(value, bytes | bytearray):
+            return base64.b64encode(bytes(value)).decode()
+        return value
+
+    def get_parameter_data_type_from_value(self, value: Any) -> ParameterDataType:
+        """Infers ParameterDataType from a Python runtime value."""
+        # Matter SDK uses a special sentinel for "no value", not Python None
+        try:
+            if value is NullValue or isinstance(value, Nullable):
+                value = None
+                return ParameterDataType.none
+        except ImportError:
+            pass
+
+        if value is None:
+            return ParameterDataType.none
+
+        # bool must be checked before int because bool is a subclass of int.
+        if isinstance(value, bool):
+            return ParameterDataType.bool
+
+        if isinstance(value, enum.Enum):
+            return ParameterDataType.enum
+
+        if isinstance(value, int):
+            return ParameterDataType.integer
+
+        if isinstance(value, float):
+            return ParameterDataType.decimal
+
+        if isinstance(value, str):
+            return ParameterDataType.string
+
+        if isinstance(value, (bytes, bytearray, memoryview)):
+            return ParameterDataType.data
+
+        if is_dataclass(value) or isinstance(value, dict):
+            return ParameterDataType.struct
+
+        if isinstance(value, (list, tuple, set)):
+            return ParameterDataType.struct
+
+        raise ValueError(
+            f"Cannot infer ParameterDataType for value of type {type(value)!r}: {value!r}. "
+            f"Extend get_parameter_data_type_from_value to handle this type explicitly."
+        )
+
+    def apply_attribute_scale(self, cluster_id: int, attribute_id: int, value: Any) -> Any:
+        """Converts a raw Matter attribute value into ATTRIBUTE_UNITS' base unit, per ATTRIBUTE_SCALE.
+        Unwraps the cumulative-energy struct's `energy` field before scaling, since that's the
+        only scaled attribute whose SDK value isn't already a plain number."""
+        scale = ATTRIBUTE_SCALE.get(AttributeKey(cluster_id, attribute_id))
+        if scale is None:
+            return value
+        if is_dataclass(value) and hasattr(value, "energy"):
+            value = value.energy
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return value * scale
+        return value
+
+    def resolve_runtime_bounds(
+        self, key, cluster_id: int, endpoint, name: str, default_min, default_max
+    ) -> tuple[Any, Any]:
+        """Metadata priority 1: override a parameter's min/max with the device's own limit
+        attributes' runtime VALUES (the *_min/*_max we hide as metadata). Falls back to the passed
+        defaults (spec/type) when the device doesn't report a source attribute, warning so a quirk
+        or a new device that omits an expected limit shows up in the logs."""
+        source = METADATA_SOURCES.get(key)
+        if source is None:
+            return default_min, default_max
+        min_v, max_v = default_min, default_max
+        for attr_id, is_min in ((source.min_attr, True), (source.max_attr, False)):
+            if attr_id is None:
+                continue
+            raw = endpoint.get_attribute_value(cluster_id, attr_id)
+            resolved = self.normalize_value(raw)
+            if resolved is not None:
+                if is_min:
+                    min_v = resolved
+                else:
+                    max_v = resolved
+            else:
+                logging.warning(
+                    f"Metadata source cluster {cluster_id:#x} attr {attr_id:#x} "
+                    f"({'min' if is_min else 'max'} for {name!r}) not reported — quirk or unsupported; "
+                    f"using spec/type default"
+                )
+        return min_v, max_v
+
+    def get_min_max_value(self, attribute, value) -> tuple[int | None, int | None]:
+        """
+        Encodes the attribute value to TLV to discover its wire type,
+        then looks up the valid numeric range for that type from matter_spec.
+        Returns (None, None) if the type is unknown or encoding fails.
+        """
+        try:
+            tlv_bytes = attribute.ToTLV(None, value)
+            reader = TLVReader(tlv_bytes)
+            reader.get()
+            tlv_type = reader.decoding[0]["type"]
+            return MIN_MAX_VALUE.get(tlv_type, (None, None))
+        except Exception:
+            return None, None
+
+    def parse_data_for_command(self, cmd_class: type, data: dict) -> dict:
+        import enum
+
+        if not is_dataclass(cmd_class):
+            raise TypeError(f"Expected a dataclass cluster-command class, got {cmd_class!r}")
+        hints = get_type_hints(cmd_class)
+        result = {}
+        for field in fields(cmd_class):
+            if field.name not in data:
+                continue
+            raw = data[field.name]
+            field_type = hints.get(field.name, field.type)
+
+            # Unwrap Optional / Union
+            if get_origin(field_type):
+                args = [a for a in get_args(field_type) if a is not type(None)]
+                field_type = args[0] if args else field_type
+
+            if raw is None:
+                result[field.name] = NullValue
+            elif isinstance(field_type, type) and issubclass(field_type, enum.Enum):
+                result[field.name] = field_type(int(raw))
+            elif field_type in (bytes, bytearray):
+                if isinstance(raw, str):
+                    result[field.name] = raw.encode("utf-8")
+                elif isinstance(raw, (list, tuple)):
+                    result[field.name] = bytes(raw)
+                else:
+                    result[field.name] = bytes(raw) if not isinstance(raw, (bytes, bytearray)) else raw
+            else:
+                result[field.name] = raw
+
+        return result
+
+    def parse_data_for_attribute(self, attribute_cls: type, raw: Any) -> Any:
+        if raw is None:
+            return NullValue
+
+        attr_type = getattr(attribute_cls, "attribute_type", None)
+        field_type = getattr(attr_type, "Type", None) if attr_type else None
+
+        # Unwrap Optional[X] / Union[X, None] — same as in parse_data_for_command
+        if get_origin(field_type):
+            args = [a for a in get_args(field_type) if a is not type(None)]
+            field_type = args[0] if args else field_type
+
+        if isinstance(field_type, type) and issubclass(field_type, enum.Enum):
+            return field_type(int(raw))
+
+        if field_type in (bytes, bytearray):
+            if isinstance(raw, str):
+                return raw.encode("utf-8")
+            if isinstance(raw, (list, tuple)):
+                return bytes(raw)
+            return bytes(raw) if not isinstance(raw, (bytes, bytearray)) else raw
+
+        return raw
+
+    # -------------------------------------------------------------------------
+    # Node parsing: matter SDK cluster data -> MatterParameter
+    # -------------------------------------------------------------------------
+
+    def parse_commands(
+        self, device_id: UUID, endpoint_id: int, cluster_id: int, cluster, node: MatterNode
+    ) -> list[MatterParameter]:
+        params = []
+        on_system_cluster = cluster_id in SYSTEM_CLUSTERS
+
+        # Only process commands actually supported by this device
+        accepted_command_ids: list[int] = node.get_attribute_value(endpoint_id, cluster_id, 0xFFF9) or []
+
+        for name, command in inspect.getmembers(cluster.Commands, inspect.isclass):
+            if not issubclass(command, ClusterCommand):
+                continue
+
+            # Skip response commands (server→client) — only keep client→server commands
+            if not getattr(command, "is_client", True):
+                continue
+
+            command_id = getattr(command, "command_id", -1)
+
+            # Skip commands not supported by this specific device
+            if accepted_command_ids and command_id not in accepted_command_ids:
+                continue
+
+            # Command visibility: system-cluster commands hidden; everyday one-tap actions ->
+            # user; every other command (schedule/credential/log management) -> setting.
+            if on_system_cluster:
+                visibility = ParameterVisibility.system
+            elif (cluster_id, command_id) in EVERYDAY_COMMANDS:
+                visibility = ParameterVisibility.user
+            else:
+                visibility = ParameterVisibility.setting
+
+            # Reflect on dataclass fields to build typed argument descriptors
+            args = []
+            if is_dataclass(command):
+                command_types = get_type_hints(command)
+                for field in fields(command):
+                    if field.name.startswith("_"):
+                        continue
+
+                    field_type = command_types.get(field.name, field.type)
+                    data_type = ParameterDataType.none
+                    valid_values = None
+
+                    # Unwrap Optional[X] / Union[X, None] → take the first concrete type
+                    if get_origin(field_type):
+                        args_ = [a for a in get_args(field_type) if a is not type(None)]
+                        field_type = args_[0] if args_ else field_type
+
+                    if isinstance(field_type, type):
+                        if issubclass(field_type, enum.Enum):
+                            data_type = ParameterDataType.enum
+                            # Keys are numeric values sent to device, values are display labels
+                            valid_values = {m.value: m.name for m in field_type if "unknown" not in m.name.lower()}
+                        else:
+                            # Exact match first, then subclass fallback (e.g. custom int wrappers)
+                            matched = FIELD_TYPE_TO_DATA_TYPE.get(field_type)
+                            if matched is None:
+                                for candidate_type, mapped_type in FIELD_TYPE_TO_DATA_TYPE.items():
+                                    if issubclass(field_type, candidate_type):
+                                        matched = mapped_type
+                                        break
+                            if matched is not None:
+                                data_type = matched
+
+                    args.append(
+                        Parameter(
+                            id=self.command_field_uuid(device_id, endpoint_id, cluster_id, command_id, field.name),
+                            name=field.name,
+                            data_type=data_type,
+                            unit=ParameterUnit.plain,
+                            role=ParameterRole.control,
+                            valid_values=valid_values,
+                            visibility=ParameterVisibility.setting,
+                            integration_data=None,
+                        )
+                    )
+
+            params.append(
+                MatterParameter(
+                    id=self.command_parameter_uuid(device_id, endpoint_id, cluster_id, command_id),
+                    name=name,
+                    data_type=ParameterDataType.none,
+                    role=ParameterRole.control,
+                    visibility=visibility,
+                    fields=args or None,
+                    integration_data=MatterParameterIntegrationData(
+                        endpoint_id=endpoint_id,
+                        cluster_id=cluster_id,
+                        command_id=command_id,
+                        type=MatterParameterTypeEnum.command,
+                    ),
+                )
+            )
+
+        return params
+
+    def parse_attributes(
+        self, device_id: UUID, endpoint_id: int, cluster_id: int, cluster, endpoint, node: MatterNode
+    ) -> list[MatterParameter]:
+        params = []
+
+        # Only process attributes actually present on this device
+        supported_attribute_ids: list[int] = node.get_attribute_value(endpoint_id, cluster_id, 0xFFFB) or []
+
+        for name, attribute in inspect.getmembers(cluster.Attributes, inspect.isclass):
+            if not issubclass(attribute, ClusterAttributeDescriptor):
+                continue
+
+            attribute_id = getattr(attribute, "attribute_id", -1)
+
+            # Skip system-level attributes (featureMap, clusterRevision, etc.)
+            if attribute_id in SYSTEM_ATTRIBUTES:
+                continue
+
+            # Skip attributes not present on this specific device
+            if supported_attribute_ids and attribute_id not in supported_attribute_ids:
+                continue
+
+            raw_value = endpoint.get_attribute_value(cluster_id, attribute_id)
+
+            # Visibility (see the parameter-ux recipe in the docs). System clusters and
+            # security material are always hidden. Otherwise: writable attrs are configure-once
+            # `setting`s unless curated as everyday controls; read-only attrs are hidden `system`
+            # unless curated as live readings (USER_READINGS). This inverts the old
+            # "every read-only -> user" flood — uncurated read-onlys (bounds, capabilities, counts)
+            # stay hidden and double as metadata sources; the user can still surface any of them.
+            key = AttributeKey(cluster_id, attribute_id)
+            writable = bool(
+                ChipClusters(None)
+                .GetClusterInfoById(cluster_id)
+                .get("attributes", {})
+                .get(attribute_id, {})
+                .get("writable")
+            )
+            # Classification via the priority ladder (see the matter README): safety (system
+            # cluster / sensitive crypto) > our hand overrides > harvested HA judgment > fallback
+            # (writable -> setting, else system), which WARNS on uncurated attributes.
+            spec, source = classify_attribute(
+                cluster_id,
+                attribute_id,
+                name,
+                writable=writable,
+                in_system_cluster=cluster_id in SYSTEM_CLUSTERS,
+            )
+            visibility = spec.visibility
+            role = spec.role if spec.role is not None else (ParameterRole.control if writable else ParameterRole.sensor)
+            if source.startswith("fallback"):
+                logging.warning(
+                    "Uncurated attribute cluster %#x attr %#x (%s) -> %s (%s); add to OUR_ATTRIBUTE_UX "
+                    "or refresh the matter-HA harvest",
+                    cluster_id,
+                    attribute_id,
+                    name,
+                    visibility.value,
+                    source,
+                )
+
+            valid_values = None
+            attr_type = attribute.attribute_type
+            if attr_type and hasattr(attr_type, "Type") and isinstance(attr_type.Type, type):
+                t = attr_type.Type
+                if issubclass(t, (enum.Enum, enum.Flag)):
+                    # Keys are numeric values sent to device, values are display labels
+                    valid_values = {m.value: m.name for m in t}
+
+            min_value, max_value = self.get_min_max_value(attribute, raw_value)  # priority 3: wire-type range
+            min_value, max_value = self.resolve_runtime_bounds(  # priority 1: device's own limit attrs
+                key, cluster_id, endpoint, name, min_value, max_value
+            )
+            scale = ATTRIBUTE_SCALE.get(AttributeKey(cluster_id, attribute_id))
+            if scale is not None:
+                min_value = min_value * scale if min_value is not None else None
+                max_value = max_value * scale if max_value is not None else None
+            value = self.apply_attribute_scale(cluster_id, attribute_id, raw_value)
+
+            try:
+                data_type = self.get_parameter_data_type_from_value(self.normalize_value(value))
+            except ValueError:
+                # Value type isn't one we know how to represent yet. Skip just this attribute
+                # rather than aborting the whole pairing — the device stays usable, only this
+                # one parameter is unavailable.
+                logging.warning(
+                    f"Could not infer data type for {name} "
+                    f"(cluster {cluster_id:#x}, attribute {attribute_id:#x}); skipping parameter"
+                )
+                continue
+
+            params.append(
+                MatterParameter(
+                    id=self.attribute_parameter_uuid(device_id, endpoint_id, cluster_id, attribute_id),
+                    name=name,
+                    data_type=data_type,
+                    visibility=visibility,
+                    min_value=min_value,
+                    max_value=max_value,
+                    valid_values=valid_values,
+                    min_step=ATTRIBUTE_MIN_STEPS.get(AttributeKey(cluster_id, attribute_id)),
+                    # Our spec table wins; the harvested HA unit fills gaps it leaves plain.
+                    unit=ATTRIBUTE_UNITS.get(key, spec.unit or ParameterUnit.plain),
+                    role=role,
+                    integration_data=MatterParameterIntegrationData(
+                        endpoint_id=endpoint_id,
+                        cluster_id=cluster_id,
+                        attribute_id=attribute_id,
+                        type=MatterParameterTypeEnum.attribute,
+                    ),
+                )
+            )
+
+        return params
+
+
+================================================================================
+# FILE: majordom_matter/matter_spec.py
+================================================================================
+from typing import Any, NamedTuple
+
+from chip.tlv import (
+    INT8_MAX,
+    INT8_MIN,
+    INT16_MAX,
+    INT16_MIN,
+    INT32_MAX,
+    INT32_MIN,
+    INT64_MAX,
+    INT64_MIN,
+    UINT8_MAX,
+    UINT16_MAX,
+    UINT32_MAX,
+    UINT64_MAX,
+)
+from majordom_integration_sdk.schemas.parameter import (
+    ParameterDataType,
+    ParameterRole,
+    ParameterUnit,
+    ParameterVisibility,
+)
+
+from .matter_spec_ha import MATTER_HA_ATTRIBUTE_UX
+
+SYSTEM_CLUSTERS: set[int] = {
+    0x3,  # Identify
+    0x4,  # Groups
+    0x5,  # Scenes
+    0x1D,  # Descriptor
+    0x1E,  # Binding
+    0x1F,  # AccessControl
+    0x25,  # Actions
+    0x28,  # BasicInformation
+    0x29,  # OtaSoftwareUpdateProvider
+    0x2A,  # OtaSoftwareUpdateRequestor
+    0x2B,  # LocalizationConfiguration
+    0x2C,  # TimeFormatLocalization
+    0x2D,  # UnitLocalization
+    0x2E,  # PowerSourceConfiguration
+    0x9C,  # PowerTopology
+    0x30,  # GeneralCommissioning
+    0x31,  # NetworkCommissioning
+    0x32,  # DiagnosticLogs
+    0x33,  # GeneralDiagnostics
+    0x34,  # SoftwareDiagnostics
+    0x35,  # ThreadNetworkDiagnostics
+    0x36,  # WiFiNetworkDiagnostics
+    0x37,  # EthernetNetworkDiagnostics
+    0x38,  # TimeSynchronization
+    0x3C,  # AdministratorCommissioning
+    0x3E,  # OperationalCredentials
+    0x3F,  # GroupKeyManagement
+    0x40,  # FixedLabel
+    0x41,  # UserLabel
+    0x62,  # ScenesManagement
+}
+
+SYSTEM_ATTRIBUTES: set[int] = {
+    0x0000FFF8,  # generatedCommandList
+    0x0000FFF9,  # acceptedCommandList
+    0x0000FFFA,  # eventList
+    0x0000FFFB,  # attributeList
+    0x0000FFFC,  # featureMap
+    0x0000FFFD,  # clusterRevision
+}
+
+
+class ValueRange(NamedTuple):
+    min: int
+    max: int
+
+
+MIN_MAX_VALUE: dict[str, ValueRange] = {
+    "Unsigned Integer 1-byte value": ValueRange(0, UINT8_MAX),
+    "Unsigned Integer 2-byte value": ValueRange(0, UINT16_MAX),
+    "Unsigned Integer 4-byte value": ValueRange(0, UINT32_MAX),
+    "Unsigned Integer 8-byte value": ValueRange(0, UINT64_MAX),
+    "Signed Integer 1-byte value": ValueRange(INT8_MIN, INT8_MAX),
+    "Signed Integer 2-byte value": ValueRange(INT16_MIN, INT16_MAX),
+    "Signed Integer 4-byte value": ValueRange(INT32_MIN, INT32_MAX),
+    "Signed Integer 8-byte value": ValueRange(INT64_MIN, INT64_MAX),
+}
+
+
+class AttributeKey(NamedTuple):
+    """Identifies a single attribute on a cluster — the shared dict key shape for
+    ATTRIBUTE_UNITS / ATTRIBUTE_SCALE / ATTRIBUTE_MIN_STEPS below."""
+
+    cluster_id: int
+    attribute_id: int
+
+
+ATTRIBUTE_UNITS: dict[AttributeKey, ParameterUnit] = {
+    AttributeKey(0x8, 0x0): ParameterUnit.percentage,  # LevelControl.CurrentLevel
+    AttributeKey(0x102, 0x8): ParameterUnit.percentage,  # WindowCovering.LiftPercentage
+    AttributeKey(0x102, 0x9): ParameterUnit.percentage,  # WindowCovering.TiltPercentage
+    AttributeKey(0x201, 0x0): ParameterUnit.celsius,  # Thermostat.LocalTemperature
+    AttributeKey(0x201, 0x11): ParameterUnit.celsius,  # Thermostat.OccupiedCoolingSetpoint
+    AttributeKey(0x201, 0x12): ParameterUnit.celsius,  # Thermostat.OccupiedHeatingSetpoint
+    AttributeKey(0x202, 0x2): ParameterUnit.percentage,  # FanControl.PercentSetting
+    AttributeKey(0x202, 0x3): ParameterUnit.percentage,  # FanControl.PercentCurrent
+    AttributeKey(
+        0x300, 0x0
+    ): ParameterUnit.arcdegree,  # ColorControl.CurrentHue (raw 0-254, degrees = value * 360 / 254)
+    AttributeKey(0x300, 0x1): ParameterUnit.percentage,  # ColorControl.CurrentSaturation
+    AttributeKey(0x300, 0x7): ParameterUnit.mired,  # ColorControl.ColorTemperatureMireds
+    AttributeKey(0x404, 0x0): ParameterUnit.m3h,  # FlowMeasurement.MeasuredValue (deci-m3/h, see scale)
+    AttributeKey(0x400, 0x0): ParameterUnit.lux,  # IlluminanceMeasurement.MeasuredValue
+    AttributeKey(0x402, 0x0): ParameterUnit.celsius,  # TemperatureMeasurement.MeasuredValue
+    AttributeKey(0x405, 0x0): ParameterUnit.percentage,  # RelativeHumidityMeasurement.MeasuredValue
+    AttributeKey(0x40C, 0x0): ParameterUnit.ppm,  # CarbonMonoxideMeasurement.MeasuredValue
+    AttributeKey(0x40D, 0x0): ParameterUnit.ppm,  # CarbonDioxideMeasurement.MeasuredValue
+    # Pm25Measurement.MeasuredValue: unit is device-configured (mass or molar concentration,
+    # via the cluster's MeasurementUnit attribute) — not necessarily ppm. Left unmapped
+    # (defaults to plain) rather than asserting a possibly-wrong unit.
+    AttributeKey(0x56, 0x0): ParameterUnit.celsius,  # TemperatureControl.TemperatureSetpoint
+    AttributeKey(0x90, 0x8): ParameterUnit.watt,  # ElectricalPowerMeasurement.ActivePower (raw mW, see ATTRIBUTE_SCALE)
+    AttributeKey(0x90, 0x4): ParameterUnit.volt,  # ElectricalPowerMeasurement.Voltage (raw mV, see ATTRIBUTE_SCALE)
+    AttributeKey(
+        0x90, 0x5
+    ): ParameterUnit.ampere,  # ElectricalPowerMeasurement.ActiveCurrent (raw mA, see ATTRIBUTE_SCALE)
+    AttributeKey(
+        0x91,
+        0x1,
+        # ElectricalEnergyMeasurement.CumulativeEnergyImported (struct; .energy in mWh, see ATTRIBUTE_SCALE)
+    ): ParameterUnit.kwh,
+    AttributeKey(
+        0x403, 0x0
+    ): ParameterUnit.pascal,  # PressureMeasurement.MeasuredValue (raw deci-kPa, see ATTRIBUTE_SCALE)
+    AttributeKey(0x2F, 0xC): ParameterUnit.percentage,  # PowerSource.BatPercentRemaining
+}
+
+# Multiplier applied to a raw attribute value to convert it into ATTRIBUTE_UNITS' base unit
+# (e.g. Matter reports power in mW; watt is the base unit, so scale = 0.001).
+ATTRIBUTE_SCALE: dict[AttributeKey, float] = {
+    AttributeKey(0x90, 0x8): 0.001,  # ElectricalPowerMeasurement.ActivePower: mW -> W
+    AttributeKey(0x90, 0x4): 0.001,  # ElectricalPowerMeasurement.Voltage: mV -> V
+    AttributeKey(0x90, 0x5): 0.001,  # ElectricalPowerMeasurement.ActiveCurrent: mA -> A
+    AttributeKey(0x91, 0x1): 1e-6,  # ElectricalEnergyMeasurement.CumulativeEnergyImported: mWh -> kWh
+    AttributeKey(0x404, 0x0): 0.1,  # FlowMeasurement.MeasuredValue: deci-m3/h -> m3/h
+    AttributeKey(0x403, 0x0): 100,  # PressureMeasurement.MeasuredValue: deci-kPa -> Pa
+}
+
+
+ATTRIBUTE_MIN_STEPS: dict[AttributeKey, int | float] = {
+    AttributeKey(0x0008, 0x0000): 1,  # CurrentLevel (uint8, 0-254)
+    AttributeKey(0x0300, 0x0000): 1,  # CurrentHue (verified: id 0x0000, uint8, step 1)
+    AttributeKey(0x0300, 0x0001): 1,  # CurrentSaturation (verified: id 0x0001, uint8, step 1)
+    AttributeKey(0x0300, 0x0007): 1,  # ColorTemperatureMireds (verified: id 0x0007, uint16, step 1)
+    AttributeKey(0x0201, 0x0010): 0.01,  # LocalTemperatureCalibration (SignedTemperature, -2.5°C to 2.5°C)
+    AttributeKey(0x0201, 0x0011): 0.01,  # OccupiedCoolingSetpoint (temperature type, 0.01°C resolution)
+    AttributeKey(0x0201, 0x0012): 0.01,  # OccupiedHeatingSetpoint (temperature type, 0.01°C resolution)
+    AttributeKey(0x0201, 0x0013): 0.01,  # UnoccupiedCoolingSetpoint (temperature type, 0.01°C resolution)
+    AttributeKey(0x0201, 0x0014): 0.01,  # UnoccupiedHeatingSetpoint (temperature type, 0.01°C resolution)
+    AttributeKey(0x0402, 0x0000): 0.01,  # MeasuredValue (temperature type, 0.01°C resolution)
+    AttributeKey(0x0405, 0x0000): 0.01,  # MeasuredValue (0.01% resolution)
+    AttributeKey(0x0403, 0x0000): 10,  # MeasuredValue (raw step 0.1 deci-kPa, scaled x100 to Pa -> 10 Pa)
+    AttributeKey(0x0102, 0x0008): 1,  # CurrentPositionLiftPercentage (plain percent 0-100, not Percent100ths)
+    AttributeKey(0x0102, 0x0009): 1,  # CurrentPositionTiltPercentage (plain percent 0-100, not Percent100ths)
+    AttributeKey(0x0102, 0x000B): 0.01,  # TargetPositionLiftPercent100ths (percent100ths, 0.01%)
+    AttributeKey(0x0102, 0x000C): 0.01,  # TargetPositionTiltPercent100ths (percent100ths, 0.01%)
+}
+
+
+class MetadataSource(NamedTuple):
+    """Sibling attributes whose runtime VALUES provide a parameter's min/max — the device's own
+    limit attributes (the ones we hide from the UI as metadata). Priority 1 in the resolver:
+    runtime sibling value > spec table > wire-type default."""
+
+    min_attr: int | None = None
+    max_attr: int | None = None
+
+
+METADATA_SOURCES: dict[AttributeKey, MetadataSource] = {
+    AttributeKey(0x008, 0x00): MetadataSource(0x02, 0x03),  # LevelControl.CurrentLevel <- Min/MaxLevel
+    AttributeKey(0x402, 0x00): MetadataSource(0x01, 0x02),  # TemperatureMeasurement <- Min/MaxMeasuredValue
+    AttributeKey(0x405, 0x00): MetadataSource(0x01, 0x02),  # RelativeHumidity <- Min/MaxMeasuredValue
+    AttributeKey(0x400, 0x00): MetadataSource(0x01, 0x02),  # Illuminance <- Min/MaxMeasuredValue
+    AttributeKey(0x403, 0x00): MetadataSource(0x01, 0x02),  # Pressure <- Min/MaxMeasuredValue
+    AttributeKey(0x404, 0x00): MetadataSource(0x01, 0x02),  # Flow <- Min/MaxMeasuredValue
+    AttributeKey(0x201, 0x11): MetadataSource(0x05, 0x06),  # OccupiedCoolingSetpoint <- AbsMin/MaxCoolSetpointLimit
+    AttributeKey(0x201, 0x12): MetadataSource(0x03, 0x04),  # OccupiedHeatingSetpoint <- AbsMin/MaxHeatSetpointLimit
+    AttributeKey(0x300, 0x07): MetadataSource(0x400B, 0x400C),  # ColorTemperatureMireds <- physical min/max mireds
+}
+
+
+FIELD_TYPE_TO_DATA_TYPE: dict[type, ParameterDataType] = {
+    bool: ParameterDataType.bool,
+    int: ParameterDataType.integer,
+    float: ParameterDataType.decimal,
+    str: ParameterDataType.string,
+}
+
+
+# --- Visibility curation (see docs/device-integration/parameter-ux recipe) ------------
+# The mapper defaults a read-only attribute to `system` (hidden) and only promotes it to `user`
+# if it's an explicitly curated live reading (USER_READINGS). Writable attributes default to
+# `setting`, promoted to `user` only if they're an everyday control (EVERYDAY_CONTROL_ATTRIBUTES).
+# This inverts the old "every read-only -> user" flood; anything not curated stays hidden and can
+# be surfaced by the user, or added here. Bounds/capabilities/counts fall through to `system` and
+# double as metadata sources (see ATTRIBUTE_MIN_STEPS / min-max resolution).
+
+# Writable attributes that are everyday, main-surface controls (-> user) rather than
+# configure-once settings.
+EVERYDAY_CONTROL_ATTRIBUTES: set[AttributeKey] = {
+    AttributeKey(0x202, 0x0),  # FanControl.FanMode (off/low/med/high/auto)
+    AttributeKey(0x202, 0x2),  # FanControl.PercentSetting
+    AttributeKey(0x202, 0x5),  # FanControl.SpeedSetting
+    AttributeKey(0x201, 0x1C),  # Thermostat.SystemMode (off/heat/cool/auto)
+    AttributeKey(0x201, 0x11),  # Thermostat.OccupiedCoolingSetpoint (the everyday "set the temp")
+    AttributeKey(0x201, 0x12),  # Thermostat.OccupiedHeatingSetpoint
+    AttributeKey(0x056, 0x00),  # TemperatureControl.TemperatureSetpoint
+}
+
+# Read-only attributes that ARE the live, everyday reading for their cluster (-> user). Anything
+# read-only and NOT listed here stays `system` (bounds, capabilities, counts, diagnostics).
+USER_READINGS: set[AttributeKey] = {
+    AttributeKey(0x006, 0x00),  # OnOff.OnOff
+    AttributeKey(0x008, 0x00),  # LevelControl.CurrentLevel
+    AttributeKey(0x300, 0x00),  # ColorControl.CurrentHue (human color model)
+    AttributeKey(0x300, 0x01),  # ColorControl.CurrentSaturation
+    AttributeKey(0x300, 0x07),  # ColorControl.ColorTemperatureMireds
+    # CurrentX/CurrentY (0x03/0x04) are the CIE machine encoding of the same colour -> system
+    # (redundant with hue/sat for the user; still available to patch to user if wanted).
+    AttributeKey(0x201, 0x00),  # Thermostat.LocalTemperature
+    AttributeKey(0x202, 0x03),  # FanControl.PercentCurrent
+    AttributeKey(0x202, 0x06),  # FanControl.SpeedCurrent (0x04 is SpeedMax, a bound -> stays system)
+    AttributeKey(0x402, 0x00),  # TemperatureMeasurement.MeasuredValue
+    AttributeKey(0x405, 0x00),  # RelativeHumidityMeasurement.MeasuredValue
+    AttributeKey(0x400, 0x00),  # IlluminanceMeasurement.MeasuredValue
+    AttributeKey(0x403, 0x00),  # PressureMeasurement.MeasuredValue
+    AttributeKey(0x404, 0x00),  # FlowMeasurement.MeasuredValue
+    AttributeKey(0x406, 0x00),  # OccupancySensing.Occupancy
+    AttributeKey(0x045, 0x00),  # BooleanState.StateValue (contact/water leak)
+    AttributeKey(0x40C, 0x00),  # CarbonMonoxideConcentrationMeasurement.MeasuredValue
+    AttributeKey(0x40D, 0x00),  # CarbonDioxideConcentrationMeasurement.MeasuredValue
+    AttributeKey(0x42A, 0x00),  # Pm25ConcentrationMeasurement.MeasuredValue
+    AttributeKey(0x101, 0x00),  # DoorLock.LockState
+    AttributeKey(0x101, 0x03),  # DoorLock.DoorState
+    AttributeKey(0x102, 0x08),  # WindowCovering.CurrentPositionLiftPercentage
+    AttributeKey(0x102, 0x09),  # WindowCovering.CurrentPositionTiltPercentage
+    AttributeKey(0x02F, 0x0C),  # PowerSource.BatPercentRemaining
+    AttributeKey(0x02F, 0x0E),  # PowerSource.BatChargeLevel
+    AttributeKey(0x060, 0x04),  # OperationalState.OperationalState
+    AttributeKey(0x061, 0x04),  # RvcOperationalState.OperationalState
+    AttributeKey(0x05C, 0x00),  # SmokeCoAlarm.ExpressedState
+    AttributeKey(0x05C, 0x01),  # SmokeCoAlarm.SmokeState
+    AttributeKey(0x05C, 0x02),  # SmokeCoAlarm.COState
+    AttributeKey(0x050, 0x03),  # ModeSelect.CurrentMode
+    # Energy metering readings (the primaries; min/max/overload/phase variants stay system)
+    AttributeKey(0x090, 0x04),  # ElectricalPowerMeasurement.Voltage
+    AttributeKey(0x090, 0x05),  # ElectricalPowerMeasurement.ActiveCurrent
+    AttributeKey(0x090, 0x08),  # ElectricalPowerMeasurement.ActivePower
+    AttributeKey(0x091, 0x01),  # ElectricalEnergyMeasurement.CumulativeEnergyImported
+}
+
+# Attribute-name prefixes that carry security material and must never be shown to the user
+# (-> system regardless of role). Matter DoorLock's Aliro* attributes are cryptographic keys /
+# identifiers that the current "read-only -> user" rule was leaking straight into the tap-view.
+SENSITIVE_ATTRIBUTE_NAME_PREFIXES: tuple[str, ...] = ("Aliro",)
+
+# Commands that are everyday one-tap actions (-> user). Every other command on a non-system
+# cluster defaults to `setting` — advanced management (schedules, credentials, logs, calibration).
+EVERYDAY_COMMANDS: set[tuple[int, int]] = {
+    (0x006, 0x0),
+    (0x006, 0x1),
+    (0x006, 0x2),  # OnOff Off / On / Toggle
+    (0x008, 0x0),
+    (0x008, 0x4),  # LevelControl MoveToLevel / MoveToLevelWithOnOff
+    (0x300, 0x0),
+    (0x300, 0x3),
+    (0x300, 0x6),
+    (0x300, 0x7),
+    (0x300, 0xA),  # ColorControl hue/sat/hue+sat/color/temp
+    (0x102, 0x0),
+    (0x102, 0x1),
+    (0x102, 0x2),
+    (0x102, 0x5),  # WindowCovering up / down / stop / goToLift%
+    (0x101, 0x0),
+    (0x101, 0x1),  # DoorLock Lock / Unlock  (credential/schedule cmds stay setting)
+    (0x201, 0x0),  # Thermostat SetpointRaiseLower
+    (0x056, 0x0),  # TemperatureControl SetTemperature
+    (0x060, 0x0),
+    (0x060, 0x1),
+    (0x060, 0x2),
+    (0x060, 0x3),  # OperationalState Pause/Stop/Start/Resume
+    (0x061, 0x0),
+    (0x061, 0x3),  # RvcOperationalState Pause / Resume
+    (0x050, 0x0),  # ModeSelect ChangeToMode
+    (0x506, 0x0),
+    (0x506, 0x1),
+    (0x506, 0x2),  # MediaPlayback Play / Pause / Stop
+}
+
+
+# Arguments to send along with a main-parameter command/attribute when the parameter itself
+# doesn't carry an obvious "activate" value (e.g. a mode/setpoint command). None means the
+# command takes no arguments; an int means a raw attribute value (only used for the FanControl
+# case below, where command_or_attribute_id is actually an attribute id).
+DefaultParams = dict[str, Any] | int | None
+
+
+class MainParameterSpec(NamedTuple):
+    """Value of MAIN_PARAMETER_BY_CLUSTER, keyed by cluster_id: which command (or — for
+    FanControl specifically — attribute) makes a sensible main_parameter for that cluster,
+    and what default_params to send with it if the parameter has no obvious "activate"
+    value. Iteration order is priority order — the first cluster below that's present on
+    the device wins."""
+
+    command_or_attribute_id: int
+    default_params: DefaultParams
+
+
+MAIN_PARAMETER_BY_CLUSTER: dict[int, MainParameterSpec] = {
+    0x00000006: MainParameterSpec(0x00000002, None),  # OnOff.Toggle
+    # Thermostat intentionally has NO one-tap: "raise or lower?" isn't a sensible tile action —
+    # tapping a thermostat should open its screen, not nudge a setpoint blind.
+    0x00000202: MainParameterSpec(0x00000000, 0x04),  # FanControl.FanMode.On(attribute)
+    0x00000056: MainParameterSpec(
+        0x00000000,
+        {"targetTemperature": 22},
+        # TemperatureControl.SetTemperature (targetTemperature/targetTemperatureLevel are
+        # feature-gated & mutually exclusive; targetTemperature covers the common "TN" case)
+    ),
+    0x00000060: MainParameterSpec(0x00000002, None),  # OperationalState.Start
+    0x00000061: MainParameterSpec(0x00000003, None),  # RVCOperationalState.Resume
+    0x0000005F: MainParameterSpec(0x00000001, {"timeToAdd": 30}),  # MicrowaveOvenControl.AddMoreTime
+    0x00000050: MainParameterSpec(0x00000000, {"newMode": 0}),  # ModeSelect.ChangeToMode
+    0x00000101: MainParameterSpec(0x00000001, {"PINCode": None}),  # DoorLock.UnlockDoor
+    # 0x0000005C: MainParameterSpec(0x00000000, None),  # SmokeCoAlarm.SelfTestRequest
+    0x00000506: MainParameterSpec(0x00000000, None),  # MediaPlayback.Play
+    0x00000509: MainParameterSpec(0x00000000, {"keyCode": 0x44}),  # KeyPadInpud.SendKey.Play
+    0x00000102: MainParameterSpec(
+        0x00000000,
+        None,
+        # WindowCovering.UpOrOpen — the everyday one-tap for a cover (open); StopMotion
+        # (0x02) only matters mid-motion, so it's not the primary action
+    ),
+    0x00000104: MainParameterSpec(
+        0x00000001,
+        {"position": 1},
+        # ClosureControl.MoveTo{position=MoveToFullyOpen} — open is the everyday one-tap;
+        # ClosureControl has no no-arg Open command (a latched closure may also need latch=False)
+    ),
+    0x00000099: MainParameterSpec(0x00000001, None),  # EnergyEvse.Disable
+    0x0000009E: MainParameterSpec(0x00000000, {"newMode": 0}),  # WaterHeaterMode.ChangeToMode
+    0x00000553: MainParameterSpec(
+        0x00000000, {"streamUsage": 0, "originatingEndpointID": 0}
+    ),  # WebRTCTransportProvider.SolicitOffer
+    0x00000556: MainParameterSpec(0x00000000, None),  # Chime.PlayChimeSound
+    0x00000081: MainParameterSpec(0x00000000, None),  # ValveConfigurationAndControl.Open
+}
+
+
+# --- Merged UX classification ladder (mirror of the zigbee integration; see the matter README) ---
+# Matter has no runtime quirk layer, so the ladder is: our hand overrides > harvested HA judgment >
+# fallback. Safety rules (system cluster, sensitive crypto material) are forced hidden on top.
+
+
+class UxSpec(NamedTuple):
+    visibility: ParameterVisibility
+    role: ParameterRole | None = None
+    unit: ParameterUnit | None = None
+
+
+def _our_attribute_ux() -> dict[AttributeKey, UxSpec]:
+    out: dict[AttributeKey, UxSpec] = {}
+    for key in USER_READINGS:
+        out[key] = UxSpec(ParameterVisibility.user, ParameterRole.sensor)
+    for key in EVERYDAY_CONTROL_ATTRIBUTES:
+        out[key] = UxSpec(ParameterVisibility.user, ParameterRole.control)
+    return out
+
+
+OUR_ATTRIBUTE_UX: dict[AttributeKey, UxSpec] = _our_attribute_ux()
+
+
+def _ha_uxspec(key: AttributeKey) -> UxSpec | None:
+    t = MATTER_HA_ATTRIBUTE_UX.get((key.cluster_id, key.attribute_id))
+    if t is None:
+        return None
+    return UxSpec(ParameterVisibility(t[0]), ParameterRole(t[1]), ParameterUnit(t[2]))
+
+
+# Flip once harvested coverage is validated on real devices: unmatched writable attrs then hide
+# (system) instead of defaulting to a settings toggle. See the matter README (fallback).
+_FALLBACK_HIDE_UNCURATED = False
+
+
+def classify_attribute(
+    cluster_id: int,
+    attribute_id: int,
+    name: str,
+    *,
+    writable: bool,
+    in_system_cluster: bool,
+) -> tuple[UxSpec, str]:
+    """Resolve an attribute's (visibility, role, unit) by the priority ladder, returning the spec
+    and a source tag. First match wins:
+
+      - system cluster / sensitive crypto material -> system (safety, top priority)
+      1. OUR_ATTRIBUTE_UX          — hand curation
+      2. MATTER_HA_ATTRIBUTE_UX    — harvested HA entity judgment
+      3. fallback policy           — writable -> setting, else system; WARNS (uncurated)
+    """
+    if in_system_cluster:
+        return UxSpec(ParameterVisibility.system), "system-cluster"
+    if name.startswith(SENSITIVE_ATTRIBUTE_NAME_PREFIXES):
+        return UxSpec(ParameterVisibility.system), "sensitive"
+
+    key = AttributeKey(cluster_id, attribute_id)
+    if (spec := OUR_ATTRIBUTE_UX.get(key)) is not None:
+        return spec, "ours"
+    if (spec := _ha_uxspec(key)) is not None:
+        return spec, "ha"
+
+    if not _FALLBACK_HIDE_UNCURATED and writable:
+        return UxSpec(ParameterVisibility.setting, ParameterRole.control), "fallback-writable"
+    return UxSpec(ParameterVisibility.system), "fallback-system"
+
+
+================================================================================
+# FILE: majordom_matter/matter_spec_ha.py
+================================================================================
+"""GENERATED by scripts/harvest_matter_ha.py — DO NOT EDIT BY HAND.
+
+Source: home-assistant/core@dev homeassistant/components/matter (Apache-2.0), parsed via
+AST (no homeassistant dependency). Attribute ids resolved via chip. Harvested entity
+judgment only (entity_category -> visibility, platform -> role, unit); the Matter Data Model
+supplies names/types/bounds. Hand overrides live in matter_spec.py and win on merge.
+"""
+
+# (cluster_id, attribute_id) -> (visibility, role, unit)
+MATTER_HA_ATTRIBUTE_UX: dict[tuple[int, int], tuple[str, str, str]] = {
+    (0x0003, 0x0001): ('setting', 'control', 'plain'),
+    (0x0006, 0x0000): ('user', 'control', 'plain'),
+    (0x0006, 0x4003): ('setting', 'control', 'plain'),
+    (0x0008, 0x0000): ('user', 'control', 'percentage'),
+    (0x0008, 0x0010): ('setting', 'control', 'plain'),
+    (0x0008, 0x0011): ('setting', 'control', 'plain'),
+    (0x0008, 0x0012): ('setting', 'control', 'plain'),
+    (0x0008, 0x0013): ('setting', 'control', 'plain'),
+    (0x0008, 0x4000): ('setting', 'control', 'plain'),
+    (0x002f, 0x000b): ('setting', 'sensor', 'volt'),
+    (0x002f, 0x000c): ('setting', 'sensor', 'percentage'),
+    (0x002f, 0x000d): ('setting', 'sensor', 'plain'),
+    (0x002f, 0x000e): ('setting', 'sensor', 'percentage'),
+    (0x002f, 0x0013): ('setting', 'sensor', 'plain'),
+    (0x002f, 0x001a): ('setting', 'sensor', 'plain'),
+    (0x002f, 0x001b): ('setting', 'sensor', 'plain'),
+    (0x0033, 0x0001): ('setting', 'sensor', 'plain'),
+    (0x0033, 0x0002): ('setting', 'sensor', 'plain'),
+    (0x0033, 0x0004): ('setting', 'sensor', 'plain'),
+    (0x0033, 0x0005): ('setting', 'sensor', 'plain'),
+    (0x0033, 0x0006): ('setting', 'sensor', 'plain'),
+    (0x0033, 0x0007): ('setting', 'sensor', 'plain'),
+    (0x0035, 0x0000): ('setting', 'sensor', 'plain'),
+    (0x0035, 0x0001): ('setting', 'sensor', 'plain'),
+    (0x0035, 0x0002): ('setting', 'sensor', 'plain'),
+    (0x0036, 0x0004): ('setting', 'sensor', 'plain'),
+    (0x003b, 0x0001): ('user', 'sensor', 'plain'),
+    (0x0045, 0x0000): ('user', 'sensor', 'plain'),
+    (0x0048, 0x0001): ('user', 'sensor', 'plain'),
+    (0x0048, 0x0004): ('user', 'sensor', 'plain'),
+    (0x0049, 0x0001): ('user', 'control', 'plain'),
+    (0x0050, 0x0003): ('setting', 'control', 'plain'),
+    (0x0051, 0x0001): ('user', 'control', 'plain'),
+    (0x0052, 0x0001): ('user', 'control', 'plain'),
+    (0x0053, 0x0001): ('user', 'control', 'plain'),
+    (0x0053, 0x0002): ('user', 'control', 'plain'),
+    (0x0055, 0x0001): ('user', 'control', 'plain'),
+    (0x0056, 0x0000): ('user', 'control', 'celsius'),
+    (0x0056, 0x0004): ('user', 'control', 'plain'),
+    (0x0057, 0x0002): ('setting', 'sensor', 'plain'),
+    (0x0059, 0x0001): ('user', 'control', 'plain'),
+    (0x005b, 0x0000): ('user', 'sensor', 'plain'),
+    (0x005c, 0x0001): ('user', 'sensor', 'plain'),
+    (0x005c, 0x0002): ('user', 'sensor', 'plain'),
+    (0x005c, 0x0003): ('setting', 'sensor', 'percentage'),
+    (0x005c, 0x0004): ('setting', 'sensor', 'plain'),
+    (0x005c, 0x0005): ('setting', 'sensor', 'plain'),
+    (0x005c, 0x0006): ('setting', 'sensor', 'plain'),
+    (0x005c, 0x0007): ('setting', 'sensor', 'plain'),
+    (0x005c, 0x0008): ('user', 'sensor', 'plain'),
+    (0x005c, 0x0009): ('user', 'sensor', 'plain'),
+    (0x005c, 0x000a): ('user', 'sensor', 'plain'),
+    (0x005c, 0x000b): ('setting', 'control', 'plain'),
+    (0x005c, 0x000c): ('user', 'sensor', 'plain'),
+    (0x005c, 0xfff9): ('setting', 'control', 'plain'),
+    (0x005d, 0x0002): ('setting', 'sensor', 'plain'),
+    (0x005f, 0x0000): ('user', 'control', 'plain'),
+    (0x005f, 0x0007): ('user', 'control', 'plain'),
+    (0x0060, 0x0001): ('user', 'sensor', 'plain'),
+    (0x0060, 0x0002): ('user', 'sensor', 'plain'),
+    (0x0060, 0x0004): ('user', 'sensor', 'plain'),
+    (0x0060, 0x0005): ('setting', 'sensor', 'plain'),
+    (0x0060, 0xfff9): ('user', 'control', 'plain'),
+    (0x0061, 0x0001): ('user', 'sensor', 'plain'),
+    (0x0061, 0x0004): ('user', 'sensor', 'plain'),
+    (0x0061, 0x0005): ('setting', 'sensor', 'plain'),
+    (0x0071, 0x0000): ('user', 'sensor', 'percentage'),
+    (0x0071, 0xfff9): ('user', 'control', 'plain'),
+    (0x0072, 0x0000): ('user', 'sensor', 'percentage'),
+    (0x0072, 0xfff9): ('user', 'control', 'plain'),
+    (0x0080, 0x0000): ('setting', 'control', 'plain'),
+    (0x0081, 0x0001): ('setting', 'control', 'plain'),
+    (0x0081, 0x0002): ('user', 'sensor', 'plain'),
+    (0x0081, 0x0009): ('setting', 'sensor', 'plain'),
+    (0x0090, 0x0004): ('setting', 'sensor', 'volt'),
+    (0x0090, 0x0005): ('setting', 'sensor', 'ampere'),
+    (0x0090, 0x0006): ('setting', 'sensor', 'ampere'),
+    (0x0090, 0x0007): ('setting', 'sensor', 'ampere'),
+    (0x0090, 0x0008): ('user', 'sensor', 'watt'),
+    (0x0090, 0x0009): ('setting', 'sensor', 'plain'),
+    (0x0090, 0x000a): ('setting', 'sensor', 'plain'),
+    (0x0090, 0x000b): ('setting', 'sensor', 'volt'),
+    (0x0090, 0x000c): ('setting', 'sensor', 'ampere'),
+    (0x0091, 0x0001): ('user', 'sensor', 'kwh'),
+    (0x0091, 0x0002): ('user', 'sensor', 'kwh'),
+    (0x0094, 0x0002): ('user', 'sensor', 'plain'),
+    (0x0094, 0x0003): ('setting', 'sensor', 'kwh'),
+    (0x0094, 0x0004): ('user', 'sensor', 'percentage'),
+    (0x0094, 0x0005): ('user', 'sensor', 'plain'),
+    (0x0094, 0xfff9): ('user', 'control', 'plain'),
+    (0x0098, 0x0002): ('setting', 'sensor', 'plain'),
+    (0x0098, 0x0007): ('setting', 'sensor', 'plain'),
+    (0x0099, 0x0000): ('user', 'sensor', 'plain'),
+    (0x0099, 0x0001): ('user', 'sensor', 'plain'),
+    (0x0099, 0x0002): ('setting', 'sensor', 'plain'),
+    (0x0099, 0x0005): ('setting', 'sensor', 'ampere'),
+    (0x0099, 0x0006): ('setting', 'sensor', 'ampere'),
+    (0x0099, 0x0007): ('setting', 'sensor', 'ampere'),
+    (0x0099, 0x0009): ('setting', 'sensor', 'ampere'),
+    (0x0099, 0x0030): ('user', 'sensor', 'percentage'),
+    (0x009d, 0x0001): ('user', 'control', 'plain'),
+    (0x009f, 0x0001): ('user', 'control', 'plain'),
+    (0x0101, 0x0000): ('user', 'control', 'plain'),
+    (0x0101, 0x0002): ('setting', 'sensor', 'plain'),
+    (0x0101, 0x0003): ('user', 'sensor', 'plain'),
+    (0x0101, 0x0004): ('setting', 'sensor', 'plain'),
+    (0x0101, 0x0005): ('setting', 'sensor', 'plain'),
+    (0x0101, 0x0023): ('setting', 'control', 'plain'),
+    (0x0101, 0x0024): ('setting', 'control', 'plain'),
+    (0x0101, 0x0025): ('setting', 'control', 'plain'),
+    (0x0101, 0x002b): ('setting', 'control', 'plain'),
+    (0x0101, 0x0030): ('setting', 'control', 'plain'),
+    (0x0101, 0x0031): ('setting', 'control', 'plain'),
+    (0x0102, 0x0007): ('setting', 'sensor', 'plain'),
+    (0x0102, 0x000a): ('user', 'control', 'plain'),
+    (0x0102, 0x000b): ('setting', 'sensor', 'percentage'),
+    (0x0150, 0x0004): ('user', 'sensor', 'plain'),
+    (0x0200, 0x0010): ('user', 'sensor', 'plain'),
+    (0x0200, 0x0014): ('user', 'sensor', 'plain'),
+    (0x0200, 0x0020): ('user', 'control', 'plain'),
+    (0x0200, 0x0021): ('user', 'sensor', 'plain'),
+    (0x0201, 0x0000): ('user', 'sensor', 'celsius'),
+    (0x0201, 0x0001): ('user', 'sensor', 'celsius'),
+    (0x0201, 0x0002): ('user', 'sensor', 'plain'),
+    (0x0201, 0x0008): ('setting', 'sensor', 'percentage'),
+    (0x0201, 0x0010): ('setting', 'control', 'celsius'),
+    (0x0201, 0x001a): ('setting', 'sensor', 'plain'),
+    (0x0201, 0x0034): ('setting', 'control', 'celsius'),
+    (0x0202, 0x0000): ('user', 'control', 'plain'),
+    (0x0204, 0x0000): ('setting', 'control', 'plain'),
+    (0x0204, 0x0001): ('setting', 'control', 'plain'),
+    (0x0400, 0x0000): ('user', 'sensor', 'lux'),
+    (0x0402, 0x0000): ('user', 'sensor', 'celsius'),
+    (0x0403, 0x0000): ('user', 'sensor', 'pascal'),
+    (0x0404, 0x0000): ('user', 'sensor', 'plain'),
+    (0x0405, 0x0000): ('user', 'sensor', 'percentage'),
+    (0x0406, 0x0000): ('user', 'sensor', 'plain'),
+    (0x0406, 0x0003): ('setting', 'control', 'plain'),
+    (0x0406, 0x0010): ('setting', 'control', 'plain'),
+    (0x0406, 0x0011): ('setting', 'control', 'plain'),
+    (0x0406, 0x0012): ('setting', 'control', 'plain'),
+    (0x040c, 0x0000): ('user', 'sensor', 'ppm'),
+    (0x040d, 0x0000): ('user', 'sensor', 'ppm'),
+    (0x0413, 0x0000): ('user', 'sensor', 'ppm'),
+    (0x0415, 0x0000): ('user', 'sensor', 'ppm'),
+    (0x042a, 0x0000): ('user', 'sensor', 'ugm3'),
+    (0x042c, 0x0000): ('user', 'sensor', 'ugm3'),
+    (0x042d, 0x0000): ('user', 'sensor', 'ugm3'),
+    (0x042e, 0x0000): ('user', 'sensor', 'ppm'),
+    (0x042e, 0x000a): ('user', 'sensor', 'plain'),
+    (0x042f, 0x0000): ('user', 'sensor', 'plain'),
+    (0x0430, 0x0001): ('user', 'sensor', 'percentage'),
+}
+
+
+================================================================================
+# FILE: majordom_matter/model.py
+================================================================================
+from enum import StrEnum
+from typing import Any
+from uuid import UUID
+
+from majordom_integration_sdk.schemas.base import Base
+from majordom_integration_sdk.schemas.device import Device, DeviceState, Parameter, ParameterState
+from pydantic import BaseModel, Field
+
+
+class MatterParameterTypeEnum(StrEnum):
+    attribute = "attribute"
+    command = "command"
+
+
+class MatterDeviceIntegrationData(Base):
+    # Defaults to 0 (the "not yet commissioned" sentinel): the Hub seeds a provisional device
+    # with empty integration_data before pair_device runs, and the read-back must validate as a
+    # MatterDeviceState. pair_device sets the real node_id once matter-server commissions the node.
+    node_id: int = 0
+    black_list: list[UUID] = Field(default_factory=list)
+
+
+class MatterParameterIntegrationData(BaseModel):
+    endpoint_id: int
+    cluster_id: int
+    is_client: bool = False
+    command_id: int | None = None
+    attribute_id: int | None = None
+    type: MatterParameterTypeEnum  # "command" or "attribute"
+    # Args to send when this command is used as the device's one-tap main parameter and needs
+    # them (e.g. a setpoint). A command parameter's data_type is `none`, which already satisfies
+    # ParameterState.can_be_main_parameter, so no `default_value` is needed for the flag — this
+    # only carries *what to send*. send_command applies it when a command arrives with no value
+    # (i.e. the user tapped the main parameter). See the zigbee model for the same note.
+    default_arguments: dict[str, Any] | None = None
+
+
+class MatterDevice(Device):
+    integration_data: MatterDeviceIntegrationData
+
+    @property
+    def node_id(self) -> int:
+        assert self.integration_data
+        if isinstance(self.integration_data, dict):
+            return self.integration_data["node_id"]
+        return self.integration_data.node_id
+
+
+class MatterParameter(Parameter):
+    integration_data: MatterParameterIntegrationData
+
+
+class MatterParameterState(ParameterState):
+    integration_data: MatterParameterIntegrationData
+
+
+class MatterDeviceState(MatterDevice, DeviceState):
+    parameters: list[MatterParameterState]
+
+
+================================================================================
+# FILE: majordom_matter/readme.md
+================================================================================
+# Matter integration
+
+The hub talks to a **Matter controller server** over its WebSocket API (`ws://<host>:5580/ws`)
+via `matter_server.client.MatterClient` (server URL overridable via the `MATTER_SERVER_URL`
+env var). The server owns the Matter fabric, the Thread/BLE radios, and commissioning; the
+hub discovers, commissions, and controls devices through it.
+
+## Files
+
+| File | Responsibility |
+|---|---|
+| `controller.py` | `AbstractController` implementation — lifecycle, commissioning, control, and the mDNS + BLE discovery/subscription paths |
+| `mapper.py` | Matter ↔ MajorDom conversions: UUIDs (via the framework helpers), node/cluster → parameter parsing, data-type/unit/scale mapping, credentials options |
+| `model.py` | Typed `integration_data` schemas (`MatterDevice`, `MatterParameter`, …) |
+| `matter_spec.py` | Static spec metadata: system clusters/attributes, units/steps/scale, and the main-parameter map |
+| `exceptions.py` | Integration-specific exceptions |
+
+## Discovery, pairing & availability
+
+- **Discovery** runs over two transports. On-network (mDNS) devices come from
+  matter-server's `discover_commissionable_nodes()`; BLE-only commissionable devices (a
+  factory-fresh device not yet on any network) are found via the Hub's shared
+  **BLE discovery service** and matched by their commissioning identity. matter-server is
+  kept for on-network discovery because it already parses the Matter TXT records into clean
+  structured data (duplicating that on the raw Zeroconf service would add a second parser
+  and, for BLE, a second scanner contending with the chip stack during commissioning).
+- **Pairing** validates the provided credentials type against the discovery's
+  `expected_credentials_options`, then commissions through matter-server (`commission_with_code`
+  for QR / BLE, `commission_on_network` for an on-network manual code).
+- **Availability** rides on `EventType.NODE_UPDATED`: `node.available` transitions emit the
+  framework's connect/lose callbacks (deduped in `_make_availability_callback`).
+
+Every parameter id is derived through the framework UUID helpers as
+`parameter_uuid(device_id, "<attribute|command|field>_<endpoint>/<cluster>/<id>")`.
+
+Two test tiers:
+
+- **Virtual** — `tests/test_controllers/test_matter/test_matter_controller.py`, driven by
+  `docker-compose.matter-tests.yml`. Prebuilt **x86-64** Matter Virtual Device (MVD) binaries under
+  `bins/` act as fake devices, commissioned over the network (no BLE). Runs in CI on x86-64 runners.
+- **Hardware** — `tests/test_controllers/test_matter/test_matter_controller_hardware.py`, on the
+  self-hosted `lab-pi5` runner: a real Thread bulb commissioned over **BLE → Thread** through a real
+  OpenThread Border Router (OTBR + SkyConnect RCP), verified physically via the IoT-cage photoresistor.
+  Manual only (`workflow_dispatch`). The target device is selectable in one line — `_TARGET` in the
+  test, or the `MATTER_HW_TARGET=ikea|nanoleaf` env var (default `ikea`); both bulbs pass.
+
+---
+
+## Issues we hit (and their true causes)
+
+- **Stale OTBR image was the whole ballgame.** A months-old cached `openthread/border-router:latest`
+  had a broken RCP serial init: otbr-agent failed/hung at `spinel_driver.cpp:87`, `wpan0` never came
+  up, and it crash-looped — producing red-herring `cp210x … -110` USB timeouts and uninterruptible
+  `D`-state `open()` hangs. With no Thread network, **every** device's commissioning failed at
+  `NetworkCommissioning.scanNetworks` ("Failure"). The RCP firmware/hardware were fine the whole time
+  (the flasher + raw pyserial talked SPINEL reliably).
+- **`uart-init-deassert` breaks this build.** Adding it to `OT_RCP_DEVICE` makes otbr-agent reject the
+  URL (`otSysInit … InvalidArgument`). It's a valid param in other OT builds — not this one.
+- **OTBR state isn't persisted by default** → the border router factory-resets on every restart. And
+  mounting a volume over `/var/lib/thread` fails (`ln: cannot overwrite directory`) — the image
+  symlinks `/var/lib/thread → /data`, so persist at **`/data`**.
+- **Docker `userns-remap`**: privileged containers are rejected without `--userns=host`, and the
+  OTBR image's s6-overlay refuses to start unless `/run` is a fresh root-owned tmpfs.
+- **The x86-64 MVD binaries can't run on the Pi** (16 KB-page kernel; qemu-user can't map the
+  4 KB-aligned segments) → the virtual suite is x86-64 CI only.
+- **BLE discovery misses static-address devices.** Matter controllers discover by BlueZ's
+  `InterfacesAdded` signal; a device with a *static* BLE address (IKEA) already in BlueZ's cache never
+  re-fires it → "no commissionable device discovered." Nanoleaf uses a resolvable address, so it's fine.
+- **The hub does not push the Thread dataset.** `MatterController.pair_device` just calls
+  `commission_with_code`; the server must *already* hold the operational dataset.
+- **The Arduino cage resets all relays OFF on every serial open** (DTR pulse) — bulbs lose power
+  unless one fd holds the port open for the whole run.
+- **The "Nanoleaf RX-wedge" was a broken-OTBR artifact, not firmware.** We'd blamed Nanoleaf fw 4.1.3
+  for wedging its Thread RX after one `Invoke`. Once the border router was healthy (fresh image, above),
+  it never reproduced: 25 back-to-back Toggle+read+ping cycles with an active subscription, plus
+  Level/Color commands and a 90 s idle soak, all clean — `ot-ctl ping` never dropped a packet. The old
+  symptom was a degraded Thread mesh from the spinel-failing RCP. **Both the IKEA and the Nanoleaf are
+  CI-usable.** (The Nanoleaf's shared A0-photoresistor light and its slot-3 power are wired in the test.)
+
+## What it takes to make it work
+
+1. **Fresh OTBR image**: `docker pull openthread/border-router:latest`, then
+   `OT_RCP_DEVICE=spinel+hdlc+uart:///dev/ttyUSB1?uart-baudrate=460800&uart-flow-control`
+   (no `uart-init-deassert`), `--network host --privileged --cap-add NET_ADMIN --userns=host`,
+   tmpfs `/run`+`/tmp`, `--device <SkyConnect by-id>:/dev/ttyUSB1 --device /dev/net/tun`,
+   and **`-v <host-dir>:/data`** for persistence.
+2. **Form a network once**: `ot-ctl dataset init new; dataset commit active; ifconfig up; thread start`
+   → `state: leader`.
+3. **Give the Matter server the dataset** before commissioning: read it from OTBR
+   (`ot-ctl dataset active -x`, or the OTBR REST `GET /node/dataset/active`) and `set_thread_dataset`.
+4. **Flush the BlueZ cache immediately before each commission** and do not scan afterward:
+   `for m in $(bluetoothctl devices | awk '{print $2}'); do bluetoothctl remove "$m"; done; systemctl restart bluetooth`.
+5. **Power the device on** (IKEA opens a ~5-min pairing window on any power-on; a decommissioned
+   Nanoleaf re-advertises on power-on), driving the cage from a single held serial fd.
+6. **Pick the target**: IKEA (`2455-383-5850`, cage slot 2) is the default CI device; switch to the
+   Nanoleaf (`1321-631-8363`, cage slot 3) with `MATTER_HW_TARGET=nanoleaf`. Both pass the full
+   discover → pair → OnOff-with-photoresistor → unpair flow.
+
+See `otbr-skyconnect-fix` in the assistant memory for the exact commands and recovery steps.
+
+
+================================================================================
+# FILE: majordom_matter/testing/__init__.py
+================================================================================
+"""In-process test doubles for the Matter integration — no matter-server, no MVD binaries.
+
+`FakeMatterClient` stands in for `matter_server.client.MatterClient`, backed by a single canned
+node captured from a real MVD on-off-light (`fixtures/on_off_light_node.json`). It rebuilds a
+**real** `MatterNode` exactly as the live client does — `MatterNode(dataclass_from_dict(
+MatterNodeData, ...))` — so the controller and mapper run against a faithful node; only the
+transport (the websocket to matter-server) is faked.
+
+Use it to exercise the controller's wiring — discovery, pairing/mapping, commands, events — in
+plain CI without docker. The heavy, real-device coverage stays in the dockerized MVD suite.
+
+    from majordom_matter.testing import FakeMatterClient
+    monkeypatch.setattr("majordom_matter.controller.MatterClient", FakeMatterClient)
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+from pathlib import Path
+from typing import Any
+
+from matter_server.client.models.node import MatterNode
+from matter_server.common.helpers.util import dataclass_from_dict
+from matter_server.common.models import CommissionableNodeData, EventType, MatterNodeData
+
+_FIXTURE = Path(__file__).parent / "fixtures" / "on_off_light_node.json"
+
+
+def load_on_off_light_node() -> MatterNode:
+    """A real `MatterNode` for a captured MVD on-off-light — the same construction the live
+    client applies to node data received over the websocket."""
+    data = json.loads(_FIXTURE.read_text())
+    return MatterNode(dataclass_from_dict(MatterNodeData, data))
+
+
+class _Subscription:
+    __slots__ = ("callback", "event_filter", "node_filter", "attr_path_filter")
+
+    def __init__(self, callback, event_filter, node_filter, attr_path_filter):
+        self.callback = callback
+        self.event_filter = event_filter
+        self.node_filter = node_filter
+        self.attr_path_filter = attr_path_filter
+
+
+class FakeMatterClient:
+    """Drop-in for `matter_server.client.MatterClient`, backed by one canned node.
+
+    Constructed with the same `(url, session)` signature the controller uses. The node is not
+    "on the fabric" until commissioned; before that it is advertised via
+    `discover_commissionable_nodes()`, so the full discover → pair → map flow runs. Outgoing
+    commands/attribute writes are recorded (`sent_commands`, `written_attributes`,
+    `removed_nodes`) and `fire_attribute_update()` lets a test simulate a device-side change.
+    """
+
+    def __init__(self, url: str | None = None, session: Any = None, *, node: MatterNode | None = None):
+        self._url = url
+        self._session = session
+        self._node = node if node is not None else load_on_off_light_node()
+        self._commissioned = False
+        self._subscriptions: list[_Subscription] = []
+        self.sent_commands: list[tuple[int, int, Any]] = []
+        self.written_attributes: list[tuple[int, str, Any]] = []
+        self.removed_nodes: list[int] = []
+
+    # --- lifecycle ---
+    async def connect(self) -> None:
+        return None
+
+    async def start_listening(self, init_ready: asyncio.Event | None = None) -> None:
+        if init_ready is not None:
+            init_ready.set()
+        # The real client runs its websocket loop forever; block until the controller's stop()
+        # cancels this task.
+        await asyncio.Event().wait()
+
+    async def disconnect(self) -> None:
+        return None
+
+    # --- nodes ---
+    def get_nodes(self) -> list[MatterNode]:
+        return [self._node] if self._commissioned else []
+
+    def get_node(self, node_id: int) -> MatterNode | None:
+        if self._commissioned and node_id == self._node.node_id:
+            return self._node
+        return None
+
+    async def remove_node(self, node_id: int) -> None:
+        self.removed_nodes.append(node_id)
+        if node_id == self._node.node_id:
+            self._commissioned = False
+
+    # --- discovery ---
+    async def discover_commissionable_nodes(self) -> list[CommissionableNodeData]:
+        if self._commissioned:
+            return []
+        info = self._node.device_info
+        return [
+            CommissionableNodeData(
+                instance_name="FAKEONOFF0001",
+                vendor_id=getattr(info, "vendorID", None),
+                product_id=getattr(info, "productID", None),
+                commissioning_mode=1,  # advertising for commissioning
+                device_name=getattr(info, "productName", None) or "Fake On/Off Light",
+                addresses=["fd00::1"],  # on-network → the code path uses commission_on_network
+            )
+        ]
+
+    # --- commissioning ---
+    async def commission_with_code(self, code: str, network_only: bool = False) -> MatterNodeData:
+        self._commissioned = True
+        return self._node.node_data
+
+    async def commission_on_network(self, setup_pin_code: int, *args: Any, **kwargs: Any) -> MatterNodeData:
+        self._commissioned = True
+        return self._node.node_data
+
+    # --- commands / attributes ---
+    async def send_device_command(self, node_id: int, endpoint_id: int, command: Any, **kwargs: Any) -> None:
+        self.sent_commands.append((node_id, endpoint_id, command))
+        return None
+
+    async def write_attribute(self, node_id: int, attribute_path: str, value: Any) -> Any:
+        self.written_attributes.append((node_id, attribute_path, value))
+        # Reflect the write into the node so reads and subscribers see it, like a real device.
+        self._node.update_attribute(attribute_path, value)
+        self._emit(EventType.ATTRIBUTE_UPDATED, node_id, attribute_path, value)
+        return value
+
+    # --- subscriptions ---
+    def subscribe_events(self, callback, event_filter=None, node_filter=None, attr_path_filter=None):
+        sub = _Subscription(callback, event_filter, node_filter, attr_path_filter)
+        self._subscriptions.append(sub)
+
+        def unsubscribe() -> None:
+            if sub in self._subscriptions:
+                self._subscriptions.remove(sub)
+
+        return unsubscribe
+
+    # --- test helpers ---
+    def fire_attribute_update(self, attribute_path: str, value: Any) -> None:
+        """Simulate the device pushing a new attribute value to its subscribers."""
+        self._node.update_attribute(attribute_path, value)
+        self._emit(EventType.ATTRIBUTE_UPDATED, self._node.node_id, attribute_path, value)
+
+    def _emit(self, event_type: EventType, node_id: int, attribute_path: str, value: Any) -> None:
+        for sub in list(self._subscriptions):
+            if sub.event_filter is not None and sub.event_filter != event_type:
+                continue
+            if sub.node_filter is not None and sub.node_filter != node_id:
+                continue
+            if sub.attr_path_filter is not None and sub.attr_path_filter != attribute_path:
+                continue
+            sub.callback(event_type, value)
+
+
+__all__ = ["FakeMatterClient", "load_on_off_light_node"]
+
+
+================================================================================
+# FILE: majordom_matter/testing/fixtures/on_off_light_node.json
+================================================================================
+{
+  "attribute_subscriptions": [],
+  "attributes": {
+    "0/29/0": [
+      {
+        "0": 22,
+        "1": 1
+      }
+    ],
+    "0/29/1": [
+      29,
+      31,
+      40,
+      42,
+      48,
+      49,
+      50,
+      51,
+      52,
+      60,
+      62,
+      63,
+      64
+    ],
+    "0/29/2": [
+      41
+    ],
+    "0/29/3": [
+      13
+    ],
+    "0/29/65528": [],
+    "0/29/65529": [],
+    "0/29/65531": [
+      0,
+      1,
+      2,
+      3,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/29/65532": 0,
+    "0/29/65533": 2,
+    "0/31/0": [
+      {
+        "1": 5,
+        "2": 2,
+        "254": 1,
+        "3": [
+          112233
+        ],
+        "4": null
+      }
+    ],
+    "0/31/1": [],
+    "0/31/2": 4,
+    "0/31/3": 3,
+    "0/31/4": 4,
+    "0/31/65528": [],
+    "0/31/65529": [],
+    "0/31/65531": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/31/65532": 0,
+    "0/31/65533": 2,
+    "0/40/0": 18,
+    "0/40/1": "TEST_VENDOR",
+    "0/40/10": "1.0",
+    "0/40/11": "20200101",
+    "0/40/12": "",
+    "0/40/13": "",
+    "0/40/14": "",
+    "0/40/15": "TEST_SN",
+    "0/40/16": false,
+    "0/40/18": "6D78CCBDAFD85AD1",
+    "0/40/19": {
+      "0": 3,
+      "1": 65535
+    },
+    "0/40/2": 65521,
+    "0/40/21": 17039616,
+    "0/40/22": 1,
+    "0/40/3": "TEST_PRODUCT",
+    "0/40/4": 32768,
+    "0/40/5": "",
+    "0/40/6": "XX",
+    "0/40/65528": [],
+    "0/40/65529": [],
+    "0/40/65531": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      19,
+      21,
+      22,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/40/65532": 0,
+    "0/40/65533": 3,
+    "0/40/7": 0,
+    "0/40/8": "TEST_VERSION",
+    "0/40/9": 1,
+    "0/42/0": [],
+    "0/42/1": true,
+    "0/42/2": 0,
+    "0/42/3": 0,
+    "0/42/65528": [],
+    "0/42/65529": [
+      0
+    ],
+    "0/42/65531": [
+      0,
+      1,
+      2,
+      3,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/42/65532": 0,
+    "0/42/65533": 1,
+    "0/48/0": 0,
+    "0/48/1": {
+      "0": 60,
+      "1": 900
+    },
+    "0/48/2": 0,
+    "0/48/3": 2,
+    "0/48/4": true,
+    "0/48/65528": [
+      1,
+      3,
+      5
+    ],
+    "0/48/65529": [
+      0,
+      2,
+      4
+    ],
+    "0/48/65531": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/48/65532": 0,
+    "0/48/65533": 1,
+    "0/49/0": 1,
+    "0/49/1": [
+      {
+        "0": "",
+        "1": true
+      }
+    ],
+    "0/49/2": 0,
+    "0/49/3": 0,
+    "0/49/4": true,
+    "0/49/5": null,
+    "0/49/6": null,
+    "0/49/65528": [],
+    "0/49/65529": [],
+    "0/49/65531": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/49/65532": 4,
+    "0/49/65533": 2,
+    "0/49/7": null,
+    "0/50/65528": [
+      1
+    ],
+    "0/50/65529": [
+      0
+    ],
+    "0/50/65531": [
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/50/65532": 0,
+    "0/50/65533": 1,
+    "0/51/0": [
+      {
+        "0": "eth0",
+        "1": true,
+        "2": null,
+        "3": null,
+        "4": "AkKsEO4D",
+        "5": [
+          "rBDuAw=="
+        ],
+        "6": [
+          "/QANuAABAAAAAAAAAAAAAw==",
+          "/oAAAAAAAAAAQqz//hDuAw=="
+        ],
+        "7": 0
+      },
+      {
+        "0": "ip6tnl0",
+        "1": false,
+        "2": null,
+        "3": null,
+        "4": "AAAAAAAA",
+        "5": [],
+        "6": [],
+        "7": 0
+      },
+      {
+        "0": "tunl0",
+        "1": false,
+        "2": null,
+        "3": null,
+        "4": "AAAAAAAA",
+        "5": [],
+        "6": [],
+        "7": 0
+      },
+      {
+        "0": "lo",
+        "1": true,
+        "2": null,
+        "3": null,
+        "4": "AAAAAAAA",
+        "5": [
+          "fwAAAQ=="
+        ],
+        "6": [
+          "AAAAAAAAAAAAAAAAAAAAAQ=="
+        ],
+        "7": 0
+      }
+    ],
+    "0/51/1": 1,
+    "0/51/2": 6,
+    "0/51/3": 0,
+    "0/51/4": 0,
+    "0/51/5": [],
+    "0/51/6": [],
+    "0/51/65528": [
+      2
+    ],
+    "0/51/65529": [
+      0,
+      1
+    ],
+    "0/51/65531": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/51/65532": 0,
+    "0/51/65533": 2,
+    "0/51/7": [],
+    "0/51/8": false,
+    "0/52/0": [
+      {
+        "0": 55,
+        "1": "55"
+      },
+      {
+        "0": 54,
+        "1": "54"
+      },
+      {
+        "0": 53,
+        "1": "53"
+      },
+      {
+        "0": 52,
+        "1": "52"
+      },
+      {
+        "0": 50,
+        "1": "50"
+      }
+    ],
+    "0/52/1": 358288,
+    "0/52/2": 710768,
+    "0/52/3": 710768,
+    "0/52/65528": [],
+    "0/52/65529": [
+      0
+    ],
+    "0/52/65531": [
+      0,
+      1,
+      2,
+      3,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/52/65532": 1,
+    "0/52/65533": 1,
+    "0/60/0": 0,
+    "0/60/1": null,
+    "0/60/2": null,
+    "0/60/65528": [],
+    "0/60/65529": [
+      0,
+      1,
+      2
+    ],
+    "0/60/65531": [
+      0,
+      1,
+      2,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/60/65532": 0,
+    "0/60/65533": 1,
+    "0/62/0": [
+      {
+        "1": "FTABAQEkAgE3AyQTAhgmBIAigScmBYAlTTo3BiQVASQRLhgkBwEkCAEwCUEEY7W1K6kpx4vZWVLIU73qp/kW9pyLNDQuBV6RLpvdIkVTbb29I6Xzm7itl+MOnHXKMtlRHRkLh64D5XlIb7XRVTcKNQEoARgkAgE2AwQCBAEYMAQUjtcdbm56tODHaNoV/ioyU9SpxREwBRSo+UzPP0I0E1K8a1hlCujFdiWqzxgwC0BxmMahSG1S3y5vyKFL58777UBKPFwP66Qm3EV80n2LZbWy9nWWkYhWZCFr7Y6fkJ3a5wG5N6RJWdNXXMBZZnxLGA==",
+        "2": "FTABAQEkAgE3AyQUARgmBIAigScmBYAlTTo3BiQTAhgkBwEkCAEwCUEE0RSu778u6pYZsH0NF1KbMVkRx6WCDubvsdq0FMGbdXjruqXkI2lQ6J4UPR6oR0ksaD2R2KvRQIzErBXbmIwHlzcKNQEpARgkAmAwBBSo+UzPP0I0E1K8a1hlCujFdiWqzzAFFNN+KRsnAn7+Qs9DAq38/3NJvWCVGDALQOIIDhZiG24xAI3J0yI4IHE7al9lIt/iEHhpWWlKqu4k3/o83hn3l/w9QeTi+/VmeexEnKdqgOHMxcWyM6PKjcQY",
+        "254": 1
+      }
+    ],
+    "0/62/1": [
+      {
+        "1": "BITlbMUi+wQk6xm6NN5escj+cIPQ1hBZmViEs4R9dzxzwP2RamKdP3Gyop8yGiIFCTGwWZIoiENYiRPloYymxZE=",
+        "2": 65521,
+        "254": 1,
+        "3": 1,
+        "4": 46,
+        "5": ""
+      }
+    ],
+    "0/62/2": 16,
+    "0/62/3": 1,
+    "0/62/4": [
+      "FTABAQEkAgE3AyQUARgmBIAigScmBYAlTTo3BiQUARgkBwEkCAEwCUEEhOVsxSL7BCTrGbo03l6xyP5wg9DWEFmZWISzhH13PHPA/ZFqYp0/cbKinzIaIgUJMbBZkiiIQ1iJE+WhjKbFkTcKNQEpARgkAmAwBBTTfikbJwJ+/kLPQwKt/P9zSb1glTAFFNN+KRsnAn7+Qs9DAq38/3NJvWCVGDALQPDg3Kj5rxI91fXdW2CvG+HsbMGtRBPIagmzYb4Mq4VUkyQfjrTZvLCHKcvRxwZmJDDGYr0EVUf5M4l377vPfjAY"
+    ],
+    "0/62/5": 1,
+    "0/62/65528": [
+      1,
+      3,
+      5,
+      8
+    ],
+    "0/62/65529": [
+      0,
+      2,
+      4,
+      6,
+      7,
+      9,
+      10,
+      11
+    ],
+    "0/62/65531": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/62/65532": 0,
+    "0/62/65533": 1,
+    "0/63/0": [],
+    "0/63/1": [],
+    "0/63/2": 4,
+    "0/63/3": 3,
+    "0/63/65528": [
+      2,
+      5
+    ],
+    "0/63/65529": [
+      0,
+      1,
+      3,
+      4
+    ],
+    "0/63/65531": [
+      0,
+      1,
+      2,
+      3,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/63/65532": 0,
+    "0/63/65533": 2,
+    "0/64/0": [
+      {
+        "0": "room",
+        "1": "bedroom 2"
+      },
+      {
+        "0": "orientation",
+        "1": "North"
+      },
+      {
+        "0": "floor",
+        "1": "2"
+      },
+      {
+        "0": "direction",
+        "1": "up"
+      }
+    ],
+    "0/64/65528": [],
+    "0/64/65529": [],
+    "0/64/65531": [
+      0,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "0/64/65532": 0,
+    "0/64/65533": 1,
+    "13/29/0": [
+      {
+        "0": 256,
+        "1": 1
+      }
+    ],
+    "13/29/1": [
+      3,
+      4,
+      6,
+      8,
+      29
+    ],
+    "13/29/2": [
+      30
+    ],
+    "13/29/3": [],
+    "13/29/65528": [],
+    "13/29/65529": [],
+    "13/29/65531": [
+      0,
+      1,
+      2,
+      3,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "13/29/65532": 0,
+    "13/29/65533": 2,
+    "13/3/0": 0,
+    "13/3/1": 0,
+    "13/3/65528": [],
+    "13/3/65529": [
+      0
+    ],
+    "13/3/65531": [
+      0,
+      1,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "13/3/65532": 0,
+    "13/3/65533": 2,
+    "13/4/0": 128,
+    "13/4/65528": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "13/4/65529": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "13/4/65531": [
+      0,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "13/4/65532": 1,
+    "13/4/65533": 3,
+    "13/6/0": false,
+    "13/6/16384": true,
+    "13/6/16385": 0,
+    "13/6/16386": 0,
+    "13/6/16387": 0,
+    "13/6/65528": [],
+    "13/6/65529": [
+      0,
+      1,
+      2
+    ],
+    "13/6/65531": [
+      0,
+      16384,
+      16385,
+      16386,
+      16387,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "13/6/65532": 1,
+    "13/6/65533": 5,
+    "13/8/0": 1,
+    "13/8/1": 0,
+    "13/8/15": 1,
+    "13/8/16384": 1,
+    "13/8/17": 254,
+    "13/8/2": 1,
+    "13/8/3": 254,
+    "13/8/65528": [],
+    "13/8/65529": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "13/8/65531": [
+      0,
+      1,
+      2,
+      3,
+      15,
+      17,
+      16384,
+      65528,
+      65529,
+      65531,
+      65532,
+      65533
+    ],
+    "13/8/65532": 3,
+    "13/8/65533": 6
+  },
+  "available": true,
+  "date_commissioned": "2026-07-18T00:41:44.182162",
+  "interview_version": 6,
+  "is_bridge": false,
+  "last_interview": "2026-07-18T00:41:44.182176",
+  "node_id": 46
+}
+
+
+================================================================================
+# FILE: pyproject.toml
+================================================================================
+[project]
+name = "majordom-matter"
+version = "0.1.4"
+description = "Matter integration for MajorDom — bridges Matter devices into the MajorDom language."
+authors = [{ name = "Mark Parker", email = "mark@parker-programs.com" }]
+readme = "README.md"
+license = "LicenseRef-PolyForm-Noncommercial-1.0.0"
+license-files = ["LICENSE"]
+keywords = ["majordom", "matter", "thread", "smart-home", "home-automation", "iot", "integration", "csa", "connectedhomeip"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Home Automation",
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "majordom-integration-sdk (>=0.1.5,<1.0)",
+    "python-matter-server (>=8.1.2,<9.0.0)",
+    "home-assistant-chip-core (>=2025.7.0)",
+    "home-assistant-chip-clusters (>=2025.7.0)",
+]
+
+[project.urls]
+Homepage = "https://majordom.io"
+Documentation = "https://docs.majordom.io/device-integration"
+Repository = "https://github.com/MajorDom-Systems/integration-matter"
+Issues = "https://github.com/MajorDom-Systems/integration-matter/issues"
+"Commercial licensing" = "https://parker-industries.org/partnership"
+
+[dependency-groups]
+dev = [
+    "poethepoet (>=0.36.0,<1.0.0)",
+    "ty", "ruff", "pip-audit",
+    "pytest", "pytest-asyncio", "pytest-cov", "pytest-timeout", "pytest-repeat",
+    "pytest-benchmark", "pytest-profiling", "pytest-resource-usage", "coverage",
+    "pytest-rerunfailures",
+    "pympler", "psutil", "faker",
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+packages = [{ include = "majordom_matter" }]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+filterwarnings = ["once"]
+markers = ["flaky: retried via pytest-rerunfailures (matter coverage tests are flaky under emulation load)"]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E", "F", "UP", "B", "SIM", "I"]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = true
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["E402"]
+
+[tool.poe.tasks.install]
+shell = """
+poetry install
+echo '#!/bin/sh\npoetry run poe check' > .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+echo "Pre-commit hook installed."
+"""
+
+[tool.poe.tasks.check]
+shell = """
+code=0
+echo "\nRunning ruff lint:"
+poetry run ruff check --fix || code=1
+echo "\nRunning ruff format:"
+poetry run ruff format || code=1
+echo "\nRunning ty:"
+poetry run ty check || code=1
+echo "\nRunning pytest:"
+poetry run pytest --cov=majordom_matter --cov-report=xml || code=1
+echo "\nRunning poetry build:"
+poetry build || code=1
+echo "\nRunning poetry check:"
+poetry check || code=1
+${ci:+git diff --exit-code}
+exit $code
+"""
+args = [{ name = "ci", type = "boolean" }]
+
+
+================================================================================
+# FILE: scripts/check_matter_ha_drift.py
+================================================================================
+#!/usr/bin/env python3
+"""CI drift check for the vendored matter-HA harvest — the Dependabot-style refresher.
+
+Re-runs the AST harvest against home-assistant/core and diffs vs the committed
+``matter_spec_ha.py`` via the SDK's diff_specs. Exit 0 (none) / 1 (ADD/REMOVE) / 2 (RECLASSIFY).
+
+Run: python scripts/check_matter_ha_drift.py --ref dev
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+
+from majordom_integration_sdk.spec_drift import diff_specs
+
+from majordom_matter.matter_spec_ha import MATTER_HA_ATTRIBUTE_UX as COMMITTED
+from scripts.harvest_matter_ha import harvest
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--ref", default="dev")
+    args = ap.parse_args()
+    current, _skipped = harvest(args.ref)
+    report = diff_specs(current, COMMITTED)
+    print(report.render(source="matter-ha"), file=sys.stderr)
+    if report.is_empty:
+        return 0
+    return 2 if report.has_high_risk else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
+
+================================================================================
+# FILE: scripts/fetch_mvd.sh
+================================================================================
+#!/usr/bin/env bash
+# Fetch Google's Matter Virtual Device (MVD) `chef` binaries into tests/mvd/ (gitignored).
+#
+# Each binary is connectedhomeip's `chef` example app compiled per device type, shipped inside
+# Google's MVD package (https://developers.home.google.com/tools/virtual-device) as a GPG-signed
+# Debian archive. A .deb is a plain `ar` archive, so we extract without installing (portable —
+# works on macOS/CI without dpkg). Only an amd64 Linux build exists upstream (no arm64 Linux),
+# which is why the matter suite runs in an x86-64 container (Rosetta locally, native on CI).
+set -euo pipefail
+
+# The lowest version this integration is known to support. Probing for "latest" starts here, and
+# it is the default when no version is requested (reproducible PR/push runs pin to a known build).
+MVD_FLOOR="${MVD_FLOOR:-1.7.0}"
+MVD_VERSION="${MVD_VERSION:-$MVD_FLOOR}"
+BASE_URL="${MVD_BASE_URL:-https://dl.google.com/mvd}"
+GOOGLE_KEY_URL="${GOOGLE_KEY_URL:-https://dl.google.com/linux/linux_signing_key.pub}"
+# Google Inc. (Linux Packages Signing Authority) — the key the MVD .deb is signed with.
+EXPECTED_KEY_FPR="${MVD_KEY_FPR:-EB4C1BFD4F042F6DDDCCEC917721F63BD38B4796}"
+OUT="$(cd "$(dirname "$0")/.." && pwd)/tests/mvd"
+
+# Resolve MVD_VERSION=latest by probing the CDN. Google publishes no directory listing, `latest`
+# alias, or manifest — but every version lives at a deterministic `mvd_<semver>_amd64.deb` URL
+# that returns 200 (exists) or 404. So walk major, then minor, then patch upward from the floor,
+# taking the highest that still exists. Bounded so a gap never loops forever. This is what lets
+# the monthly canary discover a NEW upstream release; the GPG check below still gates integrity.
+_exists() { [ "$(curl -s -o /dev/null -w '%{http_code}' "${BASE_URL}/mvd_${1}_amd64.deb")" = "200" ]; }
+if [ "$MVD_VERSION" = "latest" ]; then
+  IFS=. read -r M m p <<<"$MVD_FLOOR"
+  for _ in $(seq 1 5);  do _exists "$((M+1)).0.0"     && { M=$((M+1)); m=0; p=0; } || break; done
+  for _ in $(seq 1 20); do _exists "${M}.$((m+1)).0"  && { m=$((m+1)); p=0; }      || break; done
+  for _ in $(seq 1 50); do _exists "${M}.${m}.$((p+1))" && p=$((p+1))              || break; done
+  MVD_VERSION="${M}.${m}.${p}"
+  echo "Resolved latest MVD version: ${MVD_VERSION} (floor ${MVD_FLOOR})"
+fi
+DEB="mvd_${MVD_VERSION}_amd64.deb"
+
+work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT; cd "$work"
+
+echo "Downloading ${DEB} (+ signature)…"
+curl -fsSLO "${BASE_URL}/${DEB}"
+curl -fsSLO "${BASE_URL}/${DEB}.asc"
+
+echo "Verifying GPG signature against Google's Linux package key…"
+export GNUPGHOME="$work/gnupg"; mkdir -p "$GNUPGHOME"; chmod 700 "$GNUPGHOME"
+curl -fsSL "$GOOGLE_KEY_URL" | gpg --import 2>/dev/null
+gpg --list-keys --with-colons | grep -q "$EXPECTED_KEY_FPR" \
+  || { echo "ERROR: imported key does not match the pinned fingerprint ${EXPECTED_KEY_FPR}"; exit 1; }
+gpg --verify "${DEB}.asc" "${DEB}"   # hard-fails on a bad/absent signature
+
+echo "Extracting (ar + tar — no dpkg needed)…"
+ar x "${DEB}"
+mkdir -p data && tar -xf data.tar.* -C data
+
+# The per-device chef binaries live under the Electron app's prebuilt tree, named
+# `rootnode_<devicetype>_<hash>`. Map them to clean, hash-free names; device types that ship
+# twice (on-off-light, generic-switch) get a `-2` on the second. A device type we don't have a
+# nice name for is NOT an error — the integration maps device types flexibly, so we auto-name it
+# from its prefix and still ship it, letting the test sweep commission it like any other. That is
+# the point of the canary: a brand-new upstream device gets exercised automatically, and only a
+# genuine mapping/commissioning failure (surfaced by the tests) flags it for a human.
+python3 - "$OUT" <<'PY'
+import os, re, sys, shutil, pathlib
+out = pathlib.Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
+src = pathlib.Path("data/usr/lib/mvd/resources/app/prebuilt/linux_x64")
+NAME = {
+    "airpurifier": "air-purifier", "airqualitysensor": "air-quality-sensor",
+    "basicvideoplayer": "basic-video-player", "colortemperaturelight": "color-temperature-light",
+    "contactsensor": "contact-sensor", "dimmablelight": "dimmable-light",
+    "dimmablepluginunit": "dimmable-plug", "dishwasher": "dishwasher", "doorlock": "door-lock",
+    "extendedcolorlight": "extended-color-light", "fan": "fan", "flowsensor": "flow-sensor",
+    "genericswitch": "generic-switch", "humiditysensor": "humidity-sensor",
+    "laundrywasher": "laundry-washer", "lightsensor": "light-sensor",
+    "occupancysensor": "occupancy-sensor", "onofflight": "on-off-light",
+    "onoffpluginunit": "on-off-plug", "pressuresensor": "pressure-sensor", "pump": "pump",
+    "refrigerator_temperaturecontrolledcabinet_temperaturecontrolledcabinet": "refrigerator",
+    "roboticvacuumcleaner": "robotic-vacuum", "roomairconditioner": "room-air-conditioner",
+    "smokecoalarm": "smoke-co-alarm", "temperaturesensor": "temperature-sensor",
+    "thermostat": "thermostat", "windowcovering": "window-covering",
+}
+# group by device-type prefix (strip the trailing _<hash>), sorted for deterministic -2 order
+groups: dict[str, list[str]] = {}
+for f in sorted(p.name for p in src.glob("rootnode_*")):
+    prefix = re.sub(r"^rootnode_", "", f)
+    prefix = re.sub(r"_[^_]+$", "", prefix)  # drop the hash segment
+    groups.setdefault(prefix, []).append(f)
+unknown = sorted(set(groups) - set(NAME))
+if unknown:
+    # Not fatal — auto-name and ship them so the flexible mapping is still exercised. Consider
+    # adding a nice name to NAME above once the type is known-good.
+    print(f"Note: auto-naming {len(unknown)} unmapped device type(s): {unknown}")
+n = 0
+for prefix, files in groups.items():
+    base = NAME.get(prefix, prefix.replace("_", "-"))
+    for i, f in enumerate(files):
+        target = out / (base if i == 0 else f"{base}-{i+1}")
+        shutil.copy(src / f, target)
+        os.chmod(target, 0o755)
+        n += 1
+print(f"Extracted {n} MVD binaries -> {out}")
+PY
+
+count="$(find "$OUT" -type f | wc -l | tr -d ' ')"
+echo "Done: ${count} MVD binaries (MVD ${MVD_VERSION})"
+
+
+================================================================================
+# FILE: scripts/fetch_paa_certs.py
+================================================================================
+#!/usr/bin/env python3
+"""Fetch Matter PAA (Product Attestation Authority) root certificates.
+
+Uses python-matter-server's own fetcher — DCL production + test ledgers and the connectedhomeip
+git mirror — the same sources that produced the certificate store the matter tests run against
+(including the Chip-Test development PAA the MVD chef devices commission against).
+
+    python scripts/fetch_paa_certs.py [dest_dir]   # default: matter_data/credentials
+
+The DCL occasionally serves a single malformed certificate; upstream's fetcher aborts the whole
+source when one fails to parse. We wrap the per-cert writer to skip a malformed cert instead, so
+every source completes fully.
+"""
+
+import asyncio
+import sys
+from pathlib import Path
+
+import matter_server.server.helpers.paa_certificates as paa
+
+MIN_CERTS = 30
+
+_orig_write = paa.write_paa_root_cert
+
+
+async def _resilient_write(*args, **kwargs):
+    try:
+        return await _orig_write(*args, **kwargs)
+    except Exception as err:  # noqa: BLE001 — skip a malformed cert, keep fetching the rest
+        print(f"  (skipping malformed certificate: {type(err).__name__})")
+        return False
+
+
+paa.write_paa_root_cert = _resilient_write  # ty: ignore[invalid-assignment]  # monkeypatch, module global
+
+
+async def main() -> None:
+    dest = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("matter_data/credentials")
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / ".version").unlink(missing_ok=True)  # force a full fetch
+
+    total = await paa.fetch_certificates(dest)
+    count = len(list(dest.glob("*.der"))) + len(list(dest.glob("*.pem")))
+    if count < MIN_CERTS:
+        sys.exit(f"Only {count} PAA certs fetched (< {MIN_CERTS}) — treating as a failed fetch")
+    print(f"PAA certificate store ready: {count} certs (fetcher counted {total}) -> {dest}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
+================================================================================
+# FILE: scripts/harvest_matter_ha.py
+================================================================================
+#!/usr/bin/env python3
+"""Harvest Home Assistant's Matter entity judgment into ``majordom_matter/matter_spec_ha.py``.
+
+DEV / BUILD TOOL. Unlike zha, HA's Matter discovery is **not** a standalone library — it lives in
+`homeassistant.components.matter`. So instead of importing it (which would drag in all of HA core),
+this downloads only the handful of platform files and parses them with **AST** (no execution, no
+`homeassistant` install). Attribute references (``clusters.X.Attributes.Y``) are resolved to
+``(cluster_id, attribute_id)`` via the ``chip`` bindings we already depend on.
+
+What it takes: the genuinely-additive judgment (``entity_category`` -> visibility, platform ->
+role, unit/device_class -> unit). The Matter Data Model already gives us names/types/bounds via
+``chip``, so those are dropped. Value-transform lambdas (``device_to_ha``) can't be read statically
+and are logged as skipped.
+
+Usage:
+    python scripts/harvest_matter_ha.py                    # writes the module (ref=dev)
+    python scripts/harvest_matter_ha.py --ref 2025.1.0     # pin a HA release tag
+    python scripts/harvest_matter_ha.py --stdout
+"""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import sys
+import urllib.request
+
+import chip.clusters as clusters
+
+_PLATFORM_FILES = (
+    "sensor", "binary_sensor", "switch", "number", "select",
+    "climate", "cover", "fan", "light", "lock", "button", "event",
+)
+_RAW = "https://raw.githubusercontent.com/home-assistant/core/{ref}/homeassistant/components/matter/{f}.py"
+
+# HA unit-enum leaf / device_class leaf -> our ParameterUnit value. Unmapped -> "plain".
+_UNIT_BY_LEAF = {
+    "CELSIUS": "celsius", "PERCENTAGE": "percentage", "KELVIN": "kelvin", "WATT": "watt",
+    "VOLT": "volt", "AMPERE": "ampere", "KILO_WATT_HOUR": "kwh", "HERTZ": "hertz", "LUX": "lux",
+    "PASCAL": "pascal", "KILO_PASCAL": "pascal", "HECTOPASCAL": "pascal",
+    "PARTS_PER_MILLION": "ppm", "MICROGRAMS_PER_CUBIC_METER": "ugm3",
+}
+_UNIT_BY_DEVICE_CLASS = {
+    "TEMPERATURE": "celsius", "HUMIDITY": "percentage", "BATTERY": "percentage",
+    "ILLUMINANCE": "lux", "POWER": "watt", "VOLTAGE": "volt", "CURRENT": "ampere",
+    "ENERGY": "kwh", "PRESSURE": "pascal", "FREQUENCY": "hertz",
+}
+_CONTROL_PLATFORMS = {"switch", "number", "select", "climate", "cover", "fan", "light", "lock", "button"}
+
+
+def _leaf(node: ast.expr | None) -> str | None:
+    """Leaf name of a node: ``Platform.SENSOR`` -> 'SENSOR', bare ``PERCENTAGE`` -> 'PERCENTAGE'."""
+    if isinstance(node, ast.Attribute):
+        return node.attr
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    return None
+
+
+def _dotted(node: ast.expr) -> list[str] | None:
+    """Flatten ``clusters.X.Attributes.Y`` (an Attribute chain) into ['clusters','X','Attributes','Y']."""
+    parts: list[str] = []
+    cur: ast.expr = node
+    while isinstance(cur, ast.Attribute):
+        parts.append(cur.attr)
+        cur = cur.value
+    if isinstance(cur, ast.Name):
+        parts.append(cur.id)
+        return list(reversed(parts))
+    return None
+
+
+def _resolve_attr(dotted: list[str]) -> tuple[int, int] | None:
+    """['clusters','TemperatureMeasurement','Attributes','MeasuredValue'] -> (cluster_id, attr_id)."""
+    if not dotted or dotted[0] != "clusters":
+        return None
+    obj: object = clusters
+    for part in dotted[1:]:
+        obj = getattr(obj, part, None)
+        if obj is None:
+            return None
+    cid, aid = getattr(obj, "cluster_id", None), getattr(obj, "attribute_id", None)
+    return (cid, aid) if cid is not None and aid is not None else None
+
+
+def _kwargs(call: ast.Call) -> dict[str, ast.expr]:
+    return {kw.arg: kw.value for kw in call.keywords if kw.arg}
+
+
+def harvest(ref: str) -> tuple[dict[tuple[int, int], tuple[str, str, str]], list[str]]:
+    out: dict[tuple[int, int], tuple[str, str, str]] = {}
+    skipped: list[str] = []
+    for f in _PLATFORM_FILES:
+        try:
+            src = urllib.request.urlopen(_RAW.format(ref=ref, f=f), timeout=30).read().decode()
+        except Exception as e:  # noqa: BLE001 - a missing platform file is not fatal
+            skipped.append(f"{f}.py: fetch failed ({e})")
+            continue
+        tree = ast.parse(src)
+        for call in ast.walk(tree):
+            if not (isinstance(call, ast.Call) and isinstance(call.func, ast.Name)):
+                continue
+            if call.func.id != "MatterDiscoverySchema":
+                continue
+            kw = _kwargs(call)
+            platform = (_leaf(kw.get("platform")) or "").lower()
+            req = kw.get("required_attributes")
+            if not isinstance(req, ast.Tuple) or not req.elts:
+                skipped.append(f"{f}.py: schema with no required_attributes")
+                continue
+            key = _resolve_attr(_dotted(req.elts[0]) or [])
+            if key is None:
+                skipped.append(f"{f}.py: unresolved {ast.dump(req.elts[0])[:60]}")
+                continue
+            desc = kw.get("entity_description")
+            dkw = _kwargs(desc) if isinstance(desc, ast.Call) else {}
+            entity_category = _leaf(dkw.get("entity_category"))
+            visibility = "user" if entity_category is None else "setting"
+            role = "control" if platform in _CONTROL_PLATFORMS else "sensor"
+            unit = _unit(_leaf(dkw.get("device_class")), _leaf(dkw.get("native_unit_of_measurement")))
+            # First writer wins; but a user (primary) classification upgrades a prior setting.
+            prev = out.get(key)
+            if prev is None or (prev[0] == "setting" and visibility == "user"):
+                out[key] = (visibility, role, unit)
+    return out, skipped
+
+
+def _unit(device_class: str | None, unit_leaf: str | None) -> str:
+    if unit_leaf and unit_leaf in _UNIT_BY_LEAF:
+        return _UNIT_BY_LEAF[unit_leaf]
+    if device_class and device_class in _UNIT_BY_DEVICE_CLASS:
+        return _UNIT_BY_DEVICE_CLASS[device_class]
+    return "plain"
+
+
+def render(data: dict[tuple[int, int], tuple[str, str, str]], ref: str) -> str:
+    lines = [
+        '"""GENERATED by scripts/harvest_matter_ha.py — DO NOT EDIT BY HAND.',
+        "",
+        f"Source: home-assistant/core@{ref} homeassistant/components/matter (Apache-2.0), parsed via",
+        "AST (no homeassistant dependency). Attribute ids resolved via chip. Harvested entity",
+        "judgment only (entity_category -> visibility, platform -> role, unit); the Matter Data Model",
+        "supplies names/types/bounds. Hand overrides live in matter_spec.py and win on merge.",
+        '"""',
+        "",
+        "# (cluster_id, attribute_id) -> (visibility, role, unit)",
+        "MATTER_HA_ATTRIBUTE_UX: dict[tuple[int, int], tuple[str, str, str]] = {",
+    ]
+    for (cid, aid), (vis, role, unit) in sorted(data.items()):
+        lines.append(f"    ({cid:#06x}, {aid:#06x}): ({vis!r}, {role!r}, {unit!r}),")
+    lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--ref", default="dev", help="home-assistant/core git ref (tag/branch)")
+    ap.add_argument("--stdout", action="store_true")
+    ap.add_argument("--out", default="majordom_matter/matter_spec_ha.py")
+    args = ap.parse_args()
+
+    data, skipped = harvest(args.ref)
+    text = render(data, args.ref)
+    if args.stdout:
+        sys.stdout.write(text)
+    else:
+        with open(args.out, "w") as fh:
+            fh.write(text)
+        print(f"[harvest_matter_ha] ref={args.ref}: wrote {len(data)} entries -> {args.out}", file=sys.stderr)
+    print(f"[harvest_matter_ha] {len(skipped)} schemas skipped (composite/transform/unresolved)", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
+
+================================================================================
+# FILE: scripts/param_ux_audit.py
+================================================================================
+"""Run majordom's MATTER visibility mapping across the full chip data model (all clusters'
+attributes), replicating mapper.parse_attributes, and bucket like the iOS app: user/setting/system."""
+
+import inspect
+from typing import cast
+
+import chip.clusters.Objects as M
+from chip.clusters.CHIPClusters import ChipClusters
+from chip.clusters.ClusterObjects import ClusterAttributeDescriptor
+
+from majordom_matter.matter_spec import (
+    EVERYDAY_CONTROL_ATTRIBUTES,
+    MAIN_PARAMETER_BY_CLUSTER,
+    SENSITIVE_ATTRIBUTE_NAME_PREFIXES,
+    SYSTEM_ATTRIBUTES,
+    SYSTEM_CLUSTERS,
+    USER_READINGS,
+    AttributeKey,
+)
+
+CI = ChipClusters(None)
+
+
+def writable(cid, aid):
+    try:
+        return bool(CI.GetClusterInfoById(cid).get("attributes", {}).get(aid, {}).get("writable"))
+    except Exception:
+        return False
+
+
+clusters = [
+    c
+    for _, c in inspect.getmembers(M, inspect.isclass)
+    if hasattr(c, "id") and hasattr(c, "Attributes") and isinstance(c.id, int)
+]
+clusters = sorted({c.id: c for c in clusters}.items())
+
+tot = {"user": 0, "setting": 0, "system": 0}
+rows = []
+for cid, cls in clusters:
+    cid = cast("int", cid)  # guaranteed by the isinstance guard above; inspect types it object
+    is_sys = cid in SYSTEM_CLUSTERS
+    b = {"user": [], "setting": [], "system": []}
+    for name, attr in inspect.getmembers(cls.Attributes, inspect.isclass):
+        if not issubclass(attr, ClusterAttributeDescriptor):
+            continue
+        aid = getattr(attr, "attribute_id", -1)
+        if aid in SYSTEM_ATTRIBUTES:
+            continue
+        key = AttributeKey(cid, aid)
+        if is_sys or name.startswith(SENSITIVE_ATTRIBUTE_NAME_PREFIXES):
+            vis = "system"
+        elif writable(cid, aid):
+            vis = "user" if key in EVERYDAY_CONTROL_ATTRIBUTES else "setting"
+        elif key in USER_READINGS:
+            vis = "user"
+        else:
+            vis = "system"  # read-only, uncurated -> hidden (inverted default)
+        b[vis].append(name)
+    for k in tot:
+        tot[k] += len(b[k])
+    rows.append((cid, cls.__name__, is_sys, cid in MAIN_PARAMETER_BY_CLUSTER, b))
+
+print(f"=== MATTER full-datamodel mapping: {len(rows)} clusters ===")
+print(f"total attr-params by bucket: user={tot['user']} setting={tot['setting']} system={tot['system']}")
+print(f"clusters providing a MAIN param: {sorted(hex(c) for c in MAIN_PARAMETER_BY_CLUSTER)}\n")
+SPOT = {
+    0x6: "OnOff",
+    0x8: "LevelControl",
+    0x300: "ColorControl",
+    0x201: "Thermostat",
+    0x202: "FanControl",
+    0x102: "WindowCovering",
+    0x101: "DoorLock",
+    0x402: "TempMeas",
+    0x405: "Humidity",
+    0x2F: "PowerSource",
+    0x50: "ModeSelect",
+}
+for cid, name, _is_sys, has_main, b in rows:
+    if cid in SPOT:
+        main = " [MAIN]" if has_main else ""
+        print(
+            f"--- 0x{cid:04X} {name}{main} — "
+            f"user={len(b['user'])} setting={len(b['setting'])} system={len(b['system'])} ---"
+        )
+        if b["user"]:
+            print(f"   user: {', '.join(b['user'][:16])}{' …' if len(b['user']) > 16 else ''}")
+# biggest user buckets (over-exposure hotspots)
+print("\n=== TOP over-exposed 'user' clusters (most read-only attrs shown to user) ===")
+for cid, name, _is_sys, _has_main, b in sorted(rows, key=lambda r: -len(r[4]["user"]))[:10]:
+    print(f"  0x{cid:04X} {name}: user={len(b['user'])}")
+
+
+================================================================================
+# FILE: tests/conftest.py
+================================================================================
+"""Unit tests for the Matter controller.
+
+Drive `MatterController` directly against a live python-matter-server and real MVD `chef`
+virtual devices — no Hub. The MVD binaries are Linux x86-64, so this runs in the test
+container (see docker/); on Apple Silicon via Rosetta. The Hub keeps the e2e and
+real-hardware coverage.
+"""
+
+import asyncio
+import contextlib
+import os
+import signal
+import subprocess
+import tempfile
+from pathlib import Path
+
+import pytest
+import pytest_asyncio
+from aiohttp import ClientSession
+from majordom_integration_sdk.controller import AbstractController
+from majordom_integration_sdk.repository import DeviceRepositoryMemory
+from majordom_integration_sdk.testing import (
+    FakeBLEDiscoveryService,
+    FakeSSDPDiscoveryService,
+    FakeZeroconfDiscoveryService,
+    RecordingControllerOutput,
+)
+from matter_server.client import MatterClient
+
+from majordom_matter import MatterController
+from majordom_matter.config import matter_server_url
+
+BIN_DIR = Path(__file__).parent / "mvd"
+_MVD_LIVENESS_CHECK_S = 0.3
+
+
+async def _start_mvd(device_type: str = "on-off-light") -> subprocess.Popen:
+    stderr_file = tempfile.TemporaryFile()  # noqa: SIM115 (handed to Popen; outlives this fn)
+    proc = subprocess.Popen(
+        [
+            str(BIN_DIR / device_type),
+            "--discriminator",
+            "3840",
+            "--passcode",
+            "20202021",
+            "--capabilities",
+            "4",
+            "--interface-id",
+            "eth0",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=stderr_file,
+        preexec_fn=os.setsid,
+    )
+    await asyncio.sleep(_MVD_LIVENESS_CHECK_S)
+    if proc.poll() is not None:
+        stderr_file.seek(0)
+        pytest.fail(
+            f"MVD '{device_type}' exited immediately (code {proc.returncode}): "
+            f"{stderr_file.read().decode(errors='replace')}"
+        )
+    return proc
+
+
+def _kill_mvd(proc: subprocess.Popen) -> None:
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+    except ProcessLookupError:
+        return
+    try:
+        proc.wait(timeout=2)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            proc.wait(timeout=5)
+        except (ProcessLookupError, subprocess.TimeoutExpired):
+            pass
+
+
+async def _stop_mvd(proc: subprocess.Popen) -> None:
+    await asyncio.get_running_loop().run_in_executor(None, _kill_mvd, proc)
+
+
+async def _unpair_all() -> None:
+    """Remove every node from matter-server so each test starts from a clean fabric."""
+    session = ClientSession()
+    client = MatterClient(matter_server_url, session)
+    try:
+        await client.connect()
+        event = asyncio.Event()
+        task = asyncio.create_task(client.start_listening(init_ready=event))
+        await event.wait()
+        for node in list(client.get_nodes()):
+            with contextlib.suppress(Exception):
+                await client.remove_node(node.node_id)
+        task.cancel()
+    finally:
+        await client.disconnect()
+        await session.close()
+
+
+@pytest_asyncio.fixture
+async def mvd(request):
+    """A running virtual device on the Matter network.
+
+    Defaults to on-off-light; indirectly parametrize (`@pytest.mark.parametrize("mvd", [...],
+    indirect=True)`) to sweep other device types — see test_all_devices.py.
+    """
+    device_type = getattr(request, "param", "on-off-light")
+    await _unpair_all()
+    proc = await _start_mvd(device_type)
+    yield proc
+    await _unpair_all()
+    await _stop_mvd(proc)
+
+
+@pytest_asyncio.fixture
+async def matter(mvd):
+    """Started MatterController (connected to matter-server) + recording output + repository."""
+    repository = DeviceRepositoryMemory(integration="Matter")
+    output = RecordingControllerOutput()
+    deps = AbstractController.Dependencies(
+        output=output,
+        make_device_repository=repository.session,
+        documents_folder=Path(tempfile.mkdtemp()),
+        zeroconf_discovery_service=FakeZeroconfDiscoveryService(),
+        ssdp_discovery_service=FakeSSDPDiscoveryService(),
+        ble_discovery_service=FakeBLEDiscoveryService(),
+    )
+    controller = MatterController(deps)
+    await controller.start()
+    yield controller, output, repository, mvd
+    await controller.stop()
+
+
+================================================================================
+# FILE: tests/test_controller.py
+================================================================================
+"""Unit tests driving MatterController against a live matter-server + real MVD devices.
+
+Skipped unless MATTER_INTEGRATION_TESTS=1 (set in docker/); they need a running
+matter-server and the x86-64 MVD binaries, so they don't run on a bare dev machine.
+"""
+
+import asyncio
+import os
+import pathlib
+
+import pytest
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("MATTER_INTEGRATION_TESTS") != "1",
+    reason="needs matter-server + x86-64 MVD binaries — run via docker/ (plan §3.5)",
+)
+from uuid import UUID
+
+from majordom_integration_sdk.schemas.device import CredentialsType, ProvidedCredentials
+
+
+async def _wait_for(predicate, timeout: float | None = None):
+    timeout = timeout or float(os.environ.get("MATTER_DISCOVERY_TIMEOUT_S", "12"))
+    async with asyncio.timeout(timeout):
+        while not predicate():
+            await asyncio.sleep(0.1)
+
+
+async def test_discovers_a_matter_device(matter):
+    controller, output, _repo, _mvd = matter
+    await _wait_for(lambda: bool(output.received_discoveries))
+    discovery = output.received_discoveries[-1]
+    assert discovery.integration == "Matter"
+    assert discovery.transport == "IP"
+
+
+async def _provisional(repository, discovery):
+    from majordom_matter.model import MatterDeviceIntegrationData, MatterDeviceState
+
+    # node_id gets its real value during commissioning; the Hub seeds the row first.
+    async with repository.session() as repo:
+        await repo.save(
+            MatterDeviceState(
+                id=discovery.id,
+                name="Test Device",
+                room_id=UUID(int=1),
+                transport="IP",
+                integration="Matter",
+                manufacturer=None,
+                parameters=[],
+                integration_data=MatterDeviceIntegrationData(node_id=0),
+            )
+        )
+
+
+async def test_pairs_a_discovered_device(matter):
+    from majordom_matter.model import MatterDevice
+
+    controller, output, repository, _mvd = matter
+    await _wait_for(lambda: bool(controller.discoveries))
+    discovery = next(iter(controller.discoveries.values()))
+    await _provisional(repository, discovery)
+
+    await controller.pair_device(discovery, ProvidedCredentials(type=CredentialsType.code, value="20202021"))
+
+    # pairing renames the row from the provisional discovery id to the real device id (derived
+    # from the commissioned node), and reports the connect under that id.
+    assert output.connected_devices, "controller should report the connect"
+    device_id = output.connected_devices[-1]
+    async with repository.session() as repo:
+        device = await repo.get(device_id, as_=MatterDevice)
+        state = await repo.state(device_id)
+    assert device is not None and device.integration_data.node_id
+    assert state is not None and len(state.parameters) > 0
+
+
+async def test_unpairs_a_device(matter):
+    from majordom_matter.model import MatterDevice
+
+    controller, output, repository, _mvd = matter
+    await _wait_for(lambda: bool(controller.discoveries))
+    discovery = next(iter(controller.discoveries.values()))
+    await _provisional(repository, discovery)
+    await controller.pair_device(discovery, ProvidedCredentials(type=CredentialsType.code, value="20202021"))
+
+    device_id = output.connected_devices[-1]
+    async with repository.session() as repo:
+        device = await repo.get(device_id, as_=MatterDevice)
+    assert device is not None
+    await controller.unpair(device)  # removes the node from the fabric without error
+
+
+async def _pair(controller, output, repository):
+    from majordom_matter.model import MatterDevice
+
+    await _wait_for(lambda: bool(controller.discoveries))
+    discovery = next(iter(controller.discoveries.values()))
+    await _provisional(repository, discovery)
+    await controller.pair_device(discovery, ProvidedCredentials(type=CredentialsType.code, value="20202021"))
+    device_id = output.connected_devices[-1]
+    async with repository.session() as repo:
+        return await repo.get(device_id, as_=MatterDevice)
+
+
+async def test_fetch_emits_events(matter):
+    controller, output, repository, _mvd = matter
+    device = await _pair(controller, output, repository)
+    before = len(output.events)
+    await controller.fetch(device)
+    assert len(output.events) > before, "fetch should re-read the device and emit parameter-change events"
+
+
+async def test_identify_runs_against_the_device(matter):
+    controller, output, repository, _mvd = matter
+    device = await _pair(controller, output, repository)
+    # The on-off-light carries the Identify cluster; identify() should complete without error.
+    await controller.identify(device)
+
+
+def _all_device_types() -> list[str]:
+    """Every MVD binary fetch_mvd.sh dropped into tests/mvd — the full upstream device set."""
+    d = pathlib.Path(__file__).parent / "mvd"
+    return sorted(p.name for p in d.iterdir() if p.is_file()) if d.is_dir() else []
+
+
+@pytest.mark.parametrize("mvd", _all_device_types(), indirect=True)
+async def test_commissions_every_device_type(matter):
+    """Commission every MVD device the canary fetched — known types and any brand-new one Google
+    ships — so the integration's flexible mapping is exercised across the full set automatically.
+    A new binary added by fetch_mvd.sh is covered here with no code change; the canary goes red
+    only on a genuine commissioning/mapping failure, which is the signal to go look. (See §3.5.)"""
+    from majordom_matter.model import MatterDevice
+
+    controller, output, repository, _mvd = matter
+    await _wait_for(lambda: bool(controller.discoveries))
+    discovery = next(iter(controller.discoveries.values()))
+    await _provisional(repository, discovery)
+    await controller.pair_device(discovery, ProvidedCredentials(type=CredentialsType.code, value="20202021"))
+
+    assert output.connected_devices, "controller should report the connect"
+    device_id = output.connected_devices[-1]
+    async with repository.session() as repo:
+        device = await repo.get(device_id, as_=MatterDevice)
+        state = await repo.state(device_id)
+    assert device is not None and device.integration_data.node_id, "device should commission"
+    assert state is not None and len(state.parameters) > 0, "mapping should yield parameters"
+    await controller.unpair(device)
+
+
+================================================================================
+# FILE: tests/test_controller_stub.py
+================================================================================
+"""Controller wiring tests against the in-process FakeMatterClient — no matter-server, no MVD.
+
+These run in the default (non-docker) CI. They exercise discovery, pairing + parameter mapping,
+commands, and attribute events through the REAL controller and mapper against a faithful canned
+on-off-light node. The heavy real-device coverage (all 30 device types, real commissioning) lives
+in the dockerized MVD suite, test_controller.py.
+"""
+
+import asyncio
+import tempfile
+from pathlib import Path
+from uuid import UUID
+
+import pytest_asyncio
+from majordom_integration_sdk.schemas.command import DeviceCommand
+from majordom_integration_sdk.schemas.device import CredentialsType, ProvidedCredentials
+from majordom_integration_sdk.testing import build_test_dependencies
+
+from majordom_matter import MatterController
+from majordom_matter.model import MatterDevice, MatterDeviceIntegrationData, MatterDeviceState, MatterParameterTypeEnum
+from majordom_matter.testing import FakeMatterClient
+
+FAKE_NODE_ID = 46  # matches fixtures/on_off_light_node.json
+
+
+@pytest_asyncio.fixture
+async def controller(monkeypatch):
+    """A started MatterController whose matter-server client is the in-process fake."""
+    monkeypatch.setattr("majordom_matter.controller.MatterClient", FakeMatterClient)
+    deps = build_test_dependencies(documents_folder=Path(tempfile.mkdtemp()), integration="Matter")
+    controller = MatterController(deps)
+    await controller.start()
+    yield controller, deps.output
+    await controller.stop()
+
+
+async def _wait(predicate, timeout: float = 5.0):
+    async with asyncio.timeout(timeout):
+        while not predicate():
+            await asyncio.sleep(0.02)
+
+
+async def _commission(controller, repository) -> UUID:
+    """Seed the provisional row the Hub would create, then pair — returns the real device id."""
+    await _wait(lambda: bool(controller.discoveries))
+    discovery = next(iter(controller.discoveries.values()))
+    async with repository() as repo:
+        await repo.save(
+            MatterDeviceState(
+                id=discovery.id,
+                name="Test",
+                room_id=UUID(int=1),
+                transport="IP",
+                integration="Matter",
+                manufacturer=None,
+                parameters=[],
+                integration_data=MatterDeviceIntegrationData(node_id=0),
+            )
+        )
+    await controller.pair_device(discovery, ProvidedCredentials(type=CredentialsType.code, value="20202021"))
+    return controller.dependencies.output.connected_devices[-1]
+
+
+async def test_discovers_the_canned_node(controller):
+    ctrl, _output = controller
+    await _wait(lambda: bool(ctrl.discoveries))
+    discovery = next(iter(ctrl.discoveries.values()))
+    assert discovery.integration == "Matter"
+    assert discovery.transport == "IP"
+    assert CredentialsType.code in discovery.expected_credentials_options
+
+
+async def test_pairs_and_maps_parameters(controller):
+    ctrl, output = controller
+    device_id = await _commission(ctrl, ctrl.dependencies.make_device_repository)
+
+    assert output.connected_devices == [device_id]
+    async with ctrl.dependencies.make_device_repository() as repo:
+        device = await repo.get(device_id, as_=MatterDevice)
+        state = await repo.state(device_id)
+    assert device is not None and device.integration_data.node_id == FAKE_NODE_ID
+    # The on-off-light exposes the OnOff cluster (endpoint 13) → at least a toggle command maps.
+    assert state is not None and len(state.parameters) > 0
+
+
+async def test_send_command_reaches_the_client(controller):
+    ctrl, _output = controller
+    device_id = await _commission(ctrl, ctrl.dependencies.make_device_repository)
+    async with ctrl.dependencies.make_device_repository() as repo:
+        device = await repo.get(device_id, as_=MatterDevice)
+        state = await repo.state(device_id, MatterDeviceState)
+
+    command_param = next(p for p in state.parameters if p.integration_data.type is MatterParameterTypeEnum.command)
+    await ctrl.send_command(
+        DeviceCommand(device_id=device_id, parameter_id=command_param.id, value=None), device, command_param
+    )
+    # The fake records the outgoing command against the node's endpoint.
+    assert ctrl._matter_client.sent_commands, "send_command should reach the matter client"
+    node_id, endpoint_id, _cmd = ctrl._matter_client.sent_commands[-1]
+    assert node_id == FAKE_NODE_ID and endpoint_id == command_param.integration_data.endpoint_id
+
+
+async def test_attribute_update_becomes_an_event(controller):
+    ctrl, output = controller
+    device_id = await _commission(ctrl, ctrl.dependencies.make_device_repository)
+    before = len(output.events)
+
+    # Simulate the device pushing a new OnOff value; the subscription should surface an event.
+    ctrl._matter_client.fire_attribute_update("13/6/0", True)
+    await _wait(lambda: len(output.events) > before)
+
+    event = output.events[-1]
+    assert event.device_id == device_id
+
+
+async def test_unpair_removes_the_node(controller):
+    ctrl, _output = controller
+    device_id = await _commission(ctrl, ctrl.dependencies.make_device_repository)
+    async with ctrl.dependencies.make_device_repository() as repo:
+        device = await repo.get(device_id, as_=MatterDevice)
+
+    await ctrl.unpair(device)
+    assert FAKE_NODE_ID in ctrl._matter_client.removed_nodes
+
+
+async def test_fetch_emits_events(controller):
+    ctrl, output = controller
+    device_id = await _commission(ctrl, ctrl.dependencies.make_device_repository)
+    async with ctrl.dependencies.make_device_repository() as repo:
+        device = await repo.get(device_id, as_=MatterDevice)
+
+    before = len(output.events)
+    await ctrl.fetch(device)
+    assert len(output.events) > before, "fetch should emit a DeviceParameterChange per attribute"
+
+
+async def test_identify_sends_identify_command(controller):
+    from chip.clusters.Objects import Identify
+
+    ctrl, _output = controller
+    device_id = await _commission(ctrl, ctrl.dependencies.make_device_repository)
+    async with ctrl.dependencies.make_device_repository() as repo:
+        device = await repo.get(device_id, as_=MatterDevice)
+
+    await ctrl.identify(device)
+    # The on-off-light carries the Identify cluster (3) on its application endpoint.
+    assert any(isinstance(cmd, Identify.Commands.Identify) for _n, _ep, cmd in ctrl._matter_client.sent_commands), (
+        "identify should send an Identify command to the node's Identify cluster"
+    )
+
+
+async def test_start_populates_discoveries_and_stop_clears(controller):
+    # start() ran in the fixture and should have surfaced the canned node as a discovery;
+    # stop() must clear that state (background tasks + discoveries) without error.
+    ctrl, _output = controller
+    await _wait(lambda: bool(ctrl.discoveries))
+    assert ctrl.discoveries, "start() should surface the discovered node"
+
+    await ctrl.stop()
+    assert ctrl.discoveries == {}, "stop() should clear discoveries"
+
+
+================================================================================
+# FILE: tests/test_param_ux.py
+================================================================================
+"""Light probes for the parameter-UX mapping — exercise the code paths (visibility curation,
+metadata resolver) without re-hardcoding every device's expected parameters (that stays a manual
+review; see the audit script + the docs recipe)."""
+
+from uuid import uuid4
+
+from majordom_matter.mapper import MatterMapper
+from majordom_matter.matter_spec import (
+    EVERYDAY_CONTROL_ATTRIBUTES,
+    METADATA_SOURCES,
+    USER_READINGS,
+    AttributeKey,
+)
+
+
+def _mapper() -> MatterMapper:
+    return MatterMapper(lambda s: uuid4(), lambda d, s: uuid4())
+
+
+class _FakeEndpoint:
+    def __init__(self, values):
+        self._values = values
+
+    def get_attribute_value(self, cluster_id, attribute_id):
+        return self._values.get((cluster_id, attribute_id))
+
+
+def test_runtime_bounds_prefer_device_limit_attributes():
+    # priority 1: CurrentLevel's min/max come from the device's own Min/MaxLevel attrs
+    ep = _FakeEndpoint({(0x008, 0x02): 5, (0x008, 0x03): 200})
+    lo, hi = _mapper().resolve_runtime_bounds(AttributeKey(0x008, 0x00), 0x008, ep, "CurrentLevel", 0, 254)
+    assert (lo, hi) == (5, 200)
+
+
+def test_runtime_bounds_fall_back_to_defaults_when_device_silent():
+    ep = _FakeEndpoint({})  # device reports no limit attrs
+    lo, hi = _mapper().resolve_runtime_bounds(AttributeKey(0x008, 0x00), 0x008, ep, "CurrentLevel", 0, 254)
+    assert (lo, hi) == (0, 254)
+
+
+def test_no_metadata_source_returns_defaults_unchanged():
+    ep = _FakeEndpoint({(0x008, 0x02): 5})
+    lo, hi = _mapper().resolve_runtime_bounds(AttributeKey(0x999, 0x99), 0x999, ep, "X", 1, 2)
+    assert (lo, hi) == (1, 2)
+
+
+def test_curation_sets_are_consistent():
+    # a parameter can't be both an everyday writable control and a read-only user reading
+    assert USER_READINGS.isdisjoint(EVERYDAY_CONTROL_ATTRIBUTES)
+    # every metadata source key is a curated user reading/control (we only resolve bounds for shown params)
+    shown = USER_READINGS | EVERYDAY_CONTROL_ATTRIBUTES
+    assert set(METADATA_SOURCES).issubset(shown)
+
+
+# --- classification ladder probes (see classify_attribute) --------------------------------------
+
+def test_ladder_system_cluster_and_sensitive_forced_hidden():
+    from majordom_integration_sdk.schemas.parameter import ParameterVisibility
+
+    from majordom_matter.matter_spec import classify_attribute
+
+    spec, source = classify_attribute(0x0028, 0x0000, "VendorName", writable=False, in_system_cluster=True)
+    assert source == "system-cluster" and spec.visibility is ParameterVisibility.system
+    spec, source = classify_attribute(
+        0x0006, 0x0000, "AliroReaderVerificationKey", writable=True, in_system_cluster=False
+    )
+    assert source == "sensitive" and spec.visibility is ParameterVisibility.system
+
+
+def test_ladder_our_override_beats_ha():
+    from majordom_matter.matter_spec import OUR_ATTRIBUTE_UX, classify_attribute
+
+    key = next(iter(OUR_ATTRIBUTE_UX))
+    spec, source = classify_attribute(key.cluster_id, key.attribute_id, "x", writable=False, in_system_cluster=False)
+    assert source == "ours"
+
+
+def test_ladder_harvested_ha_and_fallback():
+    from majordom_matter.matter_spec import MATTER_HA_ATTRIBUTE_UX, OUR_ATTRIBUTE_UX, classify_attribute
+
+    assert len(MATTER_HA_ATTRIBUTE_UX) > 50  # the vendored HA harvest loaded
+    our_keys = {(x.cluster_id, x.attribute_id) for x in OUR_ATTRIBUTE_UX}
+    ha_only = next(k for k in MATTER_HA_ATTRIBUTE_UX if k not in our_keys)
+    _, source = classify_attribute(ha_only[0], ha_only[1], "x", writable=True, in_system_cluster=False)
+    assert source == "ha"
+    # a wholly-uncurated attribute falls to the warning fallback
+    _, source = classify_attribute(0x0ABC, 0x0001, "mystery", writable=True, in_system_cluster=False)
+    assert source.startswith("fallback")
+
+
+================================================================================
+# FILE: tests/test_smoke.py
+================================================================================
+"""Smoke tests — no matter-server or binaries required (run everywhere)."""
+
+from majordom_integration_sdk.controller import AbstractController
+
+from majordom_matter import MatterController
+
+
+def test_is_an_integration_controller():
+    assert issubclass(MatterController, AbstractController)
+
+
+def test_integration_identity_is_class_level():
+    assert MatterController.name == "Matter"
+    assert MatterController.slug() == "matter"
+

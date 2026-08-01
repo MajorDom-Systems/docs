@@ -1,0 +1,4197 @@
+{
+  "components": {
+    "schemas": {
+      "Automation": {
+        "properties": {
+          "condition": {
+            "$ref": "#/components/schemas/_Condition"
+          },
+          "delay_seconds": {
+            "default": 0,
+            "title": "Delay Seconds",
+            "type": "number"
+          },
+          "executables": {
+            "items": {
+              "$ref": "#/components/schemas/_Executable"
+            },
+            "title": "Executables",
+            "type": "array"
+          },
+          "executables_otherwise": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/_Executable"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Executables Otherwise"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "needs_reset": {
+            "default": false,
+            "title": "Needs Reset",
+            "type": "boolean"
+          },
+          "type": {
+            "description": "The type of model.",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "condition",
+          "executables",
+          "name"
+        ],
+        "title": "Automation",
+        "type": "object"
+      },
+      "Base": {
+        "properties": {},
+        "title": "Base",
+        "type": "object"
+      },
+      "Body_setup_hub_api_hub_post": {
+        "properties": {
+          "house_info": {
+            "$ref": "#/components/schemas/HouseInfo"
+          },
+          "hub_auth": {
+            "$ref": "#/components/schemas/HubAuthItems"
+          },
+          "hub_info": {
+            "$ref": "#/components/schemas/HubInfo"
+          },
+          "user_info": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "required": [
+          "hub_info",
+          "hub_auth",
+          "user_info",
+          "house_info"
+        ],
+        "title": "Body_setup_hub_api_hub_post",
+        "type": "object"
+      },
+      "BridgeMessage": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RestRequest"
+          },
+          "type": {
+            "const": "bridge",
+            "default": "bridge",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "BridgeMessage",
+        "type": "object"
+      },
+      "BridgeRequestBody": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "$ref": "#/components/schemas/Base"
+          }
+        ]
+      },
+      "BridgeResponseMessage": {
+        "properties": {
+          "body": {
+            "title": "Body"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "type": {
+            "const": "bridge_response",
+            "default": "bridge_response",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "method",
+          "body"
+        ],
+        "title": "BridgeResponseMessage",
+        "type": "object"
+      },
+      "CreateAutomation": {
+        "properties": {
+          "condition": {
+            "$ref": "#/components/schemas/_Condition"
+          },
+          "delay_seconds": {
+            "default": 0,
+            "title": "Delay Seconds",
+            "type": "number"
+          },
+          "executables": {
+            "items": {
+              "$ref": "#/components/schemas/_Executable"
+            },
+            "title": "Executables",
+            "type": "array"
+          },
+          "executables_otherwise": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/_Executable"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Executables Otherwise"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "needs_reset": {
+            "default": false,
+            "title": "Needs Reset",
+            "type": "boolean"
+          },
+          "type": {
+            "description": "The type of model.",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "condition",
+          "executables",
+          "name"
+        ],
+        "title": "CreateAutomation",
+        "type": "object"
+      },
+      "CreateScene": {
+        "properties": {
+          "executables": {
+            "items": {
+              "$ref": "#/components/schemas/_Executable"
+            },
+            "title": "Executables",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "executables"
+        ],
+        "title": "CreateScene",
+        "type": "object"
+      },
+      "CredentialsType": {
+        "enum": [
+          "code",
+          "qr",
+          "secret",
+          "none"
+        ],
+        "title": "CredentialsType",
+        "type": "string"
+      },
+      "CredentialsValue": {
+        "type": "string"
+      },
+      "Device": {
+        "properties": {
+          "available": {
+            "default": false,
+            "title": "Available",
+            "type": "boolean"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "integration": {
+            "title": "Integration",
+            "type": "string"
+          },
+          "integration_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "$ref": "#/components/schemas/Base"
+              }
+            ],
+            "title": "Integration Data"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen"
+          },
+          "main_parameter": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Parameter"
+          },
+          "manufacturer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manufacturer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "room_id": {
+            "format": "uuid",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "transport": {
+            "title": "Transport",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "room_id",
+          "id",
+          "transport",
+          "integration",
+          "manufacturer"
+        ],
+        "title": "Device",
+        "type": "object"
+      },
+      "DeviceCommand": {
+        "properties": {
+          "device_id": {
+            "format": "uuid",
+            "title": "Device Id",
+            "type": "string"
+          },
+          "parameter_id": {
+            "format": "uuid",
+            "title": "Parameter Id",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "device_id",
+          "parameter_id",
+          "value"
+        ],
+        "title": "DeviceCommand",
+        "type": "object"
+      },
+      "DeviceCommandMessage": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceCommand"
+          },
+          "type": {
+            "const": "device_command",
+            "default": "device_command",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DeviceCommandMessage",
+        "type": "object"
+      },
+      "DeviceConnectedMessage": {
+        "properties": {
+          "data": {
+            "format": "uuid",
+            "title": "Data",
+            "type": "string"
+          },
+          "type": {
+            "const": "majordom_did_connect_device",
+            "default": "majordom_did_connect_device",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DeviceConnectedMessage",
+        "type": "object"
+      },
+      "DeviceCreate": {
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "credentials": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProvidedCredentials"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "discovery_id": {
+            "format": "uuid",
+            "title": "Discovery Id",
+            "type": "string"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "main_parameter": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Parameter"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "room_id": {
+            "format": "uuid",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "room_id",
+          "discovery_id"
+        ],
+        "title": "DeviceCreate",
+        "type": "object"
+      },
+      "DeviceDisconnectedMessage": {
+        "properties": {
+          "data": {
+            "format": "uuid",
+            "title": "Data",
+            "type": "string"
+          },
+          "type": {
+            "const": "majordom_did_disconnect_device",
+            "default": "majordom_did_disconnect_device",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DeviceDisconnectedMessage",
+        "type": "object"
+      },
+      "DeviceEventMessage": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceParameterChange"
+          },
+          "type": {
+            "const": "majordom_did_receive_event",
+            "default": "majordom_did_receive_event",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DeviceEventMessage",
+        "type": "object"
+      },
+      "DeviceInfo": {
+        "properties": {
+          "available": {
+            "default": false,
+            "title": "Available",
+            "type": "boolean"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "integration": {
+            "title": "Integration",
+            "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen"
+          },
+          "main_parameter": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Parameter"
+          },
+          "manufacturer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manufacturer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "room_id": {
+            "format": "uuid",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "transport": {
+            "title": "Transport",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "room_id",
+          "id",
+          "transport",
+          "integration",
+          "manufacturer"
+        ],
+        "title": "DeviceInfo",
+        "type": "object"
+      },
+      "DevicePair": {
+        "description": "Re-pair discovery to the existing device.",
+        "properties": {
+          "credentials": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProvidedCredentials"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "device_id": {
+            "format": "uuid",
+            "title": "Device Id",
+            "type": "string"
+          },
+          "discovery_id": {
+            "format": "uuid",
+            "title": "Discovery Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "device_id",
+          "discovery_id"
+        ],
+        "title": "DevicePair",
+        "type": "object"
+      },
+      "DeviceParameterChange": {
+        "description": "A device reported that one of its parameters changed to a new value.\n\nMirrors :class:`DeviceCommand`'s shape (``device_id``, ``parameter_id``, ``value``) but\nflows the other direction \u2014 device \u2192 Hub.",
+        "properties": {
+          "device_id": {
+            "format": "uuid",
+            "title": "Device Id",
+            "type": "string"
+          },
+          "parameter_id": {
+            "format": "uuid",
+            "title": "Parameter Id",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "device_id",
+          "parameter_id",
+          "value"
+        ],
+        "title": "DeviceParameterChange",
+        "type": "object"
+      },
+      "DevicePatch": {
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "main_parameter": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Parameter"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "room_id": {
+            "format": "uuid",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "room_id"
+        ],
+        "title": "DevicePatch",
+        "type": "object"
+      },
+      "DeviceState": {
+        "properties": {
+          "available": {
+            "default": false,
+            "title": "Available",
+            "type": "boolean"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "integration": {
+            "title": "Integration",
+            "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen"
+          },
+          "main_parameter": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Parameter"
+          },
+          "manufacturer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manufacturer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "parameters": {
+            "items": {
+              "$ref": "#/components/schemas/ParameterState"
+            },
+            "title": "Parameters",
+            "type": "array"
+          },
+          "room_id": {
+            "format": "uuid",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "transport": {
+            "title": "Transport",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "room_id",
+          "id",
+          "transport",
+          "integration",
+          "manufacturer",
+          "parameters"
+        ],
+        "title": "DeviceState",
+        "type": "object"
+      },
+      "Discovery": {
+        "properties": {
+          "device_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Category"
+          },
+          "device_icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Icon"
+          },
+          "device_manufacturer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Manufacturer"
+          },
+          "device_name": {
+            "description": "A non-empty string",
+            "examples": [
+              "example text"
+            ],
+            "minLength": 1,
+            "title": "NonEmptyStr",
+            "type": "string"
+          },
+          "expected_credentials_options": {
+            "items": {
+              "$ref": "#/components/schemas/CredentialsType"
+            },
+            "title": "Expected Credentials Options",
+            "type": "array"
+          },
+          "expiration": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expiration"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "integration": {
+            "description": "A non-empty string",
+            "examples": [
+              "example text"
+            ],
+            "minLength": 1,
+            "title": "NonEmptyStr",
+            "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Last Error"
+          },
+          "transport": {
+            "description": "A non-empty string",
+            "examples": [
+              "example text"
+            ],
+            "minLength": 1,
+            "title": "NonEmptyStr",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "integration",
+          "expected_credentials_options",
+          "transport",
+          "device_manufacturer",
+          "device_name",
+          "device_category",
+          "device_icon"
+        ],
+        "title": "Discovery",
+        "type": "object"
+      },
+      "DiscoveryMessage": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Discovery"
+          },
+          "type": {
+            "const": "majordom_did_discover_discovery",
+            "default": "majordom_did_discover_discovery",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DiscoveryMessage",
+        "type": "object"
+      },
+      "DismissDiscoveryMessage": {
+        "properties": {
+          "data": {
+            "format": "uuid",
+            "title": "Data",
+            "type": "string"
+          },
+          "type": {
+            "const": "majordom_did_dismiss_discovery",
+            "default": "majordom_did_dismiss_discovery",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DismissDiscoveryMessage",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Hotspot": {
+        "properties": {
+          "encrypted": {
+            "title": "Encrypted",
+            "type": "boolean"
+          },
+          "frequency": {
+            "title": "Frequency",
+            "type": "string"
+          },
+          "quality": {
+            "title": "Quality",
+            "type": "number"
+          },
+          "ssid": {
+            "title": "Ssid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ssid",
+          "quality",
+          "frequency",
+          "encrypted"
+        ],
+        "title": "Hotspot",
+        "type": "object"
+      },
+      "House": {
+        "properties": {
+          "hubs": {
+            "items": {
+              "$ref": "#/components/schemas/Hub"
+            },
+            "title": "Hubs",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "owner_id": {
+            "format": "uuid",
+            "title": "Owner Id",
+            "type": "string"
+          },
+          "rooms": {
+            "items": {
+              "$ref": "#/components/schemas/RoomInfo"
+            },
+            "title": "Rooms",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "owner_id",
+          "name",
+          "hubs",
+          "rooms"
+        ],
+        "title": "House",
+        "type": "object"
+      },
+      "HouseInfo": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "owner_id": {
+            "format": "uuid",
+            "title": "Owner Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "owner_id",
+          "name"
+        ],
+        "title": "HouseInfo",
+        "type": "object"
+      },
+      "HttpMethod": {
+        "enum": [
+          "get",
+          "post",
+          "put",
+          "patch",
+          "delete"
+        ],
+        "title": "HttpMethod",
+        "type": "string"
+      },
+      "Hub": {
+        "properties": {
+          "access_expiration": {
+            "format": "date-time",
+            "title": "Access Expiration",
+            "type": "string"
+          },
+          "hostname": {
+            "title": "Hostname",
+            "type": "string"
+          },
+          "house_id": {
+            "format": "uuid",
+            "title": "House Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "house_id",
+          "hostname",
+          "access_expiration"
+        ],
+        "title": "Hub",
+        "type": "object"
+      },
+      "HubAuthItems": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "public_key": {
+            "title": "Public Key",
+            "type": "string"
+          },
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "public_key"
+        ],
+        "title": "HubAuthItems",
+        "type": "object"
+      },
+      "HubInfo": {
+        "properties": {
+          "house_id": {
+            "format": "uuid",
+            "title": "House Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "house_id"
+        ],
+        "title": "HubInfo",
+        "type": "object"
+      },
+      "HubPatch": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "HubPatch",
+        "type": "object"
+      },
+      "IntegrationErrorMessage": {
+        "description": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); `still_running=False` means the integration failed and\nis now inactive. Device-scoped problems travel on the device's `last_error` instead.",
+        "properties": {
+          "integration": {
+            "title": "Integration",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "still_running": {
+            "title": "Still Running",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "majordom_did_encounter_error",
+            "default": "majordom_did_encounter_error",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "integration",
+          "message",
+          "still_running"
+        ],
+        "title": "IntegrationErrorMessage",
+        "type": "object"
+      },
+      "Notification": {
+        "description": "A general user-facing message an integration surfaces to the user as a floating tile in the\napp. Distinct from ``controller_did_encounter_error`` (which is specifically for integration\nfailures/health) \u2014 use this for anything informational or advisory the user should see.\n\n``ttl`` is how many seconds the tile stays before auto-dismissing; ``None`` keeps it until the\nuser dismisses it.",
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/NotificationPriority",
+            "default": "normal"
+          },
+          "ttl": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Ttl"
+          },
+          "type": {
+            "$ref": "#/components/schemas/NotificationType",
+            "default": "info"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "Notification",
+        "type": "object"
+      },
+      "NotificationMessage": {
+        "description": "A general user-facing notification from an integration \u2014 rendered as a floating tile. The\nnested `notification` carries the message, callout type (info/warning/error), delivery\npriority, and ttl. Distinct from IntegrationErrorMessage, which is specifically for failures.",
+        "properties": {
+          "integration": {
+            "title": "Integration",
+            "type": "string"
+          },
+          "notification": {
+            "$ref": "#/components/schemas/Notification"
+          },
+          "type": {
+            "const": "majordom_did_emit_notification",
+            "default": "majordom_did_emit_notification",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "integration",
+          "notification"
+        ],
+        "title": "NotificationMessage",
+        "type": "object"
+      },
+      "NotificationPriority": {
+        "description": "How insistently the notification is delivered (maps to the OS interruption levels).",
+        "enum": [
+          "silent",
+          "normal",
+          "time_sensitive",
+          "urgent"
+        ],
+        "title": "NotificationPriority",
+        "type": "string"
+      },
+      "NotificationType": {
+        "description": "The callout style the app renders the notification with.",
+        "enum": [
+          "info",
+          "warning",
+          "error"
+        ],
+        "title": "NotificationType",
+        "type": "string"
+      },
+      "ParameterDataType": {
+        "enum": [
+          "none",
+          "bool",
+          "integer",
+          "decimal",
+          "enum",
+          "string",
+          "struct",
+          "data"
+        ],
+        "title": "ParameterDataType",
+        "type": "string"
+      },
+      "ParameterRole": {
+        "enum": [
+          "sensor",
+          "control",
+          "event"
+        ],
+        "title": "ParameterRole",
+        "type": "string"
+      },
+      "ParameterState": {
+        "description": "A parameter plus its current ``value`` (same type ``V`` as the parameter's labels/default).\n\nValues are pythonic and serialize natively (Pydantic handles JSON \u2014 a ``set`` default_value\nbecomes an array, etc.). The Hub persists them as JSON; integrations set ``value`` directly.",
+        "properties": {
+          "data_type": {
+            "$ref": "#/components/schemas/ParameterDataType"
+          },
+          "default_value": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array",
+                "uniqueItems": true
+              },
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Value"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fields"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "integration_data": {
+            "title": "Integration Data"
+          },
+          "max_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Value"
+          },
+          "min_step": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Step"
+          },
+          "min_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Value"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "role": {
+            "$ref": "#/components/schemas/ParameterRole"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/ParameterUnit",
+            "default": "plain"
+          },
+          "valid_values": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Values"
+          },
+          "value": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/ParameterVisibility"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "data_type",
+          "role",
+          "visibility",
+          "integration_data"
+        ],
+        "title": "ParameterState",
+        "type": "object"
+      },
+      "ParameterUnit": {
+        "enum": [
+          "plain",
+          "percentage",
+          "second",
+          "hertz",
+          "kilogram",
+          "arcdegree",
+          "meters",
+          "mps",
+          "mps2",
+          "m3h",
+          "rpm",
+          "newton",
+          "joule",
+          "kwh",
+          "watt",
+          "celsius",
+          "kelvin",
+          "mired",
+          "volt",
+          "ampere",
+          "lux",
+          "pascal",
+          "ppm",
+          "ugm3",
+          "bytes",
+          "bps",
+          "json",
+          "document"
+        ],
+        "title": "ParameterUnit",
+        "type": "string"
+      },
+      "ParameterVisibility": {
+        "enum": [
+          "user",
+          "setting",
+          "system"
+        ],
+        "title": "ParameterVisibility",
+        "type": "string"
+      },
+      "ParameterVisibilityPatch": {
+        "properties": {
+          "visibility": {
+            "$ref": "#/components/schemas/ParameterVisibility"
+          }
+        },
+        "required": [
+          "visibility"
+        ],
+        "title": "ParameterVisibilityPatch",
+        "type": "object"
+      },
+      "ProvidedCredentials": {
+        "description": "What a pairing request actually supplies \u2014 paired with its type, so pairing can\nvalidate it against Discovery.expected_credentials_options instead of trusting\nwhatever the integration guessed at discovery time.",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/CredentialsType"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CredentialsValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "ProvidedCredentials",
+        "type": "object"
+      },
+      "RestRequest": {
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/BridgeRequestBody"
+          },
+          "method": {
+            "$ref": "#/components/schemas/HttpMethod"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "method",
+          "body"
+        ],
+        "title": "RestRequest",
+        "type": "object"
+      },
+      "Room": {
+        "properties": {
+          "devices": {
+            "items": {
+              "$ref": "#/components/schemas/Device"
+            },
+            "title": "Devices",
+            "type": "array"
+          },
+          "house_id": {
+            "format": "uuid",
+            "title": "House Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "house_id",
+          "name",
+          "devices"
+        ],
+        "title": "Room",
+        "type": "object"
+      },
+      "RoomCreate": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "RoomCreate",
+        "type": "object"
+      },
+      "RoomInfo": {
+        "properties": {
+          "house_id": {
+            "format": "uuid",
+            "title": "House Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "house_id",
+          "name"
+        ],
+        "title": "RoomInfo",
+        "type": "object"
+      },
+      "RoomPatch": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "RoomPatch",
+        "type": "object"
+      },
+      "Scene": {
+        "properties": {
+          "executables": {
+            "items": {
+              "$ref": "#/components/schemas/_Executable"
+            },
+            "title": "Executables",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "executables",
+          "id"
+        ],
+        "title": "Scene",
+        "type": "object"
+      },
+      "ServiceStatusResponse": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "running": {
+            "title": "Running",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "disabled",
+              "pending",
+              "starting",
+              "running",
+              "stopping",
+              "inactive",
+              "error"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "enabled",
+          "running",
+          "status",
+          "last_error"
+        ],
+        "title": "ServiceStatusResponse",
+        "type": "object"
+      },
+      "TokensPair": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token"
+        ],
+        "title": "TokensPair",
+        "type": "object"
+      },
+      "User": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "User",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WifiConnection": {
+        "properties": {
+          "password": {
+            "title": "Password",
+            "type": "string"
+          },
+          "ssid": {
+            "title": "Ssid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ssid",
+          "password"
+        ],
+        "title": "WifiConnection",
+        "type": "object"
+      },
+      "_Condition": {
+        "properties": {
+          "type": {
+            "description": "The type of model.",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "_Condition",
+        "type": "object"
+      },
+      "_Executable": {
+        "properties": {
+          "delay_seconds": {
+            "default": 0,
+            "title": "Delay Seconds",
+            "type": "number"
+          },
+          "type": {
+            "description": "The type of model.",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "_Executable",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "\n[**GitHub**](https://github.com/ParkerIndustries/MajorDom-Hub)\n\n[**Changelog**](https://github.com/ParkerIndustries/MajorDom-Hub/releases/tag/v0.0.40)\n\n---\n\n\n**WS endpoint:** `/v1/ws/user` \u2014 Auth: OAuth2PasswordBearer\n",
+    "title": "MajorDom Hub - API",
+    "version": "0.0.40"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/automation": {
+      "get": {
+        "operationId": "get_all_automations_api_automation_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Automation"
+                  },
+                  "title": "Response Get All Automations Api Automation Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get All Automations",
+        "tags": [
+          "automation"
+        ]
+      },
+      "post": {
+        "operationId": "create_automation_api_automation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAutomation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Automation",
+        "tags": [
+          "automation"
+        ]
+      }
+    },
+    "/api/automation/{id}": {
+      "delete": {
+        "operationId": "delete_automation_api_automation__id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Automation",
+        "tags": [
+          "automation"
+        ]
+      },
+      "get": {
+        "operationId": "get_automation_api_automation__id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Automation",
+        "tags": [
+          "automation"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_automation_api_automation__id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Automation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Automation",
+        "tags": [
+          "automation"
+        ]
+      }
+    },
+    "/api/device": {
+      "post": {
+        "operationId": "create_device_api_device_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Device",
+        "tags": [
+          "device"
+        ]
+      }
+    },
+    "/api/device/discoveries": {
+      "get": {
+        "operationId": "get_discoveries_api_device_discoveries_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_ignored",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Ignored",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/Discovery"
+                  },
+                  "propertyNames": {
+                    "format": "uuid"
+                  },
+                  "title": "Response Get Discoveries Api Device Discoveries Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Discoveries",
+        "tags": [
+          "device"
+        ]
+      }
+    },
+    "/api/device/discoveries/{discovery_id}/ignore": {
+      "delete": {
+        "operationId": "unignore_discovery_api_device_discoveries__discovery_id__ignore_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "discovery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Discovery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unignore Discovery",
+        "tags": [
+          "device"
+        ]
+      },
+      "post": {
+        "operationId": "ignore_discovery_api_device_discoveries__discovery_id__ignore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "discovery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Discovery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ignore Discovery",
+        "tags": [
+          "device"
+        ]
+      }
+    },
+    "/api/device/start_pairing_window": {
+      "post": {
+        "description": "Temporarily enables protocol-level discovery mechanisms that are not continuously active. Used to trigger short-lived scan/inquiry modes for transports that require explicit activation\n(e.g. Zigbee permit-join style discovery, BLE scan bursts, proprietary radios).",
+        "operationId": "start_pairing_window_api_device_start_pairing_window_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "duration_sec",
+            "required": true,
+            "schema": {
+              "title": "Duration Sec",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Pairing Window",
+        "tags": [
+          "device"
+        ]
+      }
+    },
+    "/api/device/{device_id}/parameter/{parameter_id}": {
+      "patch": {
+        "operationId": "patch_parameter_visibility_api_device__device_id__parameter__parameter_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Device Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "parameter_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Parameter Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParameterVisibilityPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Parameter Visibility",
+        "tags": [
+          "device"
+        ]
+      }
+    },
+    "/api/device/{id}": {
+      "delete": {
+        "description": "Soft - keep device in database to skip setup after re-pairing.",
+        "operationId": "delete_device_api_device__id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "soft",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Soft",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Device",
+        "tags": [
+          "device"
+        ]
+      },
+      "get": {
+        "operationId": "get_device_api_device__id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Device",
+        "tags": [
+          "device"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_device_api_device__id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevicePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Device",
+        "tags": [
+          "device"
+        ]
+      },
+      "post": {
+        "operationId": "pair_existing_device_api_device__id__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevicePair"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Device"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pair Existing Device",
+        "tags": [
+          "device"
+        ]
+      }
+    },
+    "/api/house": {
+      "get": {
+        "operationId": "get_house_api_house_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/House"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get House",
+        "tags": [
+          "house"
+        ]
+      }
+    },
+    "/api/hub": {
+      "get": {
+        "operationId": "get_hub_api_hub_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Hub"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Hub",
+        "tags": [
+          "hub"
+        ]
+      },
+      "head": {
+        "operationId": "ping_api_hub_head",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ping",
+        "tags": [
+          "hub"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_hub_api_hub_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HubPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Hub",
+        "tags": [
+          "hub"
+        ]
+      },
+      "post": {
+        "operationId": "setup_hub_api_hub_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_setup_hub_api_hub_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Setup Hub",
+        "tags": [
+          "hub"
+        ]
+      }
+    },
+    "/api/hub/add_user": {
+      "post": {
+        "operationId": "add_user_api_hub_add_user_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add User",
+        "tags": [
+          "hub"
+        ]
+      }
+    },
+    "/api/hub/connect": {
+      "post": {
+        "operationId": "connect_to_wifi_api_hub_connect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WifiConnection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Connect To Wifi",
+        "tags": [
+          "hub"
+        ]
+      }
+    },
+    "/api/hub/disable_hotspot": {
+      "post": {
+        "operationId": "disable_hotspot_api_hub_disable_hotspot_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Disable Hotspot",
+        "tags": [
+          "hub"
+        ]
+      }
+    },
+    "/api/hub/hotspots": {
+      "get": {
+        "operationId": "get_hub_hotspots_api_hub_hotspots_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Hotspot"
+                  },
+                  "title": "Response Get Hub Hotspots Api Hub Hotspots Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Hub Hotspots",
+        "tags": [
+          "hub"
+        ]
+      }
+    },
+    "/api/hub/is_connected": {
+      "get": {
+        "operationId": "is_connected_api_hub_is_connected_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Is Connected Api Hub Is Connected Get",
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Is Connected",
+        "tags": [
+          "hub"
+        ]
+      }
+    },
+    "/api/hub/logs": {
+      "get": {
+        "operationId": "get_logs_api_hub_logs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Logs",
+        "tags": [
+          "hub"
+        ]
+      }
+    },
+    "/api/hub/reset": {
+      "post": {
+        "operationId": "reset_api_hub_reset_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Reset",
+        "tags": [
+          "hub"
+        ]
+      }
+    },
+    "/api/hub/set_tokens": {
+      "post": {
+        "operationId": "set_tokens_api_hub_set_tokens_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokensPair"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Tokens",
+        "tags": [
+          "hub"
+        ]
+      }
+    },
+    "/api/room": {
+      "post": {
+        "operationId": "create_room_api_room_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Room",
+        "tags": [
+          "room"
+        ]
+      }
+    },
+    "/api/room/{id}": {
+      "delete": {
+        "operationId": "delete_room_api_room__id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Room",
+        "tags": [
+          "room"
+        ]
+      },
+      "get": {
+        "operationId": "get_room_api_room__id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Room",
+        "tags": [
+          "room"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_room_api_room__id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Room",
+        "tags": [
+          "room"
+        ]
+      }
+    },
+    "/api/scene": {
+      "get": {
+        "operationId": "get_all_scenes_api_scene_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Scene"
+                  },
+                  "title": "Response Get All Scenes Api Scene Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get All Scenes",
+        "tags": [
+          "scene"
+        ]
+      },
+      "post": {
+        "operationId": "create_scene_api_scene_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScene"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scene"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Scene",
+        "tags": [
+          "scene"
+        ]
+      }
+    },
+    "/api/scene/{id}": {
+      "delete": {
+        "operationId": "delete_scene_api_scene__id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Scene",
+        "tags": [
+          "scene"
+        ]
+      },
+      "get": {
+        "operationId": "get_scene_api_scene__id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scene"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Scene",
+        "tags": [
+          "scene"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_scene_api_scene__id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Scene"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Scene",
+        "tags": [
+          "scene"
+        ]
+      }
+    },
+    "/api/scene/{id}/run": {
+      "post": {
+        "operationId": "run_scene_api_scene__id__run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Scene",
+        "tags": [
+          "scene"
+        ]
+      }
+    },
+    "/api/services": {
+      "get": {
+        "operationId": "get_services_api_services_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceStatusResponse"
+                  },
+                  "title": "Response Get Services Api Services Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Services",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/api/services/{name}/disable": {
+      "post": {
+        "operationId": "disable_service_api_services__name__disable_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Disable Service",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/api/services/{name}/enable": {
+      "post": {
+        "operationId": "enable_service_api_services__name__enable_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enable Service",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/api/services/{name}/restart": {
+      "post": {
+        "operationId": "restart_service_api_services__name__restart_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restart Service",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/api/services/{name}/start": {
+      "post": {
+        "operationId": "start_service_api_services__name__start_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Service",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/api/services/{name}/stop": {
+      "post": {
+        "operationId": "stop_service_api_services__name__stop_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stop Service",
+        "tags": [
+          "services"
+        ]
+      }
+    },
+    "/ws/user": {
+      "head": {
+        "operationId": "websocket_endpoint_ws_user_head",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": true,
+            "schema": {
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/DeviceCommandMessage"
+                  },
+                  {
+                    "$ref": "#/components/schemas/BridgeMessage"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "101": {
+            "description": "Switching Protocols"
+          },
+          "2001": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoveryMessage"
+                }
+              }
+            },
+            "description": "DiscoveryMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_1",
+            "x-ws-endpoint": true
+          },
+          "2002": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DismissDiscoveryMessage"
+                }
+              }
+            },
+            "description": "DismissDiscoveryMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_2",
+            "x-ws-endpoint": true
+          },
+          "2003": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceConnectedMessage"
+                }
+              }
+            },
+            "description": "DeviceConnectedMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_3",
+            "x-ws-endpoint": true
+          },
+          "2004": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceDisconnectedMessage"
+                }
+              }
+            },
+            "description": "DeviceDisconnectedMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_4",
+            "x-ws-endpoint": true
+          },
+          "2005": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceEventMessage"
+                }
+              }
+            },
+            "description": "DeviceEventMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_5",
+            "x-ws-endpoint": true
+          },
+          "2006": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BridgeResponseMessage"
+                }
+              }
+            },
+            "description": "BridgeResponseMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_6",
+            "x-ws-endpoint": true
+          },
+          "2007": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationErrorMessage"
+                }
+              }
+            },
+            "description": "IntegrationErrorMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_7",
+            "x-ws-endpoint": true
+          },
+          "2008": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMessage"
+                }
+              }
+            },
+            "description": "NotificationMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_8",
+            "x-ws-endpoint": true
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Websocket Endpoint",
+        "tags": [
+          "Web Socket"
+        ]
+      }
+    },
+    "/ws/user::BridgeMessage": {
+      "post": {
+        "description": "",
+        "operationId": "post_/ws/user_BridgeMessage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "data": {
+                    "$ref": "#/components/schemas/RestRequest"
+                  },
+                  "type": {
+                    "const": "bridge",
+                    "default": "bridge",
+                    "title": "Type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "data"
+                ],
+                "title": "BridgeMessage",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {},
+        "summary": "",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    },
+    "/ws/user::BridgeResponseMessage": {
+      "get": {
+        "description": "",
+        "operationId": "get_/ws/user_BridgeResponseMessage",
+        "requestBody": {},
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "body": {
+                      "title": "Body"
+                    },
+                    "method": {
+                      "title": "Method",
+                      "type": "string"
+                    },
+                    "path": {
+                      "title": "Path",
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "bridge_response",
+                      "default": "bridge_response",
+                      "title": "Type",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "method",
+                    "body"
+                  ],
+                  "title": "BridgeResponseMessage",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    },
+    "/ws/user::DeviceCommandMessage": {
+      "post": {
+        "description": "",
+        "operationId": "post_/ws/user_DeviceCommandMessage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "data": {
+                    "$ref": "#/components/schemas/DeviceCommand"
+                  },
+                  "type": {
+                    "const": "device_command",
+                    "default": "device_command",
+                    "title": "Type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "data"
+                ],
+                "title": "DeviceCommandMessage",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {},
+        "summary": "",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    },
+    "/ws/user::DeviceConnectedMessage": {
+      "get": {
+        "description": "",
+        "operationId": "get_/ws/user_DeviceConnectedMessage",
+        "requestBody": {},
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "format": "uuid",
+                      "title": "Data",
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "majordom_did_connect_device",
+                      "default": "majordom_did_connect_device",
+                      "title": "Type",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "title": "DeviceConnectedMessage",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    },
+    "/ws/user::DeviceDisconnectedMessage": {
+      "get": {
+        "description": "",
+        "operationId": "get_/ws/user_DeviceDisconnectedMessage",
+        "requestBody": {},
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "format": "uuid",
+                      "title": "Data",
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "majordom_did_disconnect_device",
+                      "default": "majordom_did_disconnect_device",
+                      "title": "Type",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "title": "DeviceDisconnectedMessage",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    },
+    "/ws/user::DeviceEventMessage": {
+      "get": {
+        "description": "",
+        "operationId": "get_/ws/user_DeviceEventMessage",
+        "requestBody": {},
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DeviceParameterChange"
+                    },
+                    "type": {
+                      "const": "majordom_did_receive_event",
+                      "default": "majordom_did_receive_event",
+                      "title": "Type",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "title": "DeviceEventMessage",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    },
+    "/ws/user::DiscoveryMessage": {
+      "get": {
+        "description": "",
+        "operationId": "get_/ws/user_DiscoveryMessage",
+        "requestBody": {},
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Discovery"
+                    },
+                    "type": {
+                      "const": "majordom_did_discover_discovery",
+                      "default": "majordom_did_discover_discovery",
+                      "title": "Type",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "title": "DiscoveryMessage",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    },
+    "/ws/user::DismissDiscoveryMessage": {
+      "get": {
+        "description": "",
+        "operationId": "get_/ws/user_DismissDiscoveryMessage",
+        "requestBody": {},
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "format": "uuid",
+                      "title": "Data",
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "majordom_did_dismiss_discovery",
+                      "default": "majordom_did_dismiss_discovery",
+                      "title": "Type",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "title": "DismissDiscoveryMessage",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    },
+    "/ws/user::IntegrationErrorMessage": {
+      "get": {
+        "description": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); `still_running=False` means the integration failed and\nis now inactive. Device-scoped problems travel on the device's `last_error` instead.",
+        "operationId": "get_/ws/user_IntegrationErrorMessage",
+        "requestBody": {},
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); `still_running=False` means the integration failed and\nis now inactive. Device-scoped problems travel on the device's `last_error` instead.",
+                  "properties": {
+                    "integration": {
+                      "title": "Integration",
+                      "type": "string"
+                    },
+                    "message": {
+                      "title": "Message",
+                      "type": "string"
+                    },
+                    "still_running": {
+                      "title": "Still Running",
+                      "type": "boolean"
+                    },
+                    "type": {
+                      "const": "majordom_did_encounter_error",
+                      "default": "majordom_did_encounter_error",
+                      "title": "Type",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "integration",
+                    "message",
+                    "still_running"
+                  ],
+                  "title": "IntegrationErrorMessage",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); `still_running=False` means the integration failed and\nis now inactive. Device-scoped problems travel on the device's `last_error` instead.",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    },
+    "/ws/user::NotificationMessage": {
+      "get": {
+        "description": "A general user-facing notification from an integration \u2014 rendered as a floating tile. The\nnested `notification` carries the message, callout type (info/warning/error), delivery\npriority, and ttl. Distinct from IntegrationErrorMessage, which is specifically for failures.",
+        "operationId": "get_/ws/user_NotificationMessage",
+        "requestBody": {},
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A general user-facing notification from an integration \u2014 rendered as a floating tile. The\nnested `notification` carries the message, callout type (info/warning/error), delivery\npriority, and ttl. Distinct from IntegrationErrorMessage, which is specifically for failures.",
+                  "properties": {
+                    "integration": {
+                      "title": "Integration",
+                      "type": "string"
+                    },
+                    "notification": {
+                      "$ref": "#/components/schemas/Notification"
+                    },
+                    "type": {
+                      "const": "majordom_did_emit_notification",
+                      "default": "majordom_did_emit_notification",
+                      "title": "Type",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "integration",
+                    "notification"
+                  ],
+                  "title": "NotificationMessage",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "A general user-facing notification from an integration \u2014 rendered as a floating tile. The\nnested `notification` carries the message, callout type (info/warning/error), delivery\npriority, and ttl. Distinct from IntegrationErrorMessage, which is specifically for failures.",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    }
+  }
+}
