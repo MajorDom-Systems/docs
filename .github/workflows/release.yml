@@ -31,17 +31,25 @@ jobs:
 
       - name: Version bump
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Bump the patch version only if the current version already has a tag,
           # so a plain docs edit that forgot to bump still gets a fresh release.
           if [[ "v$(poetry version --short)" == "$(git describe --tags --always --abbrev=0)" ]]; then
             poetry version patch
-            git add pyproject.toml
-            git config --global user.email "34688010+MarkParker5@users.noreply.github.com"
-            git config --global user.name "MarkParker5"
-            git commit -m "Version bump v$(poetry version --short)"
-            git push
-            echo "Version bumped to $(poetry version --short)"
+            NEW=$(poetry version --short)
+            # Commit the bump via the Contents API rather than `git push`: master requires verified
+            # signatures, and API commits are signed by GitHub's web-flow key (a plain runner push is
+            # unsigned and gets rejected by branch protection). Then fast-forward the runner to it so
+            # the tag/changelog steps below see the bump commit.
+            gh api -X PUT "repos/${{ github.repository }}/contents/pyproject.toml" \
+              -f message="Version bump v$NEW" \
+              -f content="$(base64 -w0 pyproject.toml)" \
+              -f sha="$(git rev-parse "HEAD:pyproject.toml")" \
+              -f branch="${{ github.ref_name }}"
+            git pull --ff-only origin "${{ github.ref_name }}"
+            echo "Version bumped to $NEW"
           fi
           echo "Using version $(poetry version --short)"
           echo "VERSION=v$(poetry version --short)" >> $GITHUB_OUTPUT
