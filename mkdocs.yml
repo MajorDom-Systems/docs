@@ -26,7 +26,8 @@ nav:
       - Standalone Mode: "device-integration/standalone.md"
       - Example Integration: "device-integration/example-integration.md"
       - Quality Checklist: "device-integration/quality.md"
-  - Hub API: "api/hub-static.md"
+  - Hub:
+      - API Reference: "hub/api.md"
   - legacy:
       - Architecture Overview: "architecture.md"
       - "Hub Development: How to Start": "hub-development/how-to-start.md"
