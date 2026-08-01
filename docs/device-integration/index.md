@@ -1,6 +1,6 @@
 # MajorDom Device Integration Guide
 
-!!! warning
+!!! warning "Under active development"
     MajorDom is still under development.  
     The integration structure is now stable, but implementation details are still subject to change.
 

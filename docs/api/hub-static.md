@@ -1,5 +1,9 @@
 # Hub API
 
+!!! warning "Under active development"
+    MajorDom is still under development.  
+    The API surface is stabilizing, but endpoints and message schemas are still subject to change.
+
 !!! info "Reference only — interactive testing is disabled"
     These schemas are valid and are kept in sync with the Hub automatically (regenerated on
     every `develop` build), but they are published here for **learning and reference only** —
