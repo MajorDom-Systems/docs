@@ -26,14 +26,15 @@ nav:
       - Standalone Mode: "device-integration/standalone.md"
       - Example Integration: "device-integration/example-integration.md"
       - Quality Checklist: "device-integration/quality.md"
-  - API:
-      - Hub API: "api/hub.md"
-      - Bridge API: "api/bridge.md"
-      - Cloud API: "api/cloud.md"
+  - Hub API: "api/hub-static.md"
   - legacy:
       - Architecture Overview: "architecture.md"
       - "Hub Development: How to Start": "hub-development/how-to-start.md"
       - Custom Merlin Device: "custom-device-legacy.md"
+      - API:
+          - Hub API: "api/hub.md"
+          - Bridge API: "api/bridge.md"
+          - Cloud API: "api/cloud.md"
 
 theme:
   name: material
@@ -129,7 +130,9 @@ plugins:
   - social
   # - optimize
   # - tags
-  - swagger-ui-tag
+  - swagger-ui-tag:
+      # Collapse every embedded Swagger UI by default — the specs have many tags/operations.
+      docExpansion: none
   - git-revision-date-localized:
       enable_creation_date: true
       # enable_git_follow: false
