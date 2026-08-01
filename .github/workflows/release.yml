@@ -48,7 +48,11 @@ jobs:
               -f content="$(base64 -w0 pyproject.toml)" \
               -f sha="$(git rev-parse "HEAD:pyproject.toml")" \
               -f branch="${{ github.ref_name }}"
-            git pull --ff-only origin "${{ github.ref_name }}"
+            # The API already committed the bump; discard the local `poetry version patch` edit
+            # (a plain `git pull` would refuse — "local changes would be overwritten") and sync the
+            # runner to the signed commit so the tag/changelog steps below build on it.
+            git fetch origin "${{ github.ref_name }}"
+            git reset --hard "origin/${{ github.ref_name }}"
             echo "Version bumped to $NEW"
           fi
           echo "Using version $(poetry version --short)"
