@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "majordom-docs"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 authors = ["Mark Parker <mark@parker-programs.com>"]
 license = "Attribution-NonCommercial-NoDerivatives 4.0 International"
