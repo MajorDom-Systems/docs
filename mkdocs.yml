@@ -28,6 +28,7 @@ nav:
       - Quality Checklist: "device-integration/quality.md"
   - Hub:
       - API Reference: "hub/api.md"
+      - Module Map: "hub/diagram.md"
   - legacy:
       - Architecture Overview: "architecture.md"
       - "Hub Development: How to Start": "hub-development/how-to-start.md"

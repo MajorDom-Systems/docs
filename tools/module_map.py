@@ -446,12 +446,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){reset();}else if(e.
 setEmpty();
 if(location.hash.slice(1)&&D.nodes[location.hash.slice(1)])focus(location.hash.slice(1));
 '''.replace('__DATA__',DATA)
-PAGE=f'''<meta name="robots" content="noindex,nofollow">\n<title>MajorDom Hub — Interactive Module Map</title>
+PAGE=f'''<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">\n<title>MajorDom Hub — Interactive Module Map</title>
 <style>{CSS}</style>
 <div class="wrap">
- <p class="kicker"><span class="dot"></span>Interactive module map · click a node to focus</p>
- <h1>MajorDom Hub <span class="thin">— the whole system, wired</span></h1>
- <p class="lede">Concentric by abstraction (<code>Coordinator</code> centre, I/O at the rim), grouped by domain. A dot marks a <b>domain boundary</b> — the entity that talks to core. <b>Click any node</b> (or any underlined name in the panel) to focus it. VIPER-framed: <span style="color:var(--in)"><b>Inputs</b></span> = its own methods callers invoke, grouped by where they were declared (a protocol/base it overrides, or <i>own</i>); <span style="color:var(--out)"><b>Outputs</b></span> = the delegate ports it calls to emit results (<code>self.output: ControllerOutput</code>); <b>Injected dependencies</b> = the collaborators it is given (repos, sessions, hardware interfaces).</p>
  <div class="legend">
   <div class="lgroup"><span class="h">Relation</span><div class="lrow">
    <span class="li"><span class="ln" style="--x:#b6bdc8"></span>owns</span><span class="li"><span class="ln" style="--x:#8b95a4"></span>uses</span>
