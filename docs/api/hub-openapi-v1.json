@@ -90,6 +90,24 @@
         "title": "Body_setup_hub_api_hub_post",
         "type": "object"
       },
+      "BridgeMessage": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RestRequest"
+          },
+          "type": {
+            "const": "bridge",
+            "default": "bridge",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "BridgeMessage",
+        "type": "object"
+      },
       "BridgeRequestBody": {
         "anyOf": [
           {
@@ -100,6 +118,34 @@
             "$ref": "#/components/schemas/Base"
           }
         ]
+      },
+      "BridgeResponseMessage": {
+        "properties": {
+          "body": {
+            "title": "Body"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "type": {
+            "const": "bridge_response",
+            "default": "bridge_response",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "method",
+          "body"
+        ],
+        "title": "BridgeResponseMessage",
+        "type": "object"
       },
       "CreateAutomation": {
         "properties": {
@@ -351,6 +397,44 @@
         "title": "DeviceCommand",
         "type": "object"
       },
+      "DeviceCommandMessage": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceCommand"
+          },
+          "type": {
+            "const": "device_command",
+            "default": "device_command",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DeviceCommandMessage",
+        "type": "object"
+      },
+      "DeviceConnectedMessage": {
+        "properties": {
+          "data": {
+            "format": "uuid",
+            "title": "Data",
+            "type": "string"
+          },
+          "type": {
+            "const": "majordom_did_connect_device",
+            "default": "majordom_did_connect_device",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DeviceConnectedMessage",
+        "type": "object"
+      },
       "DeviceCreate": {
         "properties": {
           "category": {
@@ -423,6 +507,44 @@
           "discovery_id"
         ],
         "title": "DeviceCreate",
+        "type": "object"
+      },
+      "DeviceDisconnectedMessage": {
+        "properties": {
+          "data": {
+            "format": "uuid",
+            "title": "Data",
+            "type": "string"
+          },
+          "type": {
+            "const": "majordom_did_disconnect_device",
+            "default": "majordom_did_disconnect_device",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DeviceDisconnectedMessage",
+        "type": "object"
+      },
+      "DeviceEventMessage": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DeviceParameterChange"
+          },
+          "type": {
+            "const": "majordom_did_receive_event",
+            "default": "majordom_did_receive_event",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DeviceEventMessage",
         "type": "object"
       },
       "DeviceInfo": {
@@ -910,6 +1032,44 @@
         "title": "Discovery",
         "type": "object"
       },
+      "DiscoveryMessage": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Discovery"
+          },
+          "type": {
+            "const": "majordom_did_discover_discovery",
+            "default": "majordom_did_discover_discovery",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DiscoveryMessage",
+        "type": "object"
+      },
+      "DismissDiscoveryMessage": {
+        "properties": {
+          "data": {
+            "format": "uuid",
+            "title": "Data",
+            "type": "string"
+          },
+          "type": {
+            "const": "majordom_did_dismiss_discovery",
+            "default": "majordom_did_dismiss_discovery",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "DismissDiscoveryMessage",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1135,6 +1295,36 @@
         "title": "HubPatch",
         "type": "object"
       },
+      "IntegrationErrorMessage": {
+        "description": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); `still_running=False` means the integration failed and\nis now inactive. Device-scoped problems travel on the device's `last_error` instead.",
+        "properties": {
+          "integration": {
+            "title": "Integration",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "still_running": {
+            "title": "Still Running",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "majordom_did_encounter_error",
+            "default": "majordom_did_encounter_error",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "integration",
+          "message",
+          "still_running"
+        ],
+        "title": "IntegrationErrorMessage",
+        "type": "object"
+      },
       "Notification": {
         "description": "A general user-facing message an integration surfaces to the user as a floating tile in the\napp. Distinct from ``controller_did_encounter_error`` (which is specifically for integration\nfailures/health) \u2014 use this for anything informational or advisory the user should see.\n\n``ttl`` is how many seconds the tile stays before auto-dismissing; ``None`` keeps it until the\nuser dismisses it.",
         "properties": {
@@ -1167,6 +1357,30 @@
           "message"
         ],
         "title": "Notification",
+        "type": "object"
+      },
+      "NotificationMessage": {
+        "description": "A general user-facing notification from an integration \u2014 rendered as a floating tile. The\nnested `notification` carries the message, callout type (info/warning/error), delivery\npriority, and ttl. Distinct from IntegrationErrorMessage, which is specifically for failures.",
+        "properties": {
+          "integration": {
+            "title": "Integration",
+            "type": "string"
+          },
+          "notification": {
+            "$ref": "#/components/schemas/Notification"
+          },
+          "type": {
+            "const": "majordom_did_emit_notification",
+            "default": "majordom_did_emit_notification",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "integration",
+          "notification"
+        ],
+        "title": "NotificationMessage",
         "type": "object"
       },
       "NotificationPriority": {
@@ -3417,6 +3631,155 @@
         "summary": "Stop Service",
         "tags": [
           "services"
+        ]
+      }
+    },
+    "/ws/user": {
+      "head": {
+        "operationId": "websocket_endpoint_ws_user_head",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": true,
+            "schema": {
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/DeviceCommandMessage"
+                  },
+                  {
+                    "$ref": "#/components/schemas/BridgeMessage"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "101": {
+            "description": "Switching Protocols"
+          },
+          "2001": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoveryMessage"
+                }
+              }
+            },
+            "description": "DiscoveryMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_1",
+            "x-ws-endpoint": true
+          },
+          "2002": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DismissDiscoveryMessage"
+                }
+              }
+            },
+            "description": "DismissDiscoveryMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_2",
+            "x-ws-endpoint": true
+          },
+          "2003": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceConnectedMessage"
+                }
+              }
+            },
+            "description": "DeviceConnectedMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_3",
+            "x-ws-endpoint": true
+          },
+          "2004": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceDisconnectedMessage"
+                }
+              }
+            },
+            "description": "DeviceDisconnectedMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_4",
+            "x-ws-endpoint": true
+          },
+          "2005": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceEventMessage"
+                }
+              }
+            },
+            "description": "DeviceEventMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_5",
+            "x-ws-endpoint": true
+          },
+          "2006": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BridgeResponseMessage"
+                }
+              }
+            },
+            "description": "BridgeResponseMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_6",
+            "x-ws-endpoint": true
+          },
+          "2007": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationErrorMessage"
+                }
+              }
+            },
+            "description": "IntegrationErrorMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_7",
+            "x-ws-endpoint": true
+          },
+          "2008": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMessage"
+                }
+              }
+            },
+            "description": "NotificationMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_8",
+            "x-ws-endpoint": true
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Websocket Endpoint",
+        "tags": [
+          "Web Socket"
         ]
       }
     },
