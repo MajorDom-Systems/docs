@@ -166,7 +166,7 @@ async def start(self):
     self._cancel_discovery = self.dependencies.zeroconf_discovery_service.register(self, {"_acme._tcp.local."})
 
     async with self.dependencies.make_device_repository() as repo:
-        for device in await repo.get_all(self.name, AcmeDevice):
+        for device in await repo.get_all(as_=AcmeDevice):  # the repository the Hub injects is already scoped to this integration
             self._subscribe(device)
             await self.dependencies.output.controller_did_connect_device(self, device.id)
 
