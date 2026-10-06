@@ -30,15 +30,21 @@ the rare exception.)
 
 ## How to pick a bucket
 
-Go through your parameters one by one and take the **first** rule that matches:
+**First, decide whether it is a parameter at all:**
 
-1. **Infrastructure, not a device feature?** (pairing machinery, firmware update, diagnostics, group management) → **system**
-2. **Security material?** (keys, credentials, PIN codes) → **system**, always.
-3. **Metadata about another parameter?** (a min/max limit, a scaling factor, a capability flag) → **system** — but keep its *value*: use it as the real parameter's bounds (see [Where bounds come from](#where-bounds-come-from)).
-4. **Something people change every day?** (on/off, brightness, target temperature, fan mode) → **user**
-5. **Something people configure once?** (report interval, transition time, calibration) → **setting**
-6. **A live reading people look at?** (temperature, lock state, battery %) → **user**
-7. **Everything else** → **system**
+- **Never used** → skip it.
+- **Used only by the integration** (encryption keys, tokens, caches) → `integration_data`, not a parameter.
+- **Needed only to pair** (a pairing PIN such as 123-45-678) → it reaches the integration once, as the pairing credentials (`ProvidedCredentials`). Never store it.
+
+**Then pick its visibility** — take the **first** rule that matches:
+
+1. **Not for the UI, but MajorDom may use it** (in automations, via the API, programmatically, or in the UI in dev mode): infrastructure (pairing machinery, firmware update, group management), a secret MajorDom needs, metadata about another parameter (a device-reported min/max limit, a scaling factor, a capability flag) → `system`. For metadata, keep its *value*: use it as the real parameter's bounds (see [Where bounds come from](#where-bounds-come-from)).
+2. **Something people change every day?** (on/off, brightness, target temperature, fan mode) → `user`
+3. **A live reading people look at?** (temperature, lock state, battery %) → `user`
+4. **Something people configure once or rarely, or a diagnostic reading?** (report interval, transition time, calibration, state on powering on, user-set ranges and limits; RSSI, uptime, firmware version) → `setting`
+5. **Everything else** → `system`
+
+A **keypad PIN** (a code the user types to operate a lock or alarm panel) is not a secret to hide: make it an argument of the command it unlocks, optionally with a default-code `setting`.
 
 One habit worth copying from the built-in integrations: **when in doubt, hide it.** Default
 unknown parameters to `system` and *promote* to `user` only the ones you've deliberately chosen.
