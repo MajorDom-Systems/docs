@@ -24,3 +24,11 @@ integrations:
     title: HomeKit integration (example)
     repo: https://github.com/MajorDom-Systems/integration-homekit
     branch: master
+  - name: integration-esphome
+    title: ESPHome integration (example)
+    repo: https://github.com/MajorDom-Systems/integration-esphome
+    branch: master
+  - name: integration-zwave
+    title: Z-Wave integration (example)
+    repo: https://github.com/MajorDom-Systems/integration-zwave
+    branch: master
