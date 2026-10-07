@@ -1,0 +1,36 @@
+# MajorDom Docs
+
+> MajorDom documentation
+
+MajorDom is a self-hosted smart-home hub. This documentation covers building device
+integrations (Matter, Zigbee, HomeKit, etc.) and the Hub/Bridge/Cloud HTTP/WebSocket APIs.
+
+
+## Device Integration
+
+- [Overview](https://docs.majordom.io/device-integration/index.md)
+- [Implementing a Controller](https://docs.majordom.io/device-integration/controller/index.md)
+- [Storing Data](https://docs.majordom.io/device-integration/storing_data/index.md)
+- [Data Models](https://docs.majordom.io/device-integration/data_models/index.md)
+- [Example Integration](https://docs.majordom.io/device-integration/example-integration/index.md)
+- [Overview](https://docs.majordom.io/device-integration/discovery/index.md)
+- [BLE](https://docs.majordom.io/device-integration/discovery/ble/index.md)
+- [SSDP / UPnP](https://docs.majordom.io/device-integration/discovery/ssdp/index.md)
+- [Zeroconf / mDNS](https://docs.majordom.io/device-integration/discovery/zeroconf/index.md)
+
+## API
+
+- [Hub API](https://docs.majordom.io/api/hub/index.md)
+- [Bridge API](https://docs.majordom.io/api/bridge/index.md)
+- [Cloud API](https://docs.majordom.io/api/cloud/index.md)
+
+
+## Example Integrations (full source)
+
+Complete source of each example integration — load one to write your own:
+
+- [Integration SDK — full source](https://docs.majordom.io/llms/integration-sdk.txt)
+- [Integration template (scaffold) — full source](https://docs.majordom.io/llms/integration-template.txt)
+- [Matter integration (example) — full source](https://docs.majordom.io/llms/integration-matter.txt)
+- [Zigbee integration (example) — full source](https://docs.majordom.io/llms/integration-zigbee.txt)
+- [HomeKit integration (example) — full source](https://docs.majordom.io/llms/integration-homekit.txt)
