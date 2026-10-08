@@ -71,9 +71,17 @@ All paths are under `/v1/api`; schemas are in the [API Reference](api.md). A rad
 | `GET` | `/settings/{scope}` | values and JSON schema of an integration's (slug), a service's (name) or the hub's (`hub`) settings |
 | `PATCH` | `/settings/{scope}` | change some values; whatever uses them restarts |
 
+## Bluetooth
+
+The hub's `BLEService` listens on every local adapter and on every connected ESPHome device with `bluetooth_proxy` (the ESPHome integration adds them; its *Bluetooth proxies* setting turns that off). Integrations reach devices through whichever radio hears them best (see [Bluetooth](../device-integration/discovery/ble.md)).
+
+matter-server never touches the adapter. It runs with `BLE_PROXY=true`, and the Matter integration connects to its `/ble` endpoint as a [BLE proxy](https://github.com/matter-js/matterjs-server/blob/main/docs/ble-proxy-protocol.md): when matter-server commissions a device, it scans, connects and exchanges GATT data through the hub's `BLEService`, so commissioning works through ESPHome proxies too.
+
+An ESPHome proxy serves one API connection at a time. When Home Assistant also uses it, the two keep taking it from each other: turn the ESPHome integration's *Bluetooth proxies* setting off on one of them.
+
 ## Setup
 
-`system/setup.sh` installs Docker, adds the `majordom` user to the `docker` and `dialout` groups, and installs `universal-silabs-flasher`. It also turns on IPv6 forwarding with `accept_ra=2`, so the hub keeps learning the routes other border routers announce.
+`system/setup.sh` installs Docker and BlueZ, adds the `majordom` user to the `docker`, `dialout` and `bluetooth` groups, and installs `universal-silabs-flasher`. It also turns on IPv6 forwarding with `accept_ra=2`, so the hub keeps learning the routes other border routers announce.
 
 `RADIOS=false` (in `.env`) turns off scanning and Docker: only pinned links and the host's capabilities are bound. `--virtual` sets it.
 
@@ -82,4 +90,5 @@ All paths are under `/v1/api`; schemas are in the [API Reference](api.md). A rad
 - **See what runs:** `docker compose -p majordom ps`, then `docker compose -p majordom logs <service>` (`multiprotocol`, `otbr`, `matter-server`, `zwave-js`).
 - **A stick is recognised as the wrong thing, or not at all**, e.g. after it was flashed on another computer, or while `universal-silabs-flasher` was missing: forget it (`POST /hardware/radios/{id}/forget`) and it is identified again.
 - **A USB stick disappears right after you plug it in:** it is usually not fully seated. `dmesg` shows `error -32` or `error -71` from the kernel's USB driver. Push it in all the way.
+- **Bluetooth hears nothing:** `busctl get-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Discovering` should say `b true` while the hub runs. After `bluetoothd` restarts it says `b false` for up to a minute, until the hub restarts its scanner. matter-server's log shows `BLE proxy handshake complete` once the Matter integration is connected to it.
 - **The hub's name changes**, e.g. to `majordom-hub-2.local`: a router on the LAN answers mDNS from its cache, so avahi sees the name as taken and renames the hub. Restart avahi (`sudo systemctl restart avahi-daemon`), then fix the router's mDNS reflector or cache.

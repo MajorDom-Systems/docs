@@ -24,7 +24,7 @@ nav:
           - Overview: "device-integration/discovery/index.md"
           - Zeroconf / mDNS: "device-integration/discovery/zeroconf.md"
           - SSDP / UPnP: "device-integration/discovery/ssdp.md"
-          - BLE: "device-integration/discovery/ble.md"
+          - Bluetooth: "device-integration/discovery/ble.md"
       - Standalone Mode: "device-integration/standalone.md"
       - Example Integration: "device-integration/example-integration.md"
       - Quality Checklist: "device-integration/quality.md"

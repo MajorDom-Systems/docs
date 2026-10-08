@@ -8,7 +8,7 @@ Three services are available:
 |---|---|---|
 | `ZeroconfDiscoveryService` | mDNS / DNS-SD | `self.dependencies.zeroconf_discovery_service` |
 | `SSDPDiscoveryService` | UPnP SSDP | `self.dependencies.ssdp_discovery_service` |
-| `BLEDiscoveryService` | Bluetooth Low Energy (Bleak) | `self.dependencies.ble_discovery_service` |
+| `BLEService` | Bluetooth Low Energy, through every radio the hub has ([details](ble.md)) | `self.dependencies.ble_discovery_service` |
 
 ## Common Pattern
 

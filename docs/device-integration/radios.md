@@ -19,7 +19,7 @@ A capability is a `family/dialect` pair. The family says what it is (`zigbee`, `
 | `zwave/serial` | a Z-Wave controller (Serial API) | any Z-Wave stick | `zwave-js` service |
 | `zwave/ws` | Z-Wave JS server's WebSocket API | `zwave-js` service | Z-Wave |
 | `ip` | the hub's network (shared) | the host | `matter-server` |
-| `ble` | the hub's Bluetooth adapter (shared, dialect `bluez`) | the host | `matter-server` (optional) |
+| `ble` | the hub's Bluetooth (shared) | the host | `matter-server` (optional) |
 
 `multiprotocol` runs one multi-PAN stick as both a Zigbee coordinator and a Thread border router. `otbr` is a border router on a plain Thread stick. Both come with `majordom-transports`; `matter-server` and `zwave-js` come with the Matter and Z-Wave integrations.
 
@@ -146,8 +146,8 @@ MATTER_SERVER = Service(
         "network_mode": "host",
         "userns_mode": "host",
         "user": "{host.uid}:{host.gid}",  # its data folder belongs to the hub
-        "environment": {"STORAGE_PATH": "/data", "NOBLE_BINDINGS": "dbus", "BLUETOOTH_ADAPTER": "0"},
-        "volumes": ["{data}:/data", "/run/dbus:/run/dbus:ro"],
+        "environment": {"STORAGE_PATH": "/data", "BLE_PROXY": "true"},  # Bluetooth comes from the hub
+        "volumes": ["{data}:/data"],
     },
 )
 ```
