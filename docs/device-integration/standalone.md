@@ -93,6 +93,105 @@ async def main():
 asyncio.run(main())
 ```
 
+## Connecting to radios and services
+
+An integration with [`needs`](radios.md) gets its links from the Hub. Without the Hub, you provide
+them, at one of three levels:
+
+| Level | You run | The library runs | Pass |
+|---|---|---|---|
+| Bare | the radio or server | nothing | `links={...}` |
+| Partial | some of it, e.g. your own border router | the rest | `Runtime(..., pinned={...})` |
+| Full | nothing | everything | `Runtime(..., scan=True)` |
+
+### Bare: pass the links yourself
+
+You already have the stick or the server. Hand the controller its links, and its settings or
+context if it uses them. `run_controller` and `run_cli` take any field of `Dependencies` as a
+keyword argument:
+
+```python
+import asyncio
+from majordom_integration_sdk import Endpoint
+from majordom_integration_sdk.dev import run_controller
+from majordom_zigbee import ZigBeeController
+
+asyncio.run(run_controller(ZigBeeController, links={"zigbee": Endpoint("zigbee", "ezsp", "/dev/ttyUSB0")}))
+```
+
+```python
+import asyncio
+from majordom_integration_sdk import Context, Endpoint, WifiCredentials
+from majordom_integration_sdk.dev import run_cli
+from majordom_matter import MatterController
+
+asyncio.run(run_cli(
+    MatterController,
+    links={"matter": Endpoint("matter", "ws", "ws://localhost:5580/ws")},
+    context=Context(wifi=WifiCredentials("Home", "password")),  # the network to commission devices onto
+))
+```
+
+With `build_dependencies`, override the same fields with `.copy(links=..., settings=..., context=...)`.
+
+### Partial: let the runtime run the rest
+
+[`majordom-transports`](https://github.com/MajorDom-Systems/majordom-transports) is what the Hub
+uses: it finds sticks, runs the services in Docker, and binds needs. Endpoints you pin win over
+anything it finds:
+
+```python
+from pathlib import Path
+from majordom_integration_sdk import Endpoint
+from majordom_matter import MatterController
+from majordom_transports import Runtime
+
+runtime = Runtime(
+    Path("radios"),  # where it keeps its state and the services' data
+    {"matter": MatterController},
+    pinned={"thread": Endpoint("thread", "otbr-rest", "http://my-otbr:8081", shared=True)},
+)
+```
+
+Here the runtime runs matter-server and takes the Thread network from your border router. Start
+it and hand its links to the controller as in the full example below. Other options:
+
+- `scan=False, devices={"stick": "/dev/ttyUSB0"}`: use this device only, without scanning
+  `/dev/serial/by-id`.
+- `docker=False`: run the containers yourself. The runtime still writes the `compose.json` it would
+  have run.
+
+### Full: everything automatic
+
+```python
+import asyncio
+from pathlib import Path
+from majordom_integration_sdk.dev import run_controller
+from majordom_transports import Runtime
+from majordom_zigbee import ZigBeeController
+
+async def main():
+    runtime = Runtime(Path("radios"), {"zigbee": ZigBeeController}, scan=True)
+    await runtime.start()  # finds sticks, identifies them, binds, runs services, keeps watching
+    links = runtime.links("zigbee")  # None while no radio can serve a required need
+    if links is None:
+        raise SystemExit("No Zigbee radio found")
+    await run_controller(
+        ZigBeeController, links=links, settings=runtime.settings("zigbee"), context=runtime.context()
+    )
+
+asyncio.run(main())
+```
+
+The keys of the consumer mapping (`"zigbee"`) are what you pass to `links()` and `settings()`.
+Services need Docker, and recognising Silicon Labs sticks needs the `universal-silabs-flasher`
+command on `PATH`.
+
+`run_controller` keeps the links it started with. The Hub restarts an integration when its links,
+settings or context change; to do the same, pass `on_change=` to `Runtime` and read `links()` and
+`context()` again there. The Thread dataset, for example, reaches `context()` only once the border
+router has a network.
+
 ## The dependency structure
 
 `build_dependencies()` returns the same `AbstractController.Dependencies` the Hub injects. Its main
@@ -107,6 +206,9 @@ fields:
 - **`documents_folder`** — a `Path` your controller may write files into (per-integration subtree).
 - **discovery services** — `zeroconf_discovery_service`, `ssdp_discovery_service`,
   `ble_discovery_service`, if your protocol discovers over mDNS / SSDP / BLE.
+- **`links`**, **`settings`**, **`context`** — what the controller's `needs` are bound to, its
+  [settings](settings.md), and hub-wide facts. Empty by default; pass them as shown
+  [above](#connecting-to-radios-and-services).
 
 ```python
 deps = build_dependencies(

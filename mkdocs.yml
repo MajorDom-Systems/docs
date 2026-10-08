@@ -15,6 +15,8 @@ nav:
   - Device Integration:
       - Overview: "device-integration/index.md"
       - Implementing a Controller: "device-integration/controller.md"
+      - Connecting to Radios and Services: "device-integration/radios.md"
+      - Settings: "device-integration/settings.md"
       - Storing Data: "device-integration/storing_data.md"
       - Data Models: "device-integration/data_models.md"
       - Parameter UX: "device-integration/parameter-ux.md"
@@ -28,6 +30,7 @@ nav:
       - Quality Checklist: "device-integration/quality.md"
   - Hub:
       - API Reference: "hub/api.md"
+      - Radios and Transports: "hub/radios.md"
 #      - Module Map: "hub/diagram.md"
   - legacy:
       - Architecture Overview: "architecture.md"
@@ -148,6 +151,8 @@ plugins:
         Device Integration:
           - device-integration/index.md
           - device-integration/controller.md
+          - device-integration/radios.md
+          - device-integration/settings.md
           - device-integration/storing_data.md
           - device-integration/data_models.md
           - device-integration/example-integration.md

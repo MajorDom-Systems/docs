@@ -12,6 +12,10 @@ integrations:
     title: Integration template (scaffold)
     repo: https://github.com/MajorDom-Systems/integration-template
     branch: master
+  - name: majordom-transports
+    title: Transports (radios, firmware, services)
+    repo: https://github.com/MajorDom-Systems/majordom-transports
+    branch: develop
   - name: integration-matter
     title: Matter integration (example)
     repo: https://github.com/MajorDom-Systems/integration-matter

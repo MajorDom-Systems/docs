@@ -99,7 +99,7 @@ async def controller_did_encounter_error(
 ```
 
 - **`message`** — plain language for the user, never a traceback. Put technical detail in the logs; put here only what the user should see, and fold any call-to-action right into the text.
-- **`still_running`** — `False` when the controller can no longer run. The Hub marks the integration **inactive** and tells the user it failed (and what to do, if actionable) — no technical dump. Use `True` for a problem you've handled and recovered from but still want the user to know about (e.g. a user-fixable misconfiguration).
+- **`still_running`** — `False` when the controller can no longer run. The Hub marks the integration **inactive** and tells the user it failed (and what to do, if actionable) — no technical dump. If the controller was running, the Hub then restarts it; when `start()` raises, it retries after 5, 30 and 120 seconds before it gives up. Use `True` for a problem you've handled and recovered from but still want the user to know about (e.g. a user-fixable misconfiguration).
 
 #### Which one do I use?
 
@@ -167,7 +167,66 @@ The Hub populates `self.dependencies` (see [`AbstractController.Dependencies`](h
 | `zeroconf_discovery_service` | `ZeroconfDiscoveryService` | Shared mDNS/Zeroconf discovery service |
 | `ssdp_discovery_service` | `SSDPDiscoveryService` | Shared SSDP discovery service |
 | `ble_discovery_service` | `BLEDiscoveryService` | Shared BLE scanner service |
-| `hardware_interfaces` | `list[str]` | OS-level hardware interface paths assigned to this integration (e.g. `/dev/ttyACM0`) |
+| `links` | `Mapping[str, Endpoint]` | What your `needs` are bound to, by family, e.g. `links["zigbee"].url`. An optional need that isn't bound is missing |
+| `settings` | `BaseModel \| None` | The validated instance of your `settings` model; `None` when you declare none |
+| `context` | `Context` | Hub-wide facts: `region` (radio region), `wifi` (the network to put Wi-Fi devices on), `thread_dataset` (the hub's Thread network, hex) |
+
+Device paths, server URLs and options all arrive here. Don't read them from environment variables or config files.
+
+### Class attributes
+
+Declare what the controller connects to and what the user can set as class attributes. The Hub reads them off the class before it constructs the controller.
+
+| Attribute | Type | Default | Meaning |
+|---|---|---|---|
+| `needs` | `Sequence[Need]` | `()` | Capabilities the controller connects to, e.g. `[Need("zigbee")]`. Bound ones arrive in `dependencies.links` |
+| `services` | `Sequence[Service]` | `()` | Containers the integration brings along, e.g. Matter's `matter-server`. The Hub runs one only while something uses it |
+| `settings` | `type[BaseModel] \| None` | `None` | Options the user can set, as a pydantic model. The validated instance arrives in `dependencies.settings` |
+
+```python
+from majordom_integration_sdk import Need
+
+class ZigBeeController(AbstractController):
+    needs = [Need("zigbee")]  # any zigpy dialect: ezsp, znp, deconz, xbee, zigate, cc
+    settings = ZigBeeSettings
+
+    async def start(self):
+        link = self.dependencies.links["zigbee"]
+        settings = cast(ZigBeeSettings, self.dependencies.settings or ZigBeeSettings())
+        ...
+```
+
+An integration that only uses the network, like HomeKit, declares nothing. See [Connecting to Radios and Services](radios.md) and [Settings](settings.md).
+
+### `probe(path)`
+
+```python
+@classmethod
+async def probe(cls, path: str) -> Endpoint | None: ...
+```
+
+Optional. When the Hub finds a USB stick that none of its drivers recognise, it asks each integration whether the stick speaks one of its protocols. Return what the stick offers then, e.g. `Endpoint("zigbee", "znp", path)`, or `None`. The Hub remembers the answer, so it asks once per stick. An exception counts as `None`.
+
+### `peripheral_did_change(change)`
+
+```python
+async def peripheral_did_change(self, change: PeripheralChange) -> bool: ...
+```
+
+Optional. Called while the controller runs, when one of its links appeared, moved, or an optional one was lost. `dependencies.links` already holds the new links. `change.family` names the link; `change.before` is `None` when it appeared, `change.after` is `None` when it was lost.
+
+- Return `True` when you handled it in place. The controller keeps running.
+- Return `False` (the default) to let the Hub restart the controller with the new links.
+
+If settings or context changed at the same time, the Hub restarts the controller whatever you return. When a **required** link is lost, the Hub doesn't call this hook: it stops the controller, tells the user, and starts it again once the link is back.
+
+```python
+async def peripheral_did_change(self, change: PeripheralChange) -> bool:
+    if change.family == "thread":  # an optional need: Wi-Fi devices keep working without it
+        self._border_router = change.after.url if change.after else None
+        return True
+    return False
+```
 
 ## Helper Methods
 
