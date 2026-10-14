@@ -5,17 +5,18 @@
 ```python
 class CredentialsType(str, Enum):
     code = "code"      # pin, e.g. 123-45-678 (HomeKit) or 1234-123-1234 (Matter)
-    secret = "secret"  # e.g. AES key like in ESPHome
     qr = "qr"          # raw QR data
-    none = "none"
+    secret = "secret"  # e.g. AES key like in ESPHome
+    button = "button"  # physical confirmation on the device; carries no value
+    none = "none"      # pairing needs nothing from the user
 
-    def with_mask(self, code_mask: str) -> CredentialsType:
-        """
-        mask format: D as digit placeholder, other symbols like dashes remain unchanged,
-        e.g. "DDD-DD-DDD" for "123-45-678"
-        """
-        self.code_mask = code_mask
-        return self
+    def with_mask(self, mask: str, hint: str | None = None) -> CredentialsOption: ...
+    def with_hint(self, hint: str) -> CredentialsOption: ...
+
+class CredentialsOption(Base):
+    type: CredentialsType
+    mask: str | None = None  # D = digit placeholder, other symbols unchanged: "DDD-DD-DDD" for "123-45-678"
+    hint: str | None = None  # a short UI prompt, e.g. "Press the button on the device"
 
 type CredentialsValue = str
 
@@ -27,7 +28,7 @@ class Discovery(Base):
     # technical
     id: UUID
     integration: NonEmptyStr
-    expected_credentials_options: list[CredentialsType]
+    expected_credentials_options: list[CredentialsOption]
     expiration: datetime | None = None
     # for UX
     transport: NonEmptyStr
@@ -36,18 +37,69 @@ class Discovery(Base):
     device_category: str | None
     device_icon: str | None
     last_error: str | None = None  # set by the integration on failure, cleared (None) on recovery
+
+    def accepts(self, credentials: ProvidedCredentials | None) -> bool: ...  # no credentials count as `none`
 ```
 
-A discovery advertises every credentials type it can actually be paired with —
+A discovery advertises every way it can actually be paired —
 `expected_credentials_options` — since a device can support more than one simultaneously
 (e.g. a Matter device with both a QR code and a manual pairing code). List every option the
-device supports, in the order you'd like the app to prefer them.
+device supports, in the order you'd like the app to prefer them. `with_mask()` and `with_hint()`
+are the short form of `CredentialsOption(type=..., mask=..., hint=...)`; a bare type is an option
+without mask or hint:
+
+```python
+Discovery(
+    ...,
+    expected_credentials_options=[
+        CredentialsType.code.with_mask("DDD-DD-DDD", hint="On the box"),
+        CredentialsType.button.with_hint("Press the button on the device"),
+        CredentialsType.qr,
+    ],
+)
+# on the wire: [{"type": "code", "mask": "DDD-DD-DDD", "hint": "On the box"}, {"type": "button", ...}, ...]
+```
+
+| Type     | The user...                                                | `ProvidedCredentials.value` |
+|----------|------------------------------------------------------------|-----------------------------|
+| `code`   | types a setup code, formatted by `mask`                    | the code                    |
+| `qr`     | scans a setup QR code                                      | the raw QR payload          |
+| `secret` | enters a key (e.g. an ESPHome API encryption key)          | the key                     |
+| `button` | physically confirms on the device (Improv, a setup button) | none: a confirmation step   |
+| `none`   | does nothing; pairing needs no input                       | none                        |
+
+For example, ESPHome offers both `none` and `secret` for a node the Hub already gave a key to
+earlier: `none` pairs with the key the Hub kept, `secret` covers a node reflashed with its own key.
 
 Pairing requests then send back `ProvidedCredentials`, pairing the actual value with which
-type it is, instead of a bare string. **Your `pair_device()` must validate
-`credentials.type` is one of `discovery.expected_credentials_options` before using it** —
-don't trust `discovery.credentials` from whatever your own discovery-time heuristic
+type it is, instead of a bare string. **Your `pair_device()` must validate the supplied type
+against the discovery's options before using it** — `discovery.accepts(credentials)` does it.
+Don't trust `discovery.credentials` from whatever your own discovery-time heuristic
 guessed; validate against what the caller explicitly asserts.
+
+### Missing Hub credentials
+
+When the Hub itself lacks something a pairing needs (a Hub on Ethernet has no Wi-Fi to give a
+node set up over BLE), raise `MissingCredentialsError(type)` from `pair_device` **before touching
+the device**. The Hub keeps the device record unpaired and returns the error to the app, which asks
+the user for the credentials and retries (see [Hub API → Pairing errors](../hub/api.md#pairing-errors)).
+
+```python
+from majordom_integration_sdk.errors import MissingCredentialsError
+
+error = MissingCredentialsError(MissingCredentialsError.WIFI)  # "wifi" is the default
+str(error)                                                     # "Missing credentials: wifi"
+```
+
+`type` is a lower_snake_case string, so an integration can add its own and documents it; the app
+maps it to the screen to show.
+
+| `type`   | The Hub lacks...                                     |
+|----------|------------------------------------------------------|
+| `wifi`   | a Wi-Fi network (SSID and password) to give a device |
+| `thread` | a Thread network (dataset) to give a device          |
+
+ESPHome raises `wifi` for a BLE (Improv) discovery when the Hub has no Wi-Fi to give.
 
 ## Device
 
