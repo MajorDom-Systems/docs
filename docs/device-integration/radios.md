@@ -82,6 +82,8 @@ Strings in `compose` are templates:
 |---|---|
 | `{data}` | the service's own data folder on the hub; mount it to keep state |
 | `{links.<family>.url}` | the URL bound to one of the service's needs, e.g. `{links.zwave.url}` is the stick's path; empty while an optional need is unbound |
+| `{links.<family>.params[<name>]}` | a serial parameter of that link, such as `baud`, when the board profile sets one |
+| `{ports.<name>}` | the host port the runtime picked for the service's port `<name>` |
 | `{settings.<field>}` | a field of the service's `settings` |
 | `{context.region}` | the hub's radio region |
 | `{host.interface}` | the hub's network interface: a wired one with a link, else the one of the default route |
@@ -90,6 +92,8 @@ Strings in `compose` are templates:
 A value of `None` renders empty. Write `{{` and `}}` for literal braces. (`{device}`, a stick's path, belongs to the radio drivers in `majordom-transports`, not to services.)
 
 URLs in `provides` are used as written, so run the service on the host network and publish on a fixed port, e.g. `ws://127.0.0.1:5580/ws`.
+
+To avoid clashes, name the ports instead: a service lists the host port it prefers (`ports={"api": 5580}`). The runtime picks a free one, keeps it in `state.json`, and fills `{ports.<name>}` in the compose and in the `provides` URLs.
 
 ## Recognising a stick: `probe()`
 

@@ -31,6 +31,14 @@ nav:
   - Hub:
       - API Reference: "hub/api.md"
       - Radios and Transports: "hub/radios.md"
+      - Multi-PAN Radio Images: "hub/radio-images.md"
+      - Radios Without Docker (CM4): "hub/native-radios.md"
+  - Integrations:
+      - Zigbee: "integrations/zigbee.md"
+      - Matter: "integrations/matter.md"
+      - Z-Wave: "integrations/zwave.md"
+      - ESPHome: "integrations/esphome.md"
+      - HomeKit: "integrations/homekit.md"
 #      - Module Map: "hub/diagram.md"
   - legacy:
       - Architecture Overview: "architecture.md"
@@ -157,6 +165,12 @@ plugins:
           - device-integration/data_models.md
           - device-integration/example-integration.md
           - device-integration/discovery/*.md
+        Integrations:
+          - integrations/*.md
+        Hub:
+          - hub/radios.md
+          - hub/radio-images.md
+          - hub/native-radios.md
         API:
           - api/hub.md
           - api/bridge.md

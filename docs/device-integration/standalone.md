@@ -161,6 +161,30 @@ it and hand its links to the controller as in the full example below. Other opti
 - `docker=False`: run the containers yourself. The runtime still writes the `compose.json` it would
   have run.
 
+#### Servers you already run
+
+A matter-server or zwave-js-server of your own is an endpoint with a fixed URL, pinned by family. It is offered as written, ahead of anything the runtime finds, and no container starts for a need it serves:
+
+```python
+from majordom_integration_sdk import Endpoint
+from majordom_transports import Runtime
+
+runtime = Runtime(
+    data_dir,
+    {"matter": MatterController, "zwave": ZwaveController},
+    pinned={
+        "matter": Endpoint("matter", "ws", "ws://my-matter:5580/ws"),  # your matter-server
+        "zwave": Endpoint("zwave", "ws", "ws://my-zwave:3000"),  # your zwave-js-server
+    },
+    scan=False,  # the sticks live behind those servers
+    docker=False,  # nothing left to run
+)
+await runtime.start()
+runtime.links("matter")  # {"matter": Endpoint("matter", "ws", "ws://my-matter:5580/ws")}
+```
+
+Pin only `thread` to keep matter-server running here, but behind your border router.
+
 ### Full: everything automatic
 
 ```python

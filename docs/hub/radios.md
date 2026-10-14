@@ -51,7 +51,11 @@ Soldered radios have no `/dev/serial/by-id` entry. A MajorDom board lists them i
 [{"id": "mg26", "path": "/dev/ttyAMA3", "driver": "silabs", "firmware": "multipan"}]
 ```
 
-The Hub uses them as listed, without identifying them, whenever the path exists.
+The Hub uses them as listed, without identifying them, whenever the path exists. Add `"params": {"baud": 115200, "flow_control": false}` where the board wires the UART differently from the firmware's default.
+
+## Radios another program holds
+
+A stick another program has open (zigbee2mqtt, Home Assistant) is not opened or bound. `GET /hardware/radios` shows it as `held_by` that program. Probing it, or pinning a family to it, claims it anyway.
 
 ## Pins
 
