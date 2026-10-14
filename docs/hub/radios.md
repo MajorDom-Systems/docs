@@ -75,7 +75,7 @@ All paths are under `/v1/api`; schemas are in the [API Reference](api.md). A rad
 
 The hub's `BLEService` listens on every local adapter and on every connected ESPHome device with `bluetooth_proxy` (the ESPHome integration adds them; its *Bluetooth proxies* setting turns that off). Integrations reach devices through whichever radio hears them best (see [Bluetooth](../device-integration/discovery/ble.md)).
 
-matter-server never touches the adapter. It runs with `BLE_PROXY=true`, and the Matter integration connects to its `/ble` endpoint as a [BLE proxy](https://github.com/matter-js/matterjs-server/blob/main/docs/ble-proxy-protocol.md): when matter-server commissions a device, it scans, connects and exchanges GATT data through the hub's `BLEService`, so commissioning works through ESPHome proxies too.
+matter-server never touches the adapter. It runs with `BLE_PROXY=true`, and the Matter integration's Bluetooth backend connects to its `/ble` endpoint over matter-server's [BLE proxy protocol](https://github.com/matter-js/matterjs-server/blob/main/docs/ble-proxy-protocol.md): when matter-server commissions a device, it scans, connects and exchanges GATT data through the hub's `BLEService`, so commissioning works through ESPHome proxies too.
 
 An ESPHome node's Bluetooth proxy serves one hub at a time. Turn the ESPHome integration's *Bluetooth proxies* setting off only if another hub needs it.
 
