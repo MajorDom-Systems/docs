@@ -3040,6 +3040,58 @@
         ]
       }
     },
+    "/api/hub/set_wifi": {
+      "post": {
+        "description": "Save the Wi-Fi network integrations set devices up onto (e.g. ESPHome over Improv BLE) among the Hub's\nknown networks. The Hub reconnects only with `connect=true`, so it can stay on Ethernet or another Wi-Fi.",
+        "operationId": "set_wifi_api_hub_set_wifi_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "connect",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Connect",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WifiConnection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Wifi",
+        "tags": [
+          "hub"
+        ]
+      }
+    },
     "/api/room": {
       "post": {
         "operationId": "create_room_api_room_post",
