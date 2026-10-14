@@ -146,9 +146,15 @@ def discoveries(self) -> dict[UUID, Discovery]:
 
 The `UUID` for a given physical device must remain stable as long as it is visible.
 
-### `start_pairing_window(duration_sec)`
+### `start_pairing_window(duration_sec, credentials=None)`
+
+```python
+async def start_pairing_window(self, duration_sec: int, credentials: ProvidedCredentials | None = None) -> None: ...
+```
 
 Optional. Override only if your protocol requires an explicit short-lived scan mode to surface new devices (e.g. Zigbee permit-join, BLE burst scan). Always-on discovery (mDNS, SSDP) does not need this. Default is a no-op.
+
+`credentials` carries anything the user supplied when opening the window, before any device is discovered — e.g. a Z-Wave SmartStart QR code / DSK. It is `None` when the user gave none. The Hub relays it from `POST start_pairing_window` (target integration in the `integration` query parameter, credentials in the request body).
 
 ## Injected Dependencies
 

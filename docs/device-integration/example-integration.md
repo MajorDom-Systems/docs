@@ -42,7 +42,7 @@ class MyController(AbstractController[MyDevice, MyParameter]):
     #     await self.dependencies.output.controller_did_receive_discovery(self, discovery)
 
     # ── Pairing ──────────────────────────────────────────────────────────────
-    async def start_pairing_window(self, duration_sec: int) -> None: ...  # optional (e.g. Zigbee)
+    async def start_pairing_window(self, duration_sec: int, credentials=None) -> None: ...  # optional (e.g. Zigbee)
     async def pair_device(self, discovery, credentials) -> UUID: ...       # commission + map schema
     async def unpair(self, device: MyDevice) -> None: ...
 
