@@ -9,6 +9,8 @@ One service hears every Bluetooth radio the hub has and reaches every device thr
 - each local adapter (`hci0`, a USB dongle as `hci1`, …);
 - ESPHome devices with [`bluetooth_proxy`](https://esphome.io/components/bluetooth_proxy/), added by the ESPHome integration while they are connected.
 
+From this release `BLEService` is the only supported way for an integration to use Bluetooth. Don't open adapters or scan with `bleak` directly: it competes with the hub's own radios and bypasses the proxies.
+
 Your integration registers what it wants to hear about and connects by address. It never knows which radio heard the device or carries the connection. You make no scanning calls: sources listen continuously, and a source that hears nothing for a minute is restarted (its radio went away, e.g. `bluetoothd` restarted).
 
 `BLEDiscoveryService` is the previous name, kept as an alias for one release.
@@ -37,14 +39,17 @@ async def connect(address: str, on_disconnect: Callable[[], None] = ...) -> BLEC
 
 Opens a GATT connection through the source hearing the device best (strongest signal), falling back to the others. Raises `ConnectionError` when none can connect. `on_disconnect` is called when the connection drops.
 
-### `paused`
+### `exclusive`
 
 ```python
-async with ble.paused():
-    ...  # something else has the radios to itself
+async with ble.exclusive(address, owner="myintegration") as lease:
+    connection = await lease.connect(on_lost)
+    ...  # pair, commission, update firmware
 ```
 
-Stops every source until the block ends. Nested pauses resume when the last one ends.
+Leases the source hearing the device best to you, e.g. while pairing it. That source stops scanning until the block ends, and `connect` calls of others avoid it; every other source keeps working. `lease.connect(on_disconnect)` connects through exactly the leased source (`lease.source`, e.g. `hci0` or `esphome:<mac>`).
+
+A source someone else holds is waited for `wait` seconds (default 1), then the next best is tried, round after round. After `timeout` seconds (default 30) it raises `BLEBusyError`, a `ConnectionError`. Leaving the block releases the source and resumes scanning on it. Disconnect before you leave.
 
 ### `devices`
 
