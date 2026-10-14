@@ -2360,7 +2360,7 @@
     },
     "/api/device/start_pairing_window": {
       "post": {
-        "description": "Temporarily enables protocol-level discovery mechanisms that are not continuously active. Used to trigger short-lived scan/inquiry modes for transports that require explicit activation\n(e.g. Zigbee permit-join style discovery, BLE scan bursts, proprietary radios).",
+        "description": "Temporarily enables protocol-level discovery mechanisms that are not continuously active. Used to trigger short-lived scan/inquiry modes for transports that require explicit activation\n(e.g. Zigbee permit-join style discovery, BLE scan bursts, proprietary radios).\n\n`integration` opens the window of that integration only (every integration's otherwise). `credentials` are the ones\na protocol needs during inclusion, before the device is a discovery (e.g. a Z-Wave device's S2 PIN or QR code):\nprotocol-specific, so they need `integration`.",
         "operationId": "start_pairing_window_api_device_start_pairing_window_post",
         "parameters": [
           {
@@ -2371,8 +2371,41 @@
               "title": "Duration Sec",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "integration",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Integration"
+            }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ProvidedCredentials"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Credentials"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "content": {
