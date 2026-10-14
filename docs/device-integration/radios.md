@@ -25,6 +25,8 @@ A capability is a `family/dialect` pair. The family says what it is (`zigbee`, `
 
 ## Needs
 
+A need is what your integration requires from its environment: a dependency that something else (a radio, a server, the hub's network) must provide.
+
 ```python
 @dataclass(frozen=True)
 class Need:
@@ -70,7 +72,7 @@ class Service:
     settings: type[BaseModel] | None = None
 ```
 
-When your protocol runs behind a server (Matter behind matter-server, Z-Wave behind Z-Wave JS), declare that server as a `Service`, list it in your controller's `services`, and need what it provides. The Hub runs the service only while something is bound to one of its endpoints, and stops it when nothing is.
+A service is what your integration provides to its environment: a companion server it brings along. When your protocol runs behind a server (Matter behind matter-server, Z-Wave behind Z-Wave JS), declare that server as a `Service`, list it in your controller's `services`, and need what it provides. The Hub runs the service only while something is bound to one of its endpoints, and stops it when nothing is.
 
 `compose` is the service's [Docker Compose](https://docs.docker.com/reference/compose-file/services/) definition: image, environment, volumes, and so on. The Hub adds `restart: unless-stopped` and a `depends_on` for the services it needs, and runs it in the `majordom` Compose project. Pin the image by digest so an upstream release can't change what runs.
 
@@ -170,6 +172,16 @@ class MatterController(AbstractController):
         if dataset := self.dependencies.context.thread_dataset:
             await self._matter_client.set_thread_operational_dataset(dataset)
 ```
+
+Matter brings matter-server (its service) but needs a Thread border router, which it doesn't bring: `majordom-transports` does, as its `otbr` service (`multiprotocol` on a multi-PAN stick). The Hub binds the chain from the controller down:
+
+| Consumer | Needs | Bound to | Gets |
+|---|---|---|---|
+| `MatterController` | `matter/ws` | `matter-server`, Matter's own service | `dependencies.links["matter"].url`: `ws://127.0.0.1:5580/ws` |
+| `matter-server` | `thread/otbr-rest` (optional) | `otbr`, from `majordom-transports` | `{links.thread.url}` in its compose: `http://127.0.0.1:8081` |
+| `otbr` | `thread/spinel` | a Thread stick | `{links.thread.url}` in its compose: the stick's path |
+
+A controller that declares `Need("thread", ["otbr-rest"])` itself, as ESPHome does [below](#esphome-an-optional-border-router), finds the same URL in `dependencies.links["thread"].url`.
 
 `matter-server` needs only `ip` to run, so Matter starts on any hub. Its optional Thread need makes the Hub run a border router whenever a stick can serve one. The Hub then learns the Thread network from the border router and passes it in `context.thread_dataset`; the context changes, so Matter restarts and hands the dataset to matter-server.
 
