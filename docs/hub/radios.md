@@ -77,7 +77,7 @@ The hub's `BLEService` listens on every local adapter and on every connected ESP
 
 matter-server never touches the adapter. It runs with `BLE_PROXY=true`, and the Matter integration connects to its `/ble` endpoint as a [BLE proxy](https://github.com/matter-js/matterjs-server/blob/main/docs/ble-proxy-protocol.md): when matter-server commissions a device, it scans, connects and exchanges GATT data through the hub's `BLEService`, so commissioning works through ESPHome proxies too.
 
-An ESPHome proxy serves one API connection at a time. When Home Assistant also uses it, the two keep taking it from each other: turn the ESPHome integration's *Bluetooth proxies* setting off on one of them.
+An ESPHome node's Bluetooth proxy serves one hub at a time. Turn the ESPHome integration's *Bluetooth proxies* setting off only if another hub needs it.
 
 ## Setup
 

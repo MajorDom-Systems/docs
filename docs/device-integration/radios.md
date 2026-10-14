@@ -74,7 +74,7 @@ class Service:
 
 A service is what your integration provides to its environment: a companion server it brings along. When your protocol runs behind a server (Matter behind matter-server, Z-Wave behind Z-Wave JS), declare that server as a `Service`, list it in your controller's `services`, and need what it provides. The Hub runs the service only while something is bound to one of its endpoints, and stops it when nothing is.
 
-`compose` is the service's [Docker Compose](https://docs.docker.com/reference/compose-file/services/) definition: image, environment, volumes, and so on. The Hub adds `restart: unless-stopped` and a `depends_on` for the services it needs, and runs it in the `majordom` Compose project. Pin the image by digest so an upstream release can't change what runs.
+`compose` is the service's [Docker Compose](https://docs.docker.com/reference/compose-file/services/) definition: image, environment, volumes, and so on. The Hub adds `restart: unless-stopped` and runs it in the `majordom` Compose project. There's no `depends_on`: every service retries until the links it needs answer. Pin the image by digest so an upstream release can't change what runs.
 
 Strings in `compose` are templates:
 
