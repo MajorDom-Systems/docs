@@ -93,7 +93,7 @@ A value of `None` renders empty. Write `{{` and `}}` for literal braces. (`{devi
 
 URLs in `provides` are used as written, so run the service on the host network and publish on a fixed port, e.g. `ws://127.0.0.1:5580/ws`.
 
-To avoid clashes, name the ports instead: a service lists the host port it prefers (`ports={"api": 5580}`). The runtime picks a free one, keeps it in `state.json`, and fills `{ports.<name>}` in the compose and in the `provides` URLs.
+To avoid clashes, name the ports instead: a service lists the host port it *prefers* (`ports={"api": 5580}`). That's a preference, not a fixed port: the runtime uses it when free and otherwise assigns another (45800–45999), keeps the choice in `state.json` across restarts, and fills `{ports.<name>}` in the compose and in the `provides` URLs. Integrations never read the port; they connect through `dependencies.links[<family>].url`.
 
 ## Recognising a stick: `probe()`
 
