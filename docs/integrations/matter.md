@@ -18,7 +18,7 @@
 
 ## Bluetooth
 
-matter-server runs with `BLE_PROXY=true`. The integration's Bluetooth backend (`ble_backend.py`) serves it the Hub's `BLEService` (every local adapter and ESPHome Bluetooth proxy) over matter-server's BLE proxy protocol on `/ble`. See [Bluetooth](../hub/radios.md#bluetooth).
+matter-server runs with `BLE_PROXY=true`. The integration's Bluetooth delegate (`MatterServerBLEDelegate`, `ble_delegate.py`) serves it the Hub's `BLEService` (every local adapter and ESPHome Bluetooth proxy) over matter-server's BLE proxy protocol on `/ble`. See [Bluetooth](../hub/radios.md#bluetooth).
 
 ## Standalone
 
