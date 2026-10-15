@@ -134,6 +134,10 @@ asyncio.run(run_cli(
 
 With `build_dependencies`, override the same fields with `.copy(links=..., settings=..., context=...)`.
 
+You run the servers here, so `dependencies.services.restart()` raises `NotImplementedError`. Restart
+the server yourself; the controller [reconnects](controller.md#restarting-your-service-and-healing)
+on its own.
+
 ### Partial: let the runtime run the rest
 
 [`majordom-transports`](https://github.com/MajorDom-Systems/majordom-transports) is what the Hub
@@ -211,9 +215,10 @@ The keys of the consumer mapping (`"zigbee"`) are what you pass to `links()` and
 Services need Docker, and recognising Silicon Labs sticks needs the `universal-silabs-flasher`
 command on `PATH`.
 
-`run_controller` keeps the links it started with. The Hub restarts an integration when its links,
-settings or context change; to do the same, pass `on_change=` to `Runtime` and read `links()` and
-`context()` again there. The Thread dataset, for example, reaches `context()` only once the border
+`run_controller` keeps the links it started with. When its links, settings or context change, the
+Hub calls the controller's [hooks](controller.md#settings_did_changebefore) and restarts it unless
+they applied the change in place; to do the same, pass `on_change=` to `Runtime` and read `links()`
+and `context()` again there. The Thread dataset, for example, reaches `context()` only once the border
 router has a network.
 
 ## The dependency structure

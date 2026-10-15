@@ -86,7 +86,7 @@ The user sees a service's settings on the screen of every integration that uses 
 
 ## Changing settings
 
-The user changes settings in the app. The Hub validates the new values against the model, stores them, and restarts what uses them: the integration for its own settings, the service's container for a service's settings.
+The user changes settings in the app. The Hub validates the new values against the model, stores them, and applies them: a service's settings by recreating its container, the integration's own through [`settings_did_change()`](controller.md#settings_did_changebefore). Return `True` from it when applied in place; the default (`False`) has the Hub restart the integration.
 
 In library mode, change them through the runtime:
 

@@ -170,6 +170,7 @@ The Hub populates `self.dependencies` (see [`AbstractController.Dependencies`](h
 | `links` | `Mapping[str, Endpoint]` | What your `needs` are bound to, by family, e.g. `links["zigbee"].url`. An optional need that isn't bound is missing |
 | `settings` | `BaseModel \| None` | The validated instance of your `settings` model; `None` when you declare none |
 | `context` | `Context` | Hub-wide facts: `region` (radio region), `wifi` (the network to put Wi-Fi devices on), `thread_dataset` (the hub's Thread network, hex) |
+| `services` | `ServiceControl` | Restarts one of your own `services`, see [below](#restarting-your-service-and-healing) |
 
 Device paths, server URLs and options all arrive here. Don't read them from environment variables or config files.
 
@@ -218,7 +219,7 @@ Optional. Called while the controller runs, when one of its links appeared, move
 - Return `True` when you handled it in place. The controller keeps running.
 - Return `False` (the default) to let the Hub restart the controller with the new links.
 
-If settings or context changed at the same time, the Hub restarts the controller whatever you return. When a **required** link is lost, the Hub doesn't call this hook: it stops the controller, tells the user, and starts it again once the link is back.
+Links, settings and context can change at once. The Hub then calls every hook that applies, and restarts the controller unless all of them return `True`. A hook that raises counts as `False`. When a **required** link is lost, the Hub doesn't call this hook: it stops the controller, tells the user, and starts it again once the link is back.
 
 ```python
 async def peripheral_did_change(self, change: PeripheralChange) -> bool:
@@ -227,6 +228,108 @@ async def peripheral_did_change(self, change: PeripheralChange) -> bool:
         return True
     return False
 ```
+
+### `settings_did_change(before)`
+
+```python
+async def settings_did_change(self, before: BaseModel | None) -> bool: ...
+```
+
+Optional. Called while the controller runs, when the user changed its [settings](settings.md). `dependencies.settings` already holds the new ones, `before` the old ones.
+
+Return `True` when applied in place; the default (`False`) has the Hub restart the integration.
+
+Apply what's cheap to apply, and restart for the rest:
+
+```python
+class AcmeSettings(BaseModel):
+    poll_interval: int = Field(30, ge=5, title="Refresh every, seconds")
+    channel: int = Field(15, ge=11, le=26, title="Channel")
+
+
+async def settings_did_change(self, before: BaseModel | None) -> bool:
+    before = cast(AcmeSettings, before or AcmeSettings())
+    settings = cast(AcmeSettings, self.dependencies.settings or AcmeSettings())
+    if settings.channel != before.channel:
+        return False  # start() forms the network on the channel: restart
+    self._poll_interval = settings.poll_interval  # the poll loop reads it on its next round
+    return True
+```
+
+### `context_did_change(before)`
+
+```python
+async def context_did_change(self, before: Context) -> bool: ...
+```
+
+Optional. Called while the controller runs, when [hub-wide facts](settings.md#hub-settings) changed: the radio region, the Wi-Fi network for new devices, the Thread network. `dependencies.context` already holds the new ones, `before` the old ones. Return `True` when applied in place; the default (`False`) has the Hub restart the integration.
+
+```python
+async def context_did_change(self, before: Context) -> bool:
+    if self.dependencies.context.region != before.region:
+        return False  # start() sets the radio's region: restart
+    return True  # Wi-Fi and Thread are read from dependencies.context when pairing
+```
+
+### Restarting your service and healing
+
+```python
+class ServiceControl(Protocol):
+    async def restart(self, service: str) -> None: ...
+```
+
+`dependencies.services.restart(name)` restarts one of the [services](radios.md#bringing-your-own-service) your integration brings, by its name, e.g. when the server reads a setting only at start. You can't restart another integration's service, or one the user runs. Without the Hub, in [standalone mode](standalone.md), it raises `NotImplementedError`: restart the server yourself.
+
+```python
+async def settings_did_change(self, before: BaseModel | None) -> bool:
+    before = cast(AcmeSettings, before or AcmeSettings())
+    settings = cast(AcmeSettings, self.dependencies.settings or AcmeSettings())
+    if settings.log_level != before.log_level:
+        await self._client.set_log_level(settings.log_level)  # the server applies it at start
+        await self.dependencies.services.restart("acme-server")
+    return True  # the connection drops, and _stay_connected() heals it
+```
+
+The integration keeps running while its service restarts, and nobody tells it the service is back: the Hub restarts the container, not the integration. The same happens when the server crashes and comes back. So don't let one connection live as long as the controller. Keep a task that waits for the connection to drop and reconnects with backoff, as the Matter integration does with matter-server ([`controller.py`](https://github.com/MajorDom-Systems/integration-matter/tree/master/majordom_matter/controller.py)):
+
+```python
+_RECONNECT_DELAY, _RECONNECT_DELAY_MAX = 1, 30  # seconds
+
+
+async def start(self):
+    self._client = await self._connect()  # raising here has the Hub retry start()
+    self._keeper = asyncio.create_task(self._stay_connected())
+
+
+async def stop(self):
+    self._keeper.cancel()
+    await self._client.close()
+
+
+async def _connect(self) -> AcmeClient:
+    client = AcmeClient(self.dependencies.links["acme"].url)
+    await client.connect()
+    return client
+
+
+async def _stay_connected(self):
+    """Reconnects whenever the server goes away, until stop() cancels it."""
+    while True:
+        await self._client.wait_closed()
+        message = "Lost the connection to the Acme server, reconnecting."
+        await self.dependencies.output.controller_did_encounter_error(self, message, still_running=True)
+        delay = self._RECONNECT_DELAY
+        while True:
+            await asyncio.sleep(delay)  # 1, 2, 4, … 30, 30 seconds
+            try:
+                self._client = await self._connect()
+                break
+            except OSError as error:
+                logger.info(f"The Acme server is not back yet: {error!r}")
+                delay = min(delay * 2, self._RECONNECT_DELAY_MAX)
+```
+
+`still_running=True` tells the user the integration is degraded, not failed. While the connection is down, report the devices you reach through it as lost, and as connected again once it's back.
 
 ## Helper Methods
 

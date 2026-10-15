@@ -19,7 +19,7 @@ A capability is a `family/dialect` pair. The family says what it is (`zigbee`, `
 | `zwave/serial` | a Z-Wave controller (Serial API) | any Z-Wave stick | `zwave-js` service |
 | `zwave/ws` | Z-Wave JS server's WebSocket API | `zwave-js` service | Z-Wave |
 | `ip` | the hub's network (shared) | the host | `matter-server` |
-| `ble` | the hub's Bluetooth (shared) | the host | `matter-server` (optional) |
+| `ble` | the hub's Bluetooth (shared) | the host | Matter (optional) |
 
 `multiprotocol` runs one multi-PAN stick as both a Zigbee coordinator and a Thread border router. `otbr` is a border router on a plain Thread stick. Both come with `majordom-transports`; `matter-server` and `zwave-js` come with the Matter and Z-Wave integrations.
 
@@ -70,6 +70,7 @@ class Service:
     needs: Sequence[Need] = ()
     provides: Sequence[Endpoint] = ()
     settings: type[BaseModel] | None = None
+    ports: Mapping[str, int] = field(default_factory=dict)  # name -> preferred host port
 ```
 
 A service is what your integration provides to its environment: a companion server it brings along. When your protocol runs behind a server (Matter behind matter-server, Z-Wave behind Z-Wave JS), declare that server as a `Service`, list it in your controller's `services`, and need what it provides. The Hub runs the service only while something is bound to one of its endpoints, and stops it when nothing is.
@@ -91,9 +92,9 @@ Strings in `compose` are templates:
 
 A value of `None` renders empty. Write `{{` and `}}` for literal braces. (`{device}`, a stick's path, belongs to the radio drivers in `majordom-transports`, not to services.)
 
-URLs in `provides` are used as written, so run the service on the host network and publish on a fixed port, e.g. `ws://127.0.0.1:5580/ws`.
+Run the service on the host network and name the ports it listens on. `ports={"api": 5580}` says which host port it *prefers*, not a fixed one: the runtime uses it when free and otherwise assigns another (45800–45999), keeps the choice across restarts, and fills `{ports.<name>}` in the compose and in the `provides` URLs. Pass the port to the server through `compose` (an environment variable or a command-line argument), and write `{ports.<name>}` in the URLs it provides. See [Matter](#matter-with-its-own-service) for a complete service.
 
-To avoid clashes, name the ports instead: a service lists the host port it *prefers* (`ports={"api": 5580}`). That's a preference, not a fixed port: the runtime uses it when free and otherwise assigns another (45800–45999), keeps the choice in `state.json` across restarts, and fills `{ports.<name>}` in the compose and in the `provides` URLs. Integrations never read the port; they connect through `dependencies.links[<family>].url`.
+Your integration never reads a port: it connects to `dependencies.links[<family>].url`. That URL may not even point at your service. When the user runs their own server and pins it as the provider, the Hub doesn't run yours and hands over the pinned URL instead, with no change in your code.
 
 ## Recognising a stick: `probe()`
 
@@ -145,14 +146,19 @@ Matter drives matter-server over its WebSocket API, so it brings matter-server a
 MATTER_SERVER = Service(
     "matter-server",
     # Thread is optional: without a border router Matter still works over Wi-Fi and Ethernet.
-    needs=[Need("ip"), Need("ble", required=False), Need("thread", ["otbr-rest"], required=False)],
-    provides=[Endpoint("matter", "ws", "ws://127.0.0.1:5580/ws")],
+    needs=[Need("ip"), Need("thread", ["otbr-rest"], required=False)],
+    provides=[Endpoint("matter", "ws", "ws://127.0.0.1:{ports.api}/ws")],
+    ports={"api": 5580},  # preferred: another one when 5580 is taken
     compose={
         "image": "ghcr.io/matter-js/matterjs-server@sha256:…",
         "network_mode": "host",
         "userns_mode": "host",
         "user": "{host.uid}:{host.gid}",  # its data folder belongs to the hub
-        "environment": {"STORAGE_PATH": "/data", "BLE_PROXY": "true"},  # Bluetooth comes from the hub
+        "environment": {
+            "STORAGE_PATH": "/data",
+            "PORT": "{ports.api}",  # the server listens where the runtime says
+            "BLE_PROXY": "true",  # Bluetooth comes from the hub
+        },
         "volumes": ["{data}:/data"],
     },
 )
@@ -162,11 +168,12 @@ The controller needs only what the service provides, and hands the hub's network
 
 ```python
 class MatterController(AbstractController):
-    needs = [Need("matter", ["ws"])]
+    needs = [Need("matter", ["ws"]), Need("ble", required=False)]  # Bluetooth for commissioning
     services = [MATTER_SERVER]
 
     async def start(self):
         ...
+        # ws://127.0.0.1:5580/ws, or wherever the server runs: never build this URL yourself
         self._matter_client = MatterClient(self.dependencies.links["matter"].url, self._matter_client_session)
         await self._matter_client.connect()
         ...
@@ -181,13 +188,15 @@ Matter brings matter-server (its service) but needs a Thread border router, whic
 
 | Consumer | Needs | Bound to | Gets |
 |---|---|---|---|
-| `MatterController` | `matter/ws` | `matter-server`, Matter's own service | `dependencies.links["matter"].url`: `ws://127.0.0.1:5580/ws` |
+| `MatterController` | `matter/ws` | `matter-server`, Matter's own service | `dependencies.links["matter"].url`: `ws://127.0.0.1:5580/ws`, or another port when 5580 is taken |
 | `matter-server` | `thread/otbr-rest` (optional) | `otbr`, from `majordom-transports` | `{links.thread.url}` in its compose: `http://127.0.0.1:8081` |
 | `otbr` | `thread/spinel` | a Thread stick | `{links.thread.url}` in its compose: the stick's path |
 
 A controller that declares `Need("thread", ["otbr-rest"])` itself, as ESPHome does [below](#esphome-an-optional-border-router), finds the same URL in `dependencies.links["thread"].url`.
 
-`matter-server` needs only `ip` to run, so Matter starts on any hub. Its optional Thread need makes the Hub run a border router whenever a stick can serve one. The Hub then learns the Thread network from the border router and passes it in `context.thread_dataset`; the context changes, so Matter restarts and hands the dataset to matter-server.
+`matter-server` needs only `ip` to run, so Matter starts on any hub. Its optional Thread need makes the Hub run a border router whenever a stick can serve one. The Hub then learns the Thread network from the border router and passes it in `context.thread_dataset`; the context changes, and as Matter doesn't handle that in place (see [`context_did_change()`](controller.md#context_did_changebefore)), the Hub restarts it, and it hands the dataset to matter-server.
+
+If the user already runs a matter-server, they pin it as the `matter` provider. The Hub then doesn't run `MATTER_SERVER` and hands the controller that server's URL instead.
 
 Z-Wave follows the same pattern: its `zwave-js` service needs `zwave/serial` from the stick and provides `zwave/ws`, which the controller needs ([`config.py`](https://github.com/MajorDom-Systems/integration-zwave/tree/master/majordom_zwave/config.py)).
 
@@ -208,7 +217,8 @@ The controller never reads the link. Declaring it is enough: the Hub runs a bord
 
 - A required link is lost (the stick is unplugged, or switched to other firmware): the Hub stops the integration and tells the user it resumes when the radio is back. It starts again once the need is bound.
 - A link appears or moves, or an optional one is lost: the Hub calls [`peripheral_did_change()`](controller.md#peripheral_did_changechange). Unless it returns `True`, the Hub restarts the integration with the new links.
-- Settings or context change: the Hub restarts the integration.
+- Settings or context change: the Hub calls [`settings_did_change()`](controller.md#settings_did_changebefore) or [`context_did_change()`](controller.md#context_did_changebefore): return `True` when applied in place; the default (`False`) has the Hub restart the integration.
+- One of your services restarts (you [restarted it](controller.md#restarting-your-service-and-healing), or it crashed): the Hub isn't involved and the integration keeps running. Reconnect to it yourself.
 
 ## Without the Hub
 
