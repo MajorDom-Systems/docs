@@ -82,7 +82,7 @@ guessed; validate against what the caller explicitly asserts.
 When the Hub itself lacks something a pairing needs (a Hub on Ethernet has no Wi-Fi to give a
 node set up over BLE), raise `MissingCredentialsError(type)` from `pair_device` **before touching
 the device**. The Hub keeps the device record unpaired and returns the error to the app, which asks
-the user for the credentials and retries (see [Hub API → Pairing errors](../hub/api.md#pairing-errors)).
+the user for the credentials and retries (see `POST /device` in the [Hub API reference](../hub/api.md)).
 
 ```python
 from majordom_integration_sdk.errors import MissingCredentialsError
