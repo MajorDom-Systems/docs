@@ -127,7 +127,7 @@ from majordom_matter import MatterController
 
 asyncio.run(run_cli(
     MatterController,
-    links={"matter": Endpoint("matter", "ws", "ws://localhost:5580/ws")},
+    links={"matter": Endpoint("matter", "matter-server-ws", "ws://localhost:5580/ws")},
     context=Context(wifi=WifiCredentials("Home", "password")),  # the network to commission devices onto
 ))
 ```
@@ -157,7 +157,7 @@ runtime = Runtime(
 )
 ```
 
-Here the runtime runs matter-server and takes the Thread network from your border router. Start
+Here the runtime runs matterjs-server and takes the Thread network from your border router. Start
 it and hand its links to the controller as in the full example below. Other options:
 
 - `scan=False, devices={"stick": "/dev/ttyUSB0"}`: use this device only, without scanning
@@ -177,17 +177,17 @@ runtime = Runtime(
     data_dir,
     {"matter": MatterController, "zwave": ZwaveController},
     pinned={
-        "matter": Endpoint("matter", "ws", "ws://my-matter:5580/ws"),  # your matter-server
-        "zwave": Endpoint("zwave", "ws", "ws://my-zwave:3000"),  # your zwave-js-server
+        "matter": Endpoint("matter", "matter-server-ws", "ws://my-matter:5580/ws"),  # your matter-server
+        "zwave": Endpoint("zwave", "zwave-js-ws", "ws://my-zwave:3000"),  # your zwave-js-server
     },
     scan=False,  # the sticks live behind those servers
     docker=False,  # nothing left to run
 )
 await runtime.start()
-runtime.links("matter")  # {"matter": Endpoint("matter", "ws", "ws://my-matter:5580/ws")}
+runtime.links("matter")  # {"matter": Endpoint("matter", "matter-server-ws", "ws://my-matter:5580/ws")}
 ```
 
-Pin only `thread` to keep matter-server running here, but behind your border router.
+Pin only `thread` to keep matterjs-server running here, but behind your border router.
 
 ### Full: everything automatic
 

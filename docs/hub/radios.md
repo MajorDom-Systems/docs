@@ -6,7 +6,7 @@ The Hub runs [`majordom-transports`](https://github.com/MajorDom-Systems/majordo
 
 1. **Find.** Every 2 seconds the Hub lists `/dev/serial/by-id/` (USB sticks) and the radios of the [board profile](#board-profiles). A change counts once it held for one more look, so a stick that re-enumerates doesn't trigger twice.
 2. **Identify.** A stick seen for the first time is identified once, in this order: the Z-Wave Serial API (one short frame), Silicon Labs firmware through `universal-silabs-flasher probe` (EZSP: Zigbee, Spinel: Thread, CPC: multi-PAN), then each integration's `probe()`. The result is saved. A stick nobody recognises offers nothing.
-3. **Bind.** Each integration's needs are matched to what's on offer: endpoints pinned in library mode, the host (`ip`, `ble`), radios by their firmware, and services. A service is on offer only when its own required needs can be bound, so chains form by themselves: Matter → `matter-server` → `otbr` → a Thread stick. An exclusive endpoint goes to one consumer. The provider the user [picked](#pins) for a family is tried first.
+3. **Bind.** Each integration's needs are matched to what's on offer: endpoints pinned in library mode, the host (`ip`, `ble`), radios by their firmware, and services. A service is on offer only when its own required needs can be bound, so chains form by themselves: Matter → `matterjs-server` → `otbr` → a Thread stick. An exclusive endpoint goes to one consumer. The provider the user [picked](#pins) for a family is tried first.
 4. **Compose.** The services that ended up bound are written to `compose.json` (project `majordom`) and started with `docker compose up -d --remove-orphans`, which also removes services nothing uses any more. With none left, the Hub runs `docker compose down`.
 5. **Links.** Each integration gets its bound endpoints by family, or nothing while a required need can't be met.
 6. **Sync.** The Hub brings every integration in line:
@@ -18,7 +18,7 @@ The Hub runs [`majordom-transports`](https://github.com/MajorDom-Systems/majordo
 
 ### The Thread network
 
-When a border router is in use, the Hub waits for its Thread network (the active dataset, read over the border router's REST API) and passes it to every integration as `context.thread_dataset`. The `multiprotocol` service forms its own network. A plain `otbr`, or a border router pinned in library mode, that still has no network after 15 seconds gets one from the Hub, once: the dataset from the service's `dataset` setting, or else a new network named `MajorDom`.
+When a border router is in use, the Hub waits for its Thread network (the active dataset, read over the border router's REST API) and passes it to every integration as `context.thread_dataset`. The `silabs-multiprotocol` service forms its own network. A plain `otbr`, or a border router pinned in library mode, that still has no network after 15 seconds gets one from the Hub, once: the dataset from the service's `dataset` setting, or else a new network named `MajorDom`.
 
 ## Where state lives
 
@@ -35,7 +35,7 @@ Back up `state.json` with the rest of the data folder: it holds the generated Z-
 
 ## Firmware
 
-A Silicon Labs stick can run Zigbee (EZSP), Thread (Spinel) or multi-PAN (CPC) firmware. For each radio, `GET /hardware/radios` lists `options`: the firmware it can switch to, and which of the families integrations ask for each one would serve. Switching takes about a minute:
+A Silicon Labs stick can run Zigbee (EZSP, firmware `zigbee-ncp`), Thread (Spinel, `thread-rcp`) or multi-PAN (CPC, `multipan-rcp`) firmware; a Z-Wave stick runs `serial-api`. For each radio, `GET /hardware/radios` lists `options`: the firmware it can switch to, and which of the families integrations ask for each one would serve. Switching takes about a minute:
 
 1. The radio is marked `busy`. Whatever used it is stopped or unbound.
 2. The build is downloaded into `firmware/` and checked against its SHA-256.
@@ -48,7 +48,7 @@ The hub setting `firmware` picks the channel: `stable` (the default) offers veri
 Soldered radios have no `/dev/serial/by-id` entry. A MajorDom board lists them in `/etc/majordom/board.json`, written into the OS image:
 
 ```json
-[{"id": "mg26", "path": "/dev/ttyAMA3", "driver": "silabs", "firmware": "multipan"}]
+[{"id": "mg26", "path": "/dev/ttyAMA3", "driver": "silabs", "firmware": "multipan-rcp"}]
 ```
 
 The Hub uses them as listed, without identifying them, whenever the path exists. Add `"params": {"baud": 115200, "flow_control": false}` where the board wires the UART differently from the firmware's default.
@@ -79,7 +79,7 @@ All paths are under `/v1/api`; schemas are in the [API Reference](api.md). A rad
 
 The hub's `BLEService` listens on every local adapter and on every connected ESPHome device with `bluetooth_proxy` (the ESPHome integration adds them; its *Bluetooth proxies* setting turns that off). Integrations reach devices through whichever radio hears them best (see [Bluetooth](../device-integration/discovery/ble.md)).
 
-matter-server never touches the adapter. It runs with `BLE_PROXY=true`, and the Matter integration's Bluetooth delegate (`MatterServerBLEDelegate`) connects to its `/ble` endpoint over matter-server's [BLE proxy protocol](https://github.com/matter-js/matterjs-server/blob/main/docs/ble-proxy-protocol.md): when matter-server commissions a device, it scans, connects and exchanges GATT data through the hub's `BLEService`, so commissioning works through ESPHome proxies too.
+matterjs-server never touches the adapter. It runs with `BLE_PROXY=true`, and the Matter integration's Bluetooth delegate (`MatterServerBLEDelegate`) connects to its `/ble` endpoint over matterjs-server's [BLE proxy protocol](https://github.com/matter-js/matterjs-server/blob/main/docs/ble-proxy-protocol.md): when matterjs-server commissions a device, it scans, connects and exchanges GATT data through the hub's `BLEService`, so commissioning works through ESPHome proxies too.
 
 An ESPHome node's Bluetooth proxy serves one hub at a time. Turn the ESPHome integration's *Bluetooth proxies* setting off only if another hub needs it.
 
@@ -91,7 +91,7 @@ An ESPHome node's Bluetooth proxy serves one hub at a time. Turn the ESPHome int
 
 ## Troubleshooting
 
-- **See what runs:** `docker compose -p majordom ps`, then `docker compose -p majordom logs <service>` (`multiprotocol`, `otbr`, `matter-server`, `zwave-js`).
+- **See what runs:** `docker compose -p majordom ps`, then `docker compose -p majordom logs <service>` (`silabs-multiprotocol`, `otbr`, `matterjs-server`, `zwave-js-server`).
 - **A stick is recognised as the wrong thing, or not at all**, e.g. after it was flashed on another computer, or while `universal-silabs-flasher` was missing: forget it (`POST /hardware/radios/{id}/forget`) and it is identified again.
 - **A USB stick disappears right after you plug it in:** it is usually not fully seated. `dmesg` shows `error -32` or `error -71` from the kernel's USB driver. Push it in all the way.
 - **Bluetooth hears nothing:** `busctl get-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Discovering` should say `b true` while the hub runs. After `bluetoothd` restarts it says `b false` for up to a minute, until the hub restarts its scanner. matter-server's log shows `BLE proxy handshake complete` once the Matter integration is connected to it.

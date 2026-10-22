@@ -1,12 +1,12 @@
 # Multi-PAN Radio Images
 
-One Silicon Labs multi-PAN RCP can serve Zigbee and Thread at the same time, with no reflashing to switch protocols. The `multiprotocol` service of [`majordom-transports`](https://github.com/MajorDom-Systems/majordom-transports) runs it as one container image. Two images exist, for two SDK generations.
+One Silicon Labs multi-PAN RCP can serve Zigbee and Thread at the same time, with no reflashing to switch protocols. The `silabs-multiprotocol` service of [`majordom-transports`](https://github.com/MajorDom-Systems/majordom-transports) runs it as one container image. Two images exist, for two SDK generations.
 
 ```
 USB stick or UART (multi-PAN RCP)
    │
  cpcd  ── iid 1 ── zigbeed ── EZSP pty ── socat ── tcp :9999 ──── Zigbee integration
-       └─ iid 2 ── otbr-agent ── Thread ── REST :8081 ─────────── matter-server (ws :5580)
+       └─ iid 2 ── otbr-agent ── Thread ── REST :8081 ─────────── matterjs-server (ws :5580)
 ```
 
 The Hub talks TCP, WebSocket and REST only. Never run another Zigbee or Thread stack against the same stick: `cpcd` owns it.
@@ -56,7 +56,7 @@ On a Pi 5, the arm64 build takes about 1.5 minutes and the amd64 build 4 to 8 mi
 ### Run
 
 ```sh
-docker run -d --name multiprotocol --privileged --network host \
+docker run -d --name silabs-multiprotocol --privileged --network host \
   -v /dev/serial:/dev/serial:ro -v otbr-data:/var/lib/thread -v zigbee-data:/var/lib/zigbee \
   -e RADIO_DEVICE=/dev/serial/by-id/<stick> majordom/multiprotocol:sisdk-2025.6.3-arm64
 ```

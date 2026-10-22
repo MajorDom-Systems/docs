@@ -6,11 +6,11 @@
 
 | Capability | Required | Provided by |
 |---|---|---|
-| `zwave/ws` | yes | the `zwave-js` service below; standalone, any `zwave-js-server` you run |
-| `zwave/serial` (for `zwave-js`) | yes | a Z-Wave USB controller (for example Aeotec or Zooz Z-Stick), recognised by the Hub through the Serial API |
+| `zwave/zwave-js-ws` | yes | the `zwave-js-server` service below; standalone, any `zwave-js-server` you run |
+| `zwave/serial-api` (for `zwave-js-server`) | yes | a Z-Wave USB controller (for example Aeotec or Zooz Z-Stick), recognised by the Hub through the Serial API |
 
-- **Services it brings:** `zwave-js`, a `zwave-js-server` container the Hub runs while a Z-Wave stick is plugged in.
-- **Settings:** the network's security keys (`ZwaveNetwork`, settings of the `zwave-js` service), generated once. Back them up: without them, securely included devices have to be re-included.
+- **Services it brings:** `zwave-js-server`, a container the Hub runs while a Z-Wave stick is plugged in.
+- **Settings:** the network's security keys (`ZwaveNetwork`, settings of the `zwave-js-server` service), generated once. Back them up: without them, securely included devices have to be re-included.
 - **Context:** the RF region (`context.region`, from the Hub's region setting).
 - **OS / permissions:** network reachability (TCP) to `zwave-js-server` when you run it on another host yourself.
 
@@ -21,4 +21,4 @@
 
 ## Standalone
 
-Run `zwave-js-server` yourself and pass its URL as `links={"zwave": Endpoint("zwave", "ws", "ws://localhost:3000")}`. See [Standalone Mode](../device-integration/standalone.md#connecting-to-radios-and-services).
+Run `zwave-js-server` yourself and pass its URL as `links={"zwave": Endpoint("zwave", "zwave-js-ws", "ws://localhost:3000")}`. See [Standalone Mode](../device-integration/standalone.md#connecting-to-radios-and-services).

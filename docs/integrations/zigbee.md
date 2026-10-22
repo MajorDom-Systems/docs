@@ -6,16 +6,16 @@
 
 | Capability | Required | Provided by |
 |---|---|---|
-| `zigbee` (any dialect: `ezsp`, `znp`, `deconz`, `xbee`, `zigate`, `cc`) | yes | a Silicon Labs stick with Zigbee firmware, a stick `ZigBeeController.probe()` recognises, or the `multiprotocol` service on a multi-PAN stick |
+| `zigbee` (every zigpy dialect: `ezsp`, `znp`, `deconz`, `xbee`, `zigate`, `ziggurat`, `blz`, `cc`) | yes | a Silicon Labs stick with Zigbee firmware, a stick `ZigBeeController.probe()` recognises, or the `silabs-multiprotocol` service on a multi-PAN stick |
 
-The Hub hands it over as `dependencies.links["zigbee"]`: a serial path, or `socket://…` when the `multiprotocol` service fronts the radio. The link's dialect picks the zigpy radio library, or `auto` probes for it. `ZigBeeController.probe(path)` lets the Hub recognise sticks it doesn't know, so swapping dongles needs no source change.
+The Hub hands it over as `dependencies.links["zigbee"]`: a serial path, or `socket://…` when the `silabs-multiprotocol` service fronts the radio. The link's dialect picks the zigpy radio library, or `auto` probes for it. `ZigBeeController.probe(path)` lets the Hub recognise sticks it doesn't know, so swapping dongles needs no source change.
 
 - **Services it brings:** none. zigpy speaks to the radio directly.
 - **Settings:** channel, PAN ID, extended PAN ID, network key and transmit power (`ZigBeeSettings`). Empty values are picked or generated when the network is formed.
 - **Context:** none.
 - **OS / permissions:** serial-port access to the radio.
 
-The EZSP and Z-Stack (ZNP) libraries are installed by default. ConBee/RaspBee, XBee and ZiGate are extras: `pip install 'majordom-zigbee[deconz]'`, `[xbee]`, `[zigate]`, or `[all-radios]`.
+The EZSP and Z-Stack (ZNP) libraries are installed by default. ConBee/RaspBee, XBee, ZiGate, Ziggurat and Bouffalo Lab (BLZ) are extras: `pip install 'majordom-zigbee[deconz]'`, `[xbee]`, `[zigate]`, `[ziggurat]`, `[blz]`, or `[all-radios]`.
 
 Standalone, pass the coordinator yourself: `links={"zigbee": Endpoint("zigbee", "ezsp", "/dev/ttyUSB0")}` (see [Standalone Mode](../device-integration/standalone.md#connecting-to-radios-and-services)).
 

@@ -20,7 +20,7 @@ class ZigBeeSettings(BaseModel):
 
 
 class ZigBeeController(AbstractController):
-    needs = [Need("zigbee")]
+    needs = [Need("zigbee", ZIGPY_DIALECTS)]
     settings = ZigBeeSettings
 ```
 
@@ -66,10 +66,10 @@ It also means a default you change in a later release applies to new hubs only.
 A [`Service`](radios.md#bringing-your-own-service) can have settings too. Reach them in its `compose` through `{settings.<field>}`:
 
 ```python
-ZWAVE_JS = Service(
-    "zwave-js",
-    needs=[Need("zwave", ["serial"])],
-    provides=[Endpoint("zwave", "ws", "ws://127.0.0.1:3000")],
+ZWAVE_JS_SERVER = Service(
+    "zwave-js-server",
+    needs=[Need("zwave", ["serial-api"])],
+    provides=[Endpoint("zwave", "zwave-js-ws", "ws://127.0.0.1:3000")],
     settings=ZwaveNetwork,
     compose={
         ...
@@ -82,7 +82,7 @@ ZWAVE_JS = Service(
 )
 ```
 
-The user sees a service's settings on the screen of every integration that uses it, next to the integration's own. The Z-Wave screen shows the network keys; on a multi-PAN stick, the Zigbee screen also shows the Thread network settings of the `multiprotocol` service.
+The user sees a service's settings on the screen of every integration that uses it, next to the integration's own. The Z-Wave screen shows the network keys; on a multi-PAN stick, the Zigbee screen also shows the Thread network settings of the `silabs-multiprotocol` service.
 
 ## Changing settings
 

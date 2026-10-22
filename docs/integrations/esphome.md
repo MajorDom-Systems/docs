@@ -6,7 +6,7 @@
 
 | Capability | Required | Provided by |
 |---|---|---|
-| `thread/otbr-rest` | no | a Thread border router: the `otbr` or `multiprotocol` service on a Thread-capable stick. Only devices on Thread need it; Wi-Fi and Ethernet devices need nothing |
+| `thread/otbr-rest` | no | a Thread border router: the `otbr` or `silabs-multiprotocol` service on a Thread-capable stick. Only devices on Thread need it; Wi-Fi and Ethernet devices need nothing |
 
 - **Services it brings:** none.
 - **Settings:** *Bluetooth proxies*, on by default. ESPHome devices with `bluetooth_proxy` lend their Bluetooth radio to the Hub while they are connected. A device serves one Hub at a time: turn the setting off only if another Hub needs a device's Bluetooth proxy.

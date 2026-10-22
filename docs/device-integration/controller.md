@@ -180,15 +180,15 @@ Declare what the controller connects to and what the user can set as class attri
 
 | Attribute | Type | Default | Meaning |
 |---|---|---|---|
-| `needs` | `Sequence[Need]` | `()` | Capabilities the controller connects to, e.g. `[Need("zigbee")]`. Bound ones arrive in `dependencies.links` |
-| `services` | `Sequence[Service]` | `()` | Containers the integration brings along, e.g. Matter's `matter-server`. The Hub runs one only while something uses it |
+| `needs` | `Sequence[Need]` | `()` | Capabilities the controller connects to, e.g. `[Need("matter", ["matter-server-ws"])]`. Bound ones arrive in `dependencies.links` |
+| `services` | `Sequence[Service]` | `()` | Containers the integration brings along, e.g. Matter's `matterjs-server`. The Hub runs one only while something uses it |
 | `settings` | `type[BaseModel] \| None` | `None` | Options the user can set, as a pydantic model. The validated instance arrives in `dependencies.settings` |
 
 ```python
 from majordom_integration_sdk import Need
 
 class ZigBeeController(AbstractController):
-    needs = [Need("zigbee")]  # any zigpy dialect: ezsp, znp, deconz, xbee, zigate, cc
+    needs = [Need("zigbee", ZIGPY_DIALECTS)]  # ezsp, znp, deconz, xbee, zigate, ziggurat, blz, cc
     settings = ZigBeeSettings
 
     async def start(self):

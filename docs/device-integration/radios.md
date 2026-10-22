@@ -6,22 +6,23 @@ The language lives in the SDK ([`transport.py`](https://github.com/MajorDom-Syst
 
 ## Capabilities
 
-A capability is a `family/dialect` pair. The family says what it is (`zigbee`, `thread`); the dialect says how to talk to it (`ezsp`, `otbr-rest`).
+A capability is a `family/dialect` pair. The family says what it is (`zigbee`, `thread`); the dialect says how to talk to it (`ezsp`, `otbr-rest`). A dialect names the exact protocol or API, after its spec or the upstream server that defines it, so one client library implements it. It is never a transport word (`uart`, `serial`, `ws`, `tcp`): the transport is the URL scheme (`/dev/…`, `socket://`, `ws://`, `http://`).
 
 | Capability | What it is | Offered by | Used by |
 |---|---|---|---|
-| `zigbee/ezsp` | Silicon Labs EmberZNet | a Silicon Labs stick with Zigbee firmware, or the `multiprotocol` service | Zigbee |
-| `zigbee/znp`, `zigbee/deconz`, `zigbee/xbee`, `zigbee/zigate`, `zigbee/cc` | other Zigbee coordinators | a stick the Zigbee integration's `probe()` recognises | Zigbee |
+| `zigbee/ezsp` | Silicon Labs EmberZNet | a Silicon Labs stick with Zigbee firmware, or the `silabs-multiprotocol` service | Zigbee |
+| `zigbee/znp`, `zigbee/deconz`, `zigbee/xbee`, `zigbee/zigate`, `zigbee/ziggurat`, `zigbee/blz`, `zigbee/cc` | other Zigbee coordinators | a stick the Zigbee integration's `probe()` recognises | Zigbee |
 | `thread/spinel` | a Thread radio (RCP) | a Silicon Labs stick with Thread firmware | `otbr` service |
-| `thread/otbr-rest` | a Thread border router's REST API (shared) | `otbr` or `multiprotocol` service | `matter-server` (optional), ESPHome (optional) |
-| `cpc/uart` | a Silicon Labs multi-PAN radio | a Silicon Labs stick with multi-PAN firmware | `multiprotocol` service |
-| `matter/ws` | matter-server's WebSocket API | `matter-server` service | Matter |
-| `zwave/serial` | a Z-Wave controller (Serial API) | any Z-Wave stick | `zwave-js` service |
-| `zwave/ws` | Z-Wave JS server's WebSocket API | `zwave-js` service | Z-Wave |
-| `ip` | the hub's network (shared) | the host | `matter-server` |
-| `ble` | the hub's Bluetooth (shared) | the host | Matter (optional) |
+| `thread/otbr-rest` | a Thread border router's REST API (shared) | `otbr` or `silabs-multiprotocol` service | `matterjs-server` (optional), ESPHome (optional) |
+| `multipan/silabs-cpc` | a Silicon Labs multi-PAN radio | a Silicon Labs stick with multi-PAN firmware | `silabs-multiprotocol` service |
+| `matter/matter-server-ws` | the python-matter-server WebSocket API, which matterjs-server implements | `matterjs-server` service | Matter |
+| `zwave/serial-api` | a Z-Wave controller (Serial API) | any Z-Wave stick | `zwave-js-server` service |
+| `zwave/zwave-js-ws` | zwave-js-server's WebSocket API | `zwave-js-server` service | Z-Wave |
+| `ip` | the hub's network (shared) | the host | `matterjs-server` |
+| `ble/bluez` | the hub's Bluetooth adapter (shared) | the host | — |
+| `ble/matter-ble-proxy` | matterjs-server's BLE proxy | `matterjs-server` service | Matter (optional) |
 
-`multiprotocol` runs one multi-PAN stick as both a Zigbee coordinator and a Thread border router. `otbr` is a border router on a plain Thread stick. Both come with `majordom-transports`; `matter-server` and `zwave-js` come with the Matter and Z-Wave integrations.
+`silabs-multiprotocol` runs one multi-PAN stick as both a Zigbee coordinator and a Thread border router. `otbr` is a border router on a plain Thread stick. Both come with `majordom-transports`; `matterjs-server` and `zwave-js-server` come with the Matter and Z-Wave integrations.
 
 ## Needs
 
@@ -35,8 +36,8 @@ class Need:
     required: bool = True
 ```
 
-- `Need("zigbee")` accepts any dialect of the family. Read the bound dialect from `links["zigbee"].dialect`.
-- `Need("matter", ["ws"])` accepts only the listed dialects.
+- `Need("matter", ["matter-server-ws"])` accepts only the listed dialects. List every dialect your client speaks: Zigbee lists every zigpy radio library's (`ZIGPY_DIALECTS`) and reads the bound one from `links["zigbee"].dialect`.
+- `Need("ip")`, with no dialects, accepts any: only for what the host shares.
 
 A need is **required** by default. The Hub starts the integration only once every required need is bound, and stops it when one is lost. Meanwhile the Hub reports the integration as waiting for its radio.
 
@@ -73,7 +74,7 @@ class Service:
     ports: Mapping[str, int] = field(default_factory=dict)  # name -> preferred host port
 ```
 
-A service is what your integration provides to its environment: a companion server it brings along. When your protocol runs behind a server (Matter behind matter-server, Z-Wave behind Z-Wave JS), declare that server as a `Service`, list it in your controller's `services`, and need what it provides. The Hub runs the service only while something is bound to one of its endpoints, and stops it when nothing is.
+A service is what your integration provides to its environment: a companion server it brings along. When your protocol runs behind a server (Matter behind matterjs-server, Z-Wave behind zwave-js-server), declare that server as a `Service`, list it in your controller's `services`, and need what it provides. The Hub runs the service only while something is bound to one of its endpoints, and stops it when nothing is.
 
 `compose` is the service's [Docker Compose](https://docs.docker.com/reference/compose-file/services/) definition: image, environment, volumes, and so on. The Hub adds `restart: unless-stopped` and runs it in the `majordom` Compose project. There's no `depends_on`: every service retries until the links it needs answer. Pin the image by digest so an upstream release can't change what runs.
 
@@ -109,11 +110,11 @@ The Hub recognises Silicon Labs and Z-Wave sticks itself. For any other stick, i
 
 ### Zigbee: a radio, directly
 
-Zigbee talks to the coordinator itself through zigpy, so it needs `zigbee` in any dialect and recognises sticks the Hub doesn't know ([`controller.py`](https://github.com/MajorDom-Systems/integration-zigbee/tree/master/majordom_zigbee/controller.py)):
+Zigbee talks to the coordinator itself through zigpy, so it needs `zigbee` in every dialect zigpy speaks and recognises sticks the Hub doesn't know ([`controller.py`](https://github.com/MajorDom-Systems/integration-zigbee/tree/master/majordom_zigbee/controller.py)):
 
 ```python
 class ZigBeeController(AbstractController):
-    needs = [Need("zigbee")]  # any zigpy dialect: ezsp, znp, deconz, xbee, zigate, cc
+    needs = [Need("zigbee", ZIGPY_DIALECTS)]  # ezsp, znp, deconz, xbee, zigate, ziggurat, blz, cc
     settings = ZigBeeSettings
 
     @classmethod
@@ -135,19 +136,22 @@ What it gets depends on the stick:
 | Stick | `links["zigbee"]` |
 |---|---|
 | Silicon Labs, Zigbee firmware | `Endpoint("zigbee", "ezsp", "/dev/serial/by-id/usb-…")` |
-| Silicon Labs, multi-PAN firmware | `Endpoint("zigbee", "ezsp", "socket://127.0.0.1:9999")`, through the `multiprotocol` service |
+| Silicon Labs, multi-PAN firmware | `Endpoint("zigbee", "ezsp", "socket://127.0.0.1:9999")`, through the `silabs-multiprotocol` service |
 | Texas Instruments, recognised by `probe()` | `Endpoint("zigbee", "znp", "/dev/serial/by-id/usb-…")` |
 
 ### Matter: with its own service
 
-Matter drives matter-server over its WebSocket API, so it brings matter-server along as a service ([`config.py`](https://github.com/MajorDom-Systems/integration-matter/tree/master/majordom_matter/config.py)):
+Matter drives matterjs-server over its WebSocket API, so it brings matterjs-server along as a service ([`config.py`](https://github.com/MajorDom-Systems/integration-matter/tree/master/majordom_matter/config.py)):
 
 ```python
-MATTER_SERVER = Service(
-    "matter-server",
+MATTERJS_SERVER = Service(
+    "matterjs-server",
     # Thread is optional: without a border router Matter still works over Wi-Fi and Ethernet.
     needs=[Need("ip"), Need("thread", ["otbr-rest"], required=False)],
-    provides=[Endpoint("matter", "ws", "ws://127.0.0.1:{ports.api}/ws")],
+    provides=[
+        Endpoint("matter", "matter-server-ws", "ws://127.0.0.1:{ports.api}/ws"),
+        Endpoint("ble", "matter-ble-proxy", "ws://127.0.0.1:{ports.api}/ble"),  # BLE_PROXY
+    ],
     ports={"api": 5580},  # preferred: another one when 5580 is taken
     compose={
         "image": "ghcr.io/matter-js/matterjs-server@sha256:…",
@@ -164,12 +168,12 @@ MATTER_SERVER = Service(
 )
 ```
 
-The controller needs only what the service provides, and hands the hub's networks to matter-server for commissioning ([`controller.py`](https://github.com/MajorDom-Systems/integration-matter/tree/master/majordom_matter/controller.py)):
+The controller needs only what the service provides, and hands the hub's networks to matterjs-server for commissioning ([`controller.py`](https://github.com/MajorDom-Systems/integration-matter/tree/master/majordom_matter/controller.py)):
 
 ```python
 class MatterController(AbstractController):
-    needs = [Need("matter", ["ws"]), Need("ble", required=False)]  # Bluetooth for commissioning
-    services = [MATTER_SERVER]
+    needs = [Need("matter", ["matter-server-ws"]), Need("ble", ["matter-ble-proxy"], required=False)]  # Bluetooth for commissioning
+    services = [MATTERJS_SERVER]
 
     async def start(self):
         ...
@@ -184,21 +188,21 @@ class MatterController(AbstractController):
             await self._matter_client.set_thread_operational_dataset(dataset)
 ```
 
-Matter brings matter-server (its service) but needs a Thread border router, which it doesn't bring: `majordom-transports` does, as its `otbr` service (`multiprotocol` on a multi-PAN stick). The Hub binds the chain from the controller down:
+Matter brings matterjs-server (its service) but needs a Thread border router, which it doesn't bring: `majordom-transports` does, as its `otbr` service (`silabs-multiprotocol` on a multi-PAN stick). The Hub binds the chain from the controller down:
 
 | Consumer | Needs | Bound to | Gets |
 |---|---|---|---|
-| `MatterController` | `matter/ws` | `matter-server`, Matter's own service | `dependencies.links["matter"].url`: `ws://127.0.0.1:5580/ws`, or another port when 5580 is taken |
-| `matter-server` | `thread/otbr-rest` (optional) | `otbr`, from `majordom-transports` | `{links.thread.url}` in its compose: `http://127.0.0.1:8081` |
+| `MatterController` | `matter/matter-server-ws` | `matterjs-server`, Matter's own service | `dependencies.links["matter"].url`: `ws://127.0.0.1:5580/ws`, or another port when 5580 is taken |
+| `matterjs-server` | `thread/otbr-rest` (optional) | `otbr`, from `majordom-transports` | `{links.thread.url}` in its compose: `http://127.0.0.1:8081` |
 | `otbr` | `thread/spinel` | a Thread stick | `{links.thread.url}` in its compose: the stick's path |
 
 A controller that declares `Need("thread", ["otbr-rest"])` itself, as ESPHome does [below](#esphome-an-optional-border-router), finds the same URL in `dependencies.links["thread"].url`.
 
-`matter-server` needs only `ip` to run, so Matter starts on any hub. Its optional Thread need makes the Hub run a border router whenever a stick can serve one. The Hub then learns the Thread network from the border router and passes it in `context.thread_dataset`; the context changes, and as Matter doesn't handle that in place (see [`context_did_change()`](controller.md#context_did_changebefore)), the Hub restarts it, and it hands the dataset to matter-server.
+`matterjs-server` needs only `ip` to run, so Matter starts on any hub. Its optional Thread need makes the Hub run a border router whenever a stick can serve one. The Hub then learns the Thread network from the border router and passes it in `context.thread_dataset`; the context changes, and as Matter doesn't handle that in place (see [`context_did_change()`](controller.md#context_did_changebefore)), the Hub restarts it, and it hands the dataset to matterjs-server.
 
-If the user already runs a matter-server, they pin it as the `matter` provider. The Hub then doesn't run `MATTER_SERVER` and hands the controller that server's URL instead.
+If the user already runs a matter-server, they pin it as the `matter` provider. The Hub then doesn't run `MATTERJS_SERVER` and hands the controller that server's URL instead.
 
-Z-Wave follows the same pattern: its `zwave-js` service needs `zwave/serial` from the stick and provides `zwave/ws`, which the controller needs ([`config.py`](https://github.com/MajorDom-Systems/integration-zwave/tree/master/majordom_zwave/config.py)).
+Z-Wave follows the same pattern: its `zwave-js-server` service needs `zwave/serial-api` from the stick and provides `zwave/zwave-js-ws`, which the controller needs ([`config.py`](https://github.com/MajorDom-Systems/integration-zwave/tree/master/majordom_zwave/config.py)).
 
 ### ESPHome: an optional border router
 
