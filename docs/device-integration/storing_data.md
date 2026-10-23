@@ -38,13 +38,13 @@ The Hub will deserialize objects into these types before passing them to your im
 
 ### Repository
 
-Use `self.dependencies.make_device_repository` to read or persist devices:
+Use `self.platform.make_device_repository` to read or persist devices:
 
 ```python
-async with self.dependencies.make_device_repository() as repo:
+async with self.platform.make_device_repository() as repo:
     device = await repo.get(device_id, as_=MyDevice) # `as_=MyDevice` is optional but provides hassle-free deserialization
 
-async with self.dependencies.make_device_repository() as repo:
+async with self.platform.make_device_repository() as repo:
     device.integration_data.some_field = new_value # assuming `MyDevice.integration_data` uses custom class with `some_field` present
     await repo.save(device)
 ```

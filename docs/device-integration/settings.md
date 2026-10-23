@@ -32,11 +32,11 @@ The app builds the form from the model's JSON schema (`model_json_schema()`). So
 
 ## Reading settings
 
-The validated instance arrives in `dependencies.settings`:
+The validated instance arrives in `platform.settings`:
 
 ```python
 async def start(self):
-    settings = cast(ZigBeeSettings, self.dependencies.settings or ZigBeeSettings())
+    settings = cast(ZigBeeSettings, self.platform.settings or ZigBeeSettings())
 ```
 
 The fallback covers library mode, where the caller may pass no settings.
@@ -96,7 +96,7 @@ await runtime.update_settings("zigbee", {"tx_power": -20})
 
 ## Hub settings
 
-Some settings belong to the whole hub (scope `hub`). Integrations see them through `dependencies.context`, services through `{context.<field>}`.
+Some settings belong to the whole hub (scope `hub`). Integrations see them through `platform.context`, services through `{context.<field>}`.
 
 | Setting | Meaning | Reaches you as |
 |---|---|---|
