@@ -1,8 +1,8 @@
 # Connecting to Radios and Services
 
-An integration never opens `/dev/ttyUSB0` itself or reads a server URL from an environment variable. It declares what it needs, and the Hub hands it an address once something can serve that need. The Hub finds the USB sticks, recognises their firmware, runs the services between radios and integrations, and binds them together. Moving from one stick to another, or to a multi-PAN radio, needs no change in your code.
+An integration never opens `/dev/ttyUSB0` itself or reads a server URL from an environment variable. It declares what it needs, and the Hub hands it an address, or an object, once something can serve that need. The Hub finds the USB sticks, recognises their firmware, runs the services between radios and integrations and the peripherals it keeps in its own process (the Bluetooth router, DNS-SD, SSDP), and binds them together. Moving from one stick to another, or to a multi-PAN radio, needs no change in your code.
 
-The language lives in the SDK ([`transport.py`](https://github.com/MajorDom-Systems/integration-sdk/tree/master/majordom_integration_sdk/transport.py)). The Hub's side lives in [`majordom-transports`](https://github.com/MajorDom-Systems/majordom-transports); see [Radios and Transports](../hub/radios.md) for how it works inside.
+The language lives in the SDK ([`majordom_integration_sdk.peripherals`](https://github.com/MajorDom-Systems/integration-sdk/tree/master/majordom_integration_sdk/peripherals): `Need`, `Endpoint`, `Service`, `Peripherals`, `PeripheralChange`). The side that binds them is the SDK runtime, `majordom_integration_sdk.runtime` (the `runtime` extra), which the Hub and the standalone runner run; see [The SDK Runtime](../hub/radios.md) for how it works inside.
 
 ## Capabilities
 
@@ -15,18 +15,22 @@ A capability is a `family/dialect` pair. The family says what it is (`zigbee`, `
 | `thread/spinel` | a Thread radio (RCP) | a Silicon Labs stick with Thread firmware | `otbr` service |
 | `thread/otbr-rest` | a Thread border router's REST API (shared) | `otbr` or `silabs-multiprotocol` service | `matterjs-server` (optional), ESPHome (optional) |
 | `multipan/silabs-cpc` | a Silicon Labs multi-PAN radio | a Silicon Labs stick with multi-PAN firmware | `silabs-multiprotocol` service |
-| `matter/matter-server-ws` | the python-matter-server WebSocket API, which matterjs-server implements | `matterjs-server` service | Matter |
+| `matter/matter-server` | the python-matter-server API, which matterjs-server implements; the URL is its base, with the WebSocket API at `/ws` and the BLE proxy at `/ble` | `matterjs-server` service | Matter |
 | `zwave/serial-api` | a Z-Wave controller (Serial API) | any Z-Wave stick | `zwave-js-server` service |
 | `zwave/zwave-js-ws` | zwave-js-server's WebSocket API | `zwave-js-server` service | Z-Wave |
 | `ip` | the hub's network (shared) | the host | `matterjs-server` |
-| `ble/bluez` | the hub's Bluetooth adapter (shared) | the host | — |
-| `ble/matter-ble-proxy` | matterjs-server's BLE proxy | `matterjs-server` service | Matter (optional) |
+| `ble/router` | the [Bluetooth router](discovery/ble.md): every radio, one API (shared) | the runtime, in-process | Matter, ESPHome (optional) |
+| `ble/bluez` | one Bluetooth adapter of the hub (`hci0`, `hci1`, …), each its own endpoint | the host | the router; `matterjs-server` when one is [reserved](#reservations) for it |
+| `ble/silabs-cpc-hci` | the Bluetooth of a multi-PAN radio, when its firmware has it | a Silicon Labs stick with multi-PAN firmware | the router |
+| `ble/esphome-proxy` | an ESPHome node's Bluetooth proxy | the ESPHome integration, [offered](#offering-endpoints) while it runs | the router |
+| `mdns/dns-sd` | [DNS-SD over mDNS](discovery/zeroconf.md) (shared) | the runtime, in-process | HomeKit, ESPHome |
+| `upnp/ssdp` | [SSDP](discovery/ssdp.md) (shared) | the runtime, in-process | — |
 
-`silabs-multiprotocol` runs one multi-PAN stick as both a Zigbee coordinator and a Thread border router. `otbr` is a border router on a plain Thread stick. Both come with `majordom-transports`; `matterjs-server` and `zwave-js-server` come with the Matter and Z-Wave integrations.
+`silabs-multiprotocol` runs one multi-PAN stick as both a Zigbee coordinator and a Thread border router. `otbr` is a border router on a plain Thread stick. Both come with the SDK runtime; `matterjs-server` and `zwave-js-server` come with the Matter and Z-Wave integrations. `ble/majordom` is kept for a future MajorDom Bluetooth chip.
 
 ## Needs
 
-A need is what your integration requires from its environment: a dependency that something else (a radio, a server, the hub's network) must provide.
+A need is what your integration requires from its environment: a dependency that something else (a radio, a server, the hub's network, the Bluetooth router, DNS-SD) must provide. Declare everything external as one.
 
 ```python
 @dataclass(frozen=True)
@@ -34,14 +38,18 @@ class Need:
     family: str
     dialects: Sequence[str] = ()  # empty: any dialect of the family
     required: bool = True
+    many: bool = False
 ```
 
-- `Need("matter", ["matter-server-ws"])` accepts only the listed dialects. List every dialect your client speaks: Zigbee lists every zigpy radio library's (`ZIGPY_DIALECTS`) and reads the bound one from `links["zigbee"].dialect`.
+- `Need("matter", ["matter-server"])` accepts only the listed dialects. List every dialect your client speaks: Zigbee lists every zigpy radio library's (`ZIGPY_DIALECTS`) and reads the bound one from `self.peripherals.endpoint("zigbee").dialect`.
 - `Need("ip")`, with no dialects, accepts any: only for what the host shares.
+- `many=True` binds every matching endpoint that is free, as a list (`self.peripherals.endpoints(family)`). The Bluetooth router needs raw Bluetooth this way, to hear through every radio.
 
 A need is **required** by default. The Hub starts the integration only once every required need is bound, and stops it when one is lost. Meanwhile the Hub reports the integration as waiting for its radio.
 
-An **optional** need (`required=False`) doesn't hold the integration back. The Hub binds it when it can. Until then it is missing from `dependencies.links`.
+An **optional** need (`required=False`) doesn't hold the integration back. The Hub binds it when it can. Until then it is missing from `self.peripherals`.
+
+An unbound need carries the reason, for the user and for you: `need zigbee/ezsp|znp|…: nothing offers it`, or, when what took the endpoint offers the same family itself, what to need instead: `need ble/bluez: every provider taken by ble-router — use Need("ble", ["router"])`. The Hub shows it on the integration (`unbound` in [`GET /v1/api/integrations`](../hub/radios.md#rest-api)); standalone, the `needs` command prints it.
 
 ## Endpoints
 
@@ -52,14 +60,51 @@ class Endpoint:
     dialect: str = ""
     url: str = ""
     shared: bool = False
+    params: Mapping[str, Any] = field(default_factory=dict)
+    instance: Any = None  # not compared
 ```
 
-An endpoint is what a radio, a service or the host offers, and what your controller receives in `dependencies.links`. `url` is what you connect to: a serial path (`/dev/serial/by-id/usb-…`), a TCP socket (`socket://127.0.0.1:9999`) or a WebSocket (`ws://127.0.0.1:5580/ws`).
+An endpoint is what a radio, a service, the host, the runtime or another integration offers, and what your controller receives in `self.peripherals`. `url` is what you connect to: a serial path (`/dev/serial/by-id/usb-…`), a TCP socket (`socket://127.0.0.1:9999`) or a WebSocket base (`ws://127.0.0.1:5580`). `params` says how to talk to it, e.g. a serial port's `baud` and `flow_control`, or a host adapter's `index`.
+
+`instance` carries an in-process peripheral itself: the Bluetooth router, the DNS-SD browser, an ESPHome node's Bluetooth source. `url` still names it (`router`, an `hciN`), and two endpoints are the same when all but the instance match. Read it with `self.peripherals.instance(family)`.
 
 - **Exclusive** (the default): one consumer only. A serial port opens once, so a stick's endpoints are exclusive.
 - **Shared**: any number of consumers. One border router serves both Matter and ESPHome; `ip` serves everyone.
 
-When several providers can serve a need, endpoints you pin in library mode win, then the provider the user picked for that family, then the host, radios and services, in that order.
+When several providers can serve a need, an endpoint [reserved](#reservations) for this consumer wins, then endpoints you pin, then the provider the user picked for that family, then the host, radios, services, the runtime's own peripherals and what integrations offer, in that order.
+
+The runtime binds its own peripherals first, then the integrations in order, each with the services it reaches. An exclusive endpoint goes to the first consumer that takes it, so the router, which needs every raw Bluetooth adapter, gets them all.
+
+### Reservations
+
+A reservation keeps one endpoint for one consumer (an integration or a service), bound to it before anyone else, the runtime's `many` needs included: e.g. `ble/bluez hci1` for `matterjs-server` to use directly, ahead of the router. The user sets it with [`PUT /v1/api/hardware/reservations/{owner}/{family}`](../hub/radios.md#rest-api) (`{"url": "hci1"}`; `null` gives it back); in library mode, `await runtime.reserve(owner, family, url)`. Others see the endpoint as `reserved for <owner>`.
+
+### In-process peripherals
+
+The runtime runs the Bluetooth router (`ble/router`), DNS-SD (`mdns/dns-sd`) and SSDP (`upnp/ssdp`) in its own process, and offers each as a shared endpoint with its `instance`. Need them like any other:
+
+```python
+needs = [Need("mdns", ["dns-sd"]), Need("ble", ["router"], required=False)]
+
+async def start(self):
+    dns_sd: DNSSD = self.peripherals.instance("mdns")
+    self._cancel = dns_sd.register(self, {"_myprotocol._tcp.local."})
+    if router := self.peripherals.instance("ble"):  # None on a hub without Bluetooth
+        self._cancel_ble = router.register(self, [MY_SERVICE_UUID])
+```
+
+Their contracts (`DNSSD`, `SSDP`, `BLERouter`, …) are in `majordom_integration_sdk.capabilities`; see [Discovery Services](discovery/index.md).
+
+### Offering endpoints
+
+An integration may offer endpoints to others while it runs, through `self.platform.offers`:
+
+```python
+await self.platform.offers.offer(Endpoint("ble", "esphome-proxy", node_mac, instance=ble_source))
+await self.platform.offers.withdraw(endpoint)  # same family and url
+```
+
+The runtime binds an offer like any other endpoint and tells whoever gets or loses it. The ESPHome integration offers each node with `bluetooth_proxy` as `ble/esphome-proxy`, its Bluetooth source as the instance; the router picks it up. An offerer is never bound to its own offer. Without the runtime (library mode) offers go nowhere; in tests, `FakeOffers` records them.
 
 ## Bringing your own service
 
@@ -76,26 +121,26 @@ class Service:
 
 A service is what your integration provides to its environment: a companion server it brings along. When your protocol runs behind a server (Matter behind matterjs-server, Z-Wave behind zwave-js-server), declare that server as a `Service`, list it in your controller's `services`, and need what it provides. The Hub runs the service only while something is bound to one of its endpoints, and stops it when nothing is.
 
-`compose` is the service's [Docker Compose](https://docs.docker.com/reference/compose-file/services/) definition: image, environment, volumes, and so on. The Hub adds `restart: unless-stopped` and runs it in the `majordom` Compose project. There's no `depends_on`: every service retries until the links it needs answer. Pin the image by digest so an upstream release can't change what runs.
+`compose` is the service's [Docker Compose](https://docs.docker.com/reference/compose-file/services/) definition: image, environment, volumes, and so on. The Hub adds `restart: unless-stopped` and runs it in the `majordom` Compose project. There's no `depends_on`: every service retries until the endpoints it needs answer. Pin the image by digest so an upstream release can't change what runs.
 
 Strings in `compose` are templates:
 
 | Template | Becomes |
 |---|---|
 | `{data}` | the service's own data folder on the hub; mount it to keep state |
-| `{links.<family>.url}` | the URL bound to one of the service's needs, e.g. `{links.zwave.url}` is the stick's path; empty while an optional need is unbound |
-| `{links.<family>.params[<name>]}` | a serial parameter of that link, such as `baud`, when the board profile sets one |
+| `{peripherals.<family>.url}` | the URL bound to one of the service's needs, e.g. `{peripherals.zwave.url}` is the stick's path; empty while an optional need is unbound; the first endpoint of a `many` need |
+| `{peripherals.<family>.params[<name>]}` | a parameter of that endpoint: a serial port's `baud` or `flow_control`, a host Bluetooth adapter's `index`; empty when it has none |
 | `{ports.<name>}` | the host port the runtime picked for the service's port `<name>` |
 | `{settings.<field>}` | a field of the service's `settings` |
 | `{context.region}` | the hub's radio region |
 | `{host.interface}` | the hub's network interface: a wired one with a link, else the one of the default route |
 | `{host.uid}`, `{host.gid}` | the hub's user and group, for a container that should write its data as the hub |
 
-A value of `None` renders empty. Write `{{` and `}}` for literal braces. (`{device}`, a stick's path, belongs to the radio drivers in `majordom-transports`, not to services.)
+A value of `None` renders empty. A format spec renders text by the value: `{x:&uart-flow-control}` renders `&uart-flow-control` when the flag `x` is true, and `{x:!true}` renders `true` when `x` is empty, e.g. `"BLE_PROXY": "{peripherals.ble.url:!true}"` turns the proxy on while no adapter is bound. Write `{{` and `}}` for literal braces. (`{device}`, a stick's path, belongs to the radio drivers in the runtime, not to services.)
 
 Run the service on the host network and name the ports it listens on. `ports={"api": 5580}` says which host port it *prefers*, not a fixed one: the runtime uses it when free and otherwise assigns another (45800–45999), keeps the choice across restarts, and fills `{ports.<name>}` in the compose and in the `provides` URLs. Pass the port to the server through `compose` (an environment variable or a command-line argument), and write `{ports.<name>}` in the URLs it provides. See [Matter](#matter-with-its-own-service) for a complete service.
 
-Your integration never reads a port: it connects to `dependencies.links[<family>].url`. That URL may not even point at your service. When the user runs their own server and pins it as the provider, the Hub doesn't run yours and hands over the pinned URL instead, with no change in your code.
+Your integration never reads a port: it connects to `self.peripherals.endpoint(<family>).url`. That URL may not even point at your service. When the user runs their own server and pins it as the provider, the Hub doesn't run yours and hands over the pinned URL instead, with no change in your code.
 
 ## Recognising a stick: `probe()`
 
@@ -123,8 +168,8 @@ class ZigBeeController(AbstractController):
         return Endpoint("zigbee", found[0].key, path) if found else None
 
     async def start(self):
-        link = self.dependencies.links["zigbee"]
-        settings = cast(ZigBeeSettings, self.dependencies.settings or ZigBeeSettings())
+        link = self.peripherals.endpoint("zigbee")
+        settings = cast(ZigBeeSettings, self.platform.settings or ZigBeeSettings())
         self._zigbee_device_path = link.url
         ...
         # Start the zigpy application of the radio library the bound dialect names.
@@ -133,7 +178,7 @@ class ZigBeeController(AbstractController):
 
 What it gets depends on the stick:
 
-| Stick | `links["zigbee"]` |
+| Stick | `self.peripherals.endpoint("zigbee")` |
 |---|---|
 | Silicon Labs, Zigbee firmware | `Endpoint("zigbee", "ezsp", "/dev/serial/by-id/usb-…")` |
 | Silicon Labs, multi-PAN firmware | `Endpoint("zigbee", "ezsp", "socket://127.0.0.1:9999")`, through the `silabs-multiprotocol` service |
@@ -146,12 +191,10 @@ Matter drives matterjs-server over its WebSocket API, so it brings matterjs-serv
 ```python
 MATTERJS_SERVER = Service(
     "matterjs-server",
-    # Thread is optional: without a border router Matter still works over Wi-Fi and Ethernet.
-    needs=[Need("ip"), Need("thread", ["otbr-rest"], required=False)],
-    provides=[
-        Endpoint("matter", "matter-server-ws", "ws://127.0.0.1:{ports.api}/ws"),
-        Endpoint("ble", "matter-ble-proxy", "ws://127.0.0.1:{ports.api}/ble"),  # BLE_PROXY
-    ],
+    # Thread is optional: without a border router Matter still works over Wi-Fi and Ethernet. Bluetooth too: it has an
+    # adapter of its own only when one is reserved for it (ble_mode "direct"), the router has every other.
+    needs=[Need("ip"), Need("thread", ["otbr-rest"], required=False), Need("ble", ["bluez"], required=False)],
+    provides=[Endpoint("matter", "matter-server", "ws://127.0.0.1:{ports.api}")],  # the base URL: /ws, /ble
     ports={"api": 5580},  # preferred: another one when 5580 is taken
     compose={
         "image": "ghcr.io/matter-js/matterjs-server@sha256:…",
@@ -161,69 +204,80 @@ MATTERJS_SERVER = Service(
         "environment": {
             "STORAGE_PATH": "/data",
             "PORT": "{ports.api}",  # the server listens where the runtime says
-            "BLE_PROXY": "true",  # Bluetooth comes from the hub
+            "BLE_PROXY": "{peripherals.ble.url:!true}",  # Bluetooth comes from the hub, unless an adapter is reserved
+            "BLUETOOTH_ADAPTER": "{peripherals.ble.params[index]}",
         },
         "volumes": ["{data}:/data"],
     },
 )
 ```
 
-The controller needs only what the service provides, and hands the hub's networks to matterjs-server for commissioning ([`controller.py`](https://github.com/MajorDom-Systems/integration-matter/tree/master/majordom_matter/controller.py)):
+The controller needs what the service provides and the router, and hands the hub's networks to matterjs-server for commissioning ([`controller.py`](https://github.com/MajorDom-Systems/integration-matter/tree/master/majordom_matter/controller.py)):
 
 ```python
 class MatterController(AbstractController):
-    needs = [Need("matter", ["matter-server-ws"]), Need("ble", ["matter-ble-proxy"], required=False)]  # Bluetooth for commissioning
+    # matter: matterjs-server's base URL (its API at /ws, its BLE proxy at /ble);
+    # ble: the router, which MatterServerBLEDelegate lends matterjs-server for commissioning
+    needs = [Need("matter", ["matter-server"]), Need("ble", ["router"], required=False)]
     services = [MATTERJS_SERVER]
+    settings = MatterSettings
 
     async def start(self):
         ...
-        # ws://127.0.0.1:5580/ws, or wherever the server runs: never build this URL yourself
-        self._matter_client = MatterClient(self.dependencies.links["matter"].url, self._matter_client_session)
+        # ws://127.0.0.1:5580, or wherever the server runs: never build the base URL yourself
+        self._matter_client = MatterClient(f"{self._server_url}/ws", self._matter_client_session)
         await self._matter_client.connect()
         ...
         # Networks new devices get commissioned onto.
-        if wifi := self.dependencies.context.wifi:
+        if wifi := self.platform.context.wifi:
             await self._matter_client.set_wifi_credentials(wifi.ssid, wifi.password)
-        if dataset := self.dependencies.context.thread_dataset:
+        if dataset := self.platform.context.thread_dataset:
             await self._matter_client.set_thread_operational_dataset(dataset)
 ```
 
-Matter brings matterjs-server (its service) but needs a Thread border router, which it doesn't bring: `majordom-transports` does, as its `otbr` service (`silabs-multiprotocol` on a multi-PAN stick). The Hub binds the chain from the controller down:
+Matter brings matterjs-server (its service) but needs a Thread border router, which it doesn't bring: the SDK runtime does, as its `otbr` service (`silabs-multiprotocol` on a multi-PAN stick). The Hub binds the chain from the controller down:
 
 | Consumer | Needs | Bound to | Gets |
 |---|---|---|---|
-| `MatterController` | `matter/matter-server-ws` | `matterjs-server`, Matter's own service | `dependencies.links["matter"].url`: `ws://127.0.0.1:5580/ws`, or another port when 5580 is taken |
-| `matterjs-server` | `thread/otbr-rest` (optional) | `otbr`, from `majordom-transports` | `{links.thread.url}` in its compose: `http://127.0.0.1:8081` |
-| `otbr` | `thread/spinel` | a Thread stick | `{links.thread.url}` in its compose: the stick's path |
+| `MatterController` | `matter/matter-server` | `matterjs-server`, Matter's own service | `self.peripherals.endpoint("matter").url`: `ws://127.0.0.1:5580`, or another port when 5580 is taken |
+| `MatterController` | `ble/router` (optional) | the runtime's router | `self.peripherals.instance("ble")`, lent to matterjs-server's `/ble` |
+| `matterjs-server` | `thread/otbr-rest` (optional) | `otbr`, from the SDK runtime | `{peripherals.thread.url}` in its compose: `http://127.0.0.1:8081` |
+| `matterjs-server` | `ble/bluez` (optional) | an adapter [reserved](#reservations) for it, else unbound | `{peripherals.ble.params[index]}` in its compose |
+| `otbr` | `thread/spinel` | a Thread stick | `{peripherals.thread.url}` in its compose: the stick's path |
 
-A controller that declares `Need("thread", ["otbr-rest"])` itself, as ESPHome does [below](#esphome-an-optional-border-router), finds the same URL in `dependencies.links["thread"].url`.
+A controller that declares `Need("thread", ["otbr-rest"])` itself, as ESPHome does [below](#esphome-an-optional-border-router-and-offers), finds the same URL in `self.peripherals.endpoint("thread").url`.
 
 `matterjs-server` needs only `ip` to run, so Matter starts on any hub. Its optional Thread need makes the Hub run a border router whenever a stick can serve one. The Hub then learns the Thread network from the border router and passes it in `context.thread_dataset`; the context changes, and as Matter doesn't handle that in place (see [`context_did_change()`](controller.md#context_did_changebefore)), the Hub restarts it, and it hands the dataset to matterjs-server.
 
 If the user already runs a matter-server, they pin it as the `matter` provider. The Hub then doesn't run `MATTERJS_SERVER` and hands the controller that server's URL instead.
 
-Z-Wave follows the same pattern: its `zwave-js-server` service needs `zwave/serial-api` from the stick and provides `zwave/zwave-js-ws`, which the controller needs ([`config.py`](https://github.com/MajorDom-Systems/integration-zwave/tree/master/majordom_zwave/config.py)).
+See [Matter](../integrations/matter.md#bluetooth) for its two Bluetooth modes. Z-Wave follows the same pattern: its `zwave-js-server` service needs `zwave/serial-api` from the stick and provides `zwave/zwave-js-ws`, which the controller needs ([`config.py`](https://github.com/MajorDom-Systems/integration-zwave/tree/master/majordom_zwave/config.py)).
 
-### ESPHome: an optional border router
+### ESPHome: an optional border router, and offers
 
-ESPHome devices on Wi-Fi need nothing. Devices on Thread reach the hub over IP through a border router ([`controller.py`](https://github.com/MajorDom-Systems/integration-esphome/tree/master/majordom_esphome/controller.py)):
+ESPHome nodes are found over mDNS. Devices on Thread reach the hub over IP through a border router; Wi-Fi devices need nothing more ([`controller.py`](https://github.com/MajorDom-Systems/integration-esphome/tree/master/majordom_esphome/controller.py)):
 
 ```python
 class ESPhomeController(AbstractController[ESPhomeDevice, ESPhomeParameter]):
     name = "esphome"
-    # Devices on Thread reach the hub through a border router; Wi-Fi devices need nothing.
-    needs = [Need("thread", ["otbr-rest"], required=False)]
+    # Nodes are found over mDNS. Devices on Thread reach the hub through a border router; Wi-Fi devices need nothing.
+    # The router sets unprovisioned nodes up over Improv BLE; the nodes that proxy Bluetooth are offered back to it.
+    needs = [
+        Need("mdns", ["dns-sd"]),
+        Need("thread", ["otbr-rest"], required=False),
+        Need("ble", ["router"], required=False),
+    ]
 ```
 
-The controller never reads the link. Declaring it is enough: the Hub runs a border router when a stick can serve Thread, and ESPHome runs either way.
+The controller never reads the Thread endpoint. Declaring it is enough: the Hub runs a border router when a stick can serve Thread, and ESPHome runs either way. Each connected node with `bluetooth_proxy` is [offered](#offering-endpoints) as `ble/esphome-proxy`, and the router hears through it.
 
 ## When a radio comes or goes
 
-- A required link is lost (the stick is unplugged, or switched to other firmware): the Hub stops the integration and tells the user it resumes when the radio is back. It starts again once the need is bound.
-- A link appears or moves, or an optional one is lost: the Hub calls [`peripheral_did_change()`](controller.md#peripheral_did_changechange). Unless it returns `True`, the Hub restarts the integration with the new links.
+- A required need is lost (the stick is unplugged, or switched to other firmware): the Hub stops the integration and tells the user it resumes when the radio is back. It starts again once the need is bound.
+- A bound need appears or moves, or an optional one is lost: the Hub calls [`peripheral_did_change()`](controller.md#peripheral_did_changechange). Unless it returns `True`, the Hub restarts the integration with the new peripherals.
 - Settings or context change: the Hub calls [`settings_did_change()`](controller.md#settings_did_changebefore) or [`context_did_change()`](controller.md#context_did_changebefore): return `True` when applied in place; the default (`False`) has the Hub restart the integration.
 - One of your services restarts (you [restarted it](controller.md#restarting-your-service-and-healing), or it crashed): the Hub isn't involved and the integration keeps running. Reconnect to it yourself.
 
 ## Without the Hub
 
-Standalone, you pass the links yourself, or let `majordom-transports` find them. See [Standalone Mode](standalone.md#connecting-to-radios-and-services).
+Standalone, the dev runner starts the runtime to bind them as the Hub does, or you pass the peripherals yourself. See [Standalone Mode](standalone.md#connecting-to-radios-and-services).
