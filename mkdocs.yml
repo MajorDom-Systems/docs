@@ -30,7 +30,7 @@ nav:
       - Quality Checklist: "device-integration/quality.md"
   - Hub:
       - API Reference: "hub/api.md"
-      - Radios and Transports: "hub/radios.md"
+      - The SDK Runtime: "hub/radios.md"
       - Multi-PAN Radio Images: "hub/radio-images.md"
       - Radios Without Docker (CM4): "hub/native-radios.md"
   - Integrations:

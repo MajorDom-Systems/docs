@@ -5,17 +5,13 @@
 # Edit this list to add/remove sources. `branch` defaults to master (the released source).
 integrations:
   - name: integration-sdk
-    title: Integration SDK
+    title: Integration SDK (with its runtime — radios, firmware, services, the Bluetooth router)
     repo: https://github.com/MajorDom-Systems/integration-sdk
     branch: master
   - name: integration-template
     title: Integration template (scaffold)
     repo: https://github.com/MajorDom-Systems/integration-template
     branch: master
-  - name: majordom-transports
-    title: Transports (radios, firmware, services)
-    repo: https://github.com/MajorDom-Systems/majordom-transports
-    branch: develop
   - name: integration-matter
     title: Matter integration (example)
     repo: https://github.com/MajorDom-Systems/integration-matter

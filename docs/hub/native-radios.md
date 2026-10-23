@@ -27,4 +27,5 @@ Put both into `/opt/matterjs-server`. It keeps its data in `/home/admin/matter-d
 - Paths in the units are hardcoded to a development layout (`/home/admin/ot-br-posix/…`, `/home/admin/build-zigbeed/…`, `/opt/matterjs-server`, `/home/admin/matter-data-js`). Parameterise them and install to system locations before shipping.
 - Newer `zigbeed` builds support `--ezsp-listen 127.0.0.1 --ezsp-listen-port 9999`. That drops the socat unit; point bellows at `socket://127.0.0.1:9999`, like the container path.
 - `cpcd`, the RCP firmware, `zigbeed` and the otbr CPC vendor files must all come from the same SiSDK generation (2025.6.3, CPC 4.7.1).
+- matterjs-server here uses `hci0` itself, while the Hub's Bluetooth router takes every adapter. Reserve it for matterjs-server (`PUT /v1/api/hardware/reservations/matterjs-server/ble` with `{"url": "hci0"}`, see [Reservations](radios.md#reservations)), or run matterjs-server with `BLE_PROXY=true` so the Matter integration lends it the router.
 - This is a reference of the working configuration. It isn't part of `setup.sh` or the OS image build yet.

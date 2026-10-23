@@ -1,6 +1,6 @@
 # Multi-PAN Radio Images
 
-One Silicon Labs multi-PAN RCP can serve Zigbee and Thread at the same time, with no reflashing to switch protocols. The `silabs-multiprotocol` service of [`majordom-transports`](https://github.com/MajorDom-Systems/majordom-transports) runs it as one container image. Two images exist, for two SDK generations.
+One Silicon Labs multi-PAN RCP can serve Zigbee and Thread at the same time, with no reflashing to switch protocols. The `silabs-multiprotocol` service of the [SDK runtime](radios.md) runs it as one container image (`majordom_integration_sdk/runtime/peripherals/services/images/`). Two images exist, for two SDK generations.
 
 ```
 USB stick or UART (multi-PAN RCP)
@@ -24,6 +24,18 @@ Host programs and RCP firmware must come from the same SDK release. With a misma
 - **The stick's tty is not pinned.** `RADIO_DEVICE` may be a `/dev/serial/by-id` path. It is resolved at every start, and a USB re-enumeration kills `cpcd`, so the container restarts onto the stick's new tty.
 - **Transmit power.** The radio sends at Zigbee's power. `ot-ctl txpower` reads back but isn't applied.
 - **No energy scans.** Don't run `ot-ctl scan energy` on this stack. It wedges `otbr-agent` until restarted: the host waits without a timeout for a result the multi-PAN RCP never sends, and RCP recovery doesn't reset a multi-PAN RCP (openthread [#13702](https://github.com/openthread/openthread/pull/13702), [#11273](https://github.com/orgs/openthread/discussions/11273), [#11277](https://github.com/openthread/openthread/pull/11277)). If one is needed, scan a single channel briefly under a timeout: `timeout 15 ot-ctl scan energy 10 15`.
+
+### Bluetooth over CPC
+
+A multi-PAN RCP whose firmware also carries the Bluetooth controller serves HCI over CPC next to 802.15.4: `cpcd`'s `cpc-hci-bridge` exposes it as a pty, and `btattach` makes that a BlueZ adapter (`hciN`), which the [Bluetooth router](../device-integration/discovery/ble.md) hears through like any other. The runtime then offers the radio's `ble/silabs-cpc-hci` endpoint too, with the adapter in `params["hci"]` once the multiprotocol service attaches it.
+
+It is offered only when the radio's firmware has Bluetooth: from the driver's firmware metadata (`RadioDriver.bluetooth`, the firmware names that serve it) where it knows, else from `cpc_hci.has_bluetooth(path)`, asked once per radio and saved. None of the current builds serves Bluetooth: NabuCasa's multi-PAN RCP is 802.15.4 only, so `bluetooth` stays empty.
+
+`has_bluetooth` is not verified on hardware and answers no for now. To verify on a radio with a Bluetooth-capable multi-PAN build:
+
+1. Which CPC endpoint answers for Bluetooth on that firmware.
+2. How to ask `cpcd` without taking the port from the multiprotocol container.
+3. The `hciN` the bridge comes up as, to fill `params["hci"]`.
 
 ### Why Zigbee forms inside the container
 
