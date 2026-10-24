@@ -40,9 +40,9 @@ The Hub and the standalone runner install `majordom-integration-sdk[runtime,ble,
 5. **Peripherals.** Each integration gets its bound endpoints by family (`Runtime.peripherals(slug)`), or `None` while a required need can't be met (`Runtime.unbound(slug)` says why), and its `Platform` with its settings, the context, its services and its offers (`Runtime.platform(slug, base)`). Each provider hears about what was bound to it.
 6. **Sync.** The Hub brings every integration in line:
     - it starts an integration once its required needs are bound;
-    - it stops one when a required need is lost, and tells the user it resumes when the radio is back (error `needs-unbound`);
+    - it stops one when a required need is lost, and tells the user it resumes when the radio is back (error `hub-needs-unbound`);
     - it restarts one when its peripherals, settings or context changed, unless its hooks (`peripheral_did_change()`, …) handled them;
-    - it retries a failed start after 5, 30 and 120 seconds, then reports the integration failed (error `start-failed`);
+    - it retries a failed start after 5, 30 and 120 seconds, then reports the integration failed (error `hub-start-failed`);
     - it restarts a running integration that reports `still_running=False`;
     - it keeps each integration's active errors in memory, sends the app `majordom_did_encounter_error` when one is new or changed and `majordom_did_resolve_error` when it is resolved, and drops them all when the integration stops or restarts.
 
