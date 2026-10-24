@@ -25,12 +25,13 @@ An integration must never take the Hub down, and never spam the logs. The Hub is
 - [ ] **No environment variables and no device paths.** Radios, servers, discovery and options arrive from the Hub. Nothing is read from the environment or hardcoded, so the integration works with whatever stick the user plugs in.
 - [ ] **Everything external declared as a [`Need`](radios.md#needs)** — radios, `ble/router`, `mdns/dns-sd`, `upnp/ssdp`, and the companion servers it brings as [`Service`](radios.md#bringing-your-own-service)s. Never raw Bluetooth (`ble/bluez`): the router holds every adapter. Optional where the integration still works without it.
 - [ ] **Resolved needs read from `self.peripherals`**, and the Hub-provided app services (output, repository, settings, context) from `self.platform`.
+- [ ] **Integration-level problems reported with a stable error id** (`IntegrationError`) and resolved when they clear (`controller_did_resolve_error`), e.g. once the server is back.
 
 ## Tested — vital
 
 - [ ] **End-to-end automated tests** drive the controller through pair → command → fetch → events → `unpair` against a **virtual/simulated device** (the SDK's `majordom_integration_sdk.testing` doubles), with no physical hardware required.
 - [ ] **Failure paths are tested** — offline device, transport error, rejected credentials — asserting the integration degrades gracefully (sets `available`/`last_error`, does not raise).
-- [ ] **Behaviour without a required radio is tested.** Losing the radio or service while running reports `controller_did_encounter_error(..., still_running=False)`, so the Hub restarts the integration, instead of hanging; an unbound optional need doesn't stop it from starting.
+- [ ] **Behaviour without a required radio is tested.** Losing the radio or service while running reports an `IntegrationError` with `still_running=False`, so the Hub restarts the integration, instead of hanging; an unbound optional need doesn't stop it from starting.
 - [ ] **Broad device coverage** where the protocol has many device/parameter types — exercise the full mapping surface, not one happy-path device. (A protocol-provided virtual-device catalogue, run in CI, is the ideal.)
 
 ## Maintainable — important
@@ -63,4 +64,4 @@ The reliability rules above hinge on one habit: **catch errors at the edges and 
 - Never let an exception cross into a `self.platform.output.*` call — the Hub treats those callbacks as trusted and an exception there can disrupt Hub-side handling.
 - Log an expected failure once at the appropriate level; don't re-log the same condition every poll.
 
-For controller-level problems that aren't tied to a single device (e.g. the backend/radio went away entirely), call `controller_did_encounter_error` — it surfaces a plain-language message to the user, and `still_running=False` marks the whole integration as failed. See [Reporting errors to the user](controller.md#controller_did_encounter_error).
+For controller-level problems that aren't tied to a single device (e.g. the backend/radio went away entirely), call `controller_did_encounter_error` with an `IntegrationError` — it surfaces a plain-language message to the user until you resolve its id with `controller_did_resolve_error`, and `still_running=False` marks the whole integration as failed. See [Reporting errors to the user](controller.md#controller_did_encounter_error).

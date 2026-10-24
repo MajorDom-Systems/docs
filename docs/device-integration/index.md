@@ -75,6 +75,7 @@ you implement them. The list below is the reference.
 - [ ] Graceful shutdown in `stop`
 - [ ] Everything external declared as a `Need` — radios, `ble/router`, `mdns/dns-sd`, `upnp/ssdp`, the services it brings; never raw Bluetooth
 - [ ] Resolved needs read from `self.peripherals`, Hub-provided app services from `self.platform`
+- [ ] Integration-level problems reported with a stable error id (`IntegrationError`) and resolved when they clear
 - [ ] **Quality:** once it's functional, the integration meets the [Quality Checklist](quality.md) — reliability, tests, and maintainability — before release
 
 See [Implementing a Controller](controller.md) for details, or [Example Integration](example-integration.md) for a narrative walkthrough of the template's controller. The template README mirrors this checklist as its **Progress** list, so you can track your integration against it directly in your repo.
