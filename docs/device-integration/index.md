@@ -12,7 +12,9 @@ Don't start from a blank folder. Every integration is scaffolded from the **[`in
 
 ### Licensing
 
-The SDK and the official integrations are released under [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/) — free for noncommercial use. For commercial licensing or partnership, see <https://parker-industries.org/partnership>.
+The SDK and the integration template are released under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0): use them freely, for MajorDom integrations or in your own projects, including library mode. We do ask you to keep what you build on them open source.
+
+Most official integrations are source-available for noncommercial use. For a commercial license, contact us — we're open to partnership: <https://parker-industries.org/partnership>.
 
 ---
 
