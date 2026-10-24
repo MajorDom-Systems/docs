@@ -136,7 +136,9 @@ Strings in `compose` are templates:
 | `{host.interface}` | the hub's network interface: a wired one with a link, else the one of the default route |
 | `{host.uid}`, `{host.gid}` | the hub's user and group, for a container that should write its data as the hub |
 
-A value of `None` renders empty. A format spec renders text by the value: `{x:&uart-flow-control}` renders `&uart-flow-control` when the flag `x` is true, and `{x:!true}` renders `true` when `x` is empty, e.g. `"BLE_PROXY": "{peripherals.ble.url:!true}"` turns the proxy on while no adapter is bound. Write `{{` and `}}` for literal braces. (`{device}`, a stick's path, belongs to the radio drivers in the runtime, not to services.)
+A value of `None` renders empty. A format spec renders text by the value: `{x:&uart-flow-control}` renders `&uart-flow-control` when the flag `x` is true, `{x:!true}` renders `true` when `x` is empty, e.g. `"BLE_PROXY": "{peripherals.ble.url:!true}"` turns the proxy on while no adapter is bound, and `{x:?dbus}` renders `dbus` when `x` isn't empty. A list item that renders empty is left out, so `"volumes": ["{data}:/data", "{peripherals.ble.url:?/run/dbus:/run/dbus:ro}"]` mounts the system bus only while an adapter is bound. Write `{{` and `}}` for literal braces. (`{device}`, a stick's path, belongs to the radio drivers in the runtime, not to services.)
+
+The `params` of the endpoints a service `provides` are templates too, rendered the same way. That is how a consumer learns what its service got: matterjs-server provides `params={"adapter": "{peripherals.ble.url}"}`, so Matter reads `self.peripherals.endpoint("matter").params["adapter"]`, empty while no adapter is bound to the service. When it changes, the consumer's `matter` endpoint changes, and the Hub calls [`peripheral_did_change()`](controller.md#peripheral_did_changechange).
 
 Run the service on the host network and name the ports it listens on. `ports={"api": 5580}` says which host port it *prefers*, not a fixed one: the runtime uses it when free and otherwise assigns another (45800–45999), keeps the choice across restarts, and fills `{ports.<name>}` in the compose and in the `provides` URLs. Pass the port to the server through `compose` (an environment variable or a command-line argument), and write `{ports.<name>}` in the URLs it provides. See [Matter](#matter-with-its-own-service) for a complete service.
 
@@ -194,7 +196,10 @@ MATTERJS_SERVER = Service(
     # Thread is optional: without a border router Matter still works over Wi-Fi and Ethernet. Bluetooth too: it has an
     # adapter of its own only when one is reserved for it (ble_mode "direct"), the router has every other.
     needs=[Need("ip"), Need("thread", ["otbr-rest"], required=False), Need("ble", ["bluez"], required=False)],
-    provides=[Endpoint("matter", "matter-server", "ws://127.0.0.1:{ports.api}")],  # the base URL: /ws, /ble
+    # the base URL: /ws, /ble; "adapter" tells the controller whether an adapter is bound here (empty: none)
+    provides=[
+        Endpoint("matter", "matter-server", "ws://127.0.0.1:{ports.api}", params={"adapter": "{peripherals.ble.url}"})
+    ],
     ports={"api": 5580},  # preferred: another one when 5580 is taken
     compose={
         "image": "ghcr.io/matter-js/matterjs-server@sha256:…",
@@ -206,8 +211,12 @@ MATTERJS_SERVER = Service(
             "PORT": "{ports.api}",  # the server listens where the runtime says
             "BLE_PROXY": "{peripherals.ble.url:!true}",  # Bluetooth comes from the hub, unless an adapter is reserved
             "BLUETOOTH_ADAPTER": "{peripherals.ble.params[index]}",
+            "NOBLE_BINDINGS": "{peripherals.ble.url:?dbus}",  # an adapter goes through the host's BlueZ, not as root
         },
-        "volumes": ["{data}:/data"],
+        "volumes": [
+            "{data}:/data",
+            "{peripherals.ble.url:?/run/dbus:/run/dbus:ro}",  # the system bus only with an adapter: gone without one
+        ],
     },
 )
 ```
@@ -242,7 +251,7 @@ Matter brings matterjs-server (its service) but needs a Thread border router, wh
 | `MatterController` | `matter/matter-server` | `matterjs-server`, Matter's own service | `self.peripherals.endpoint("matter").url`: `ws://127.0.0.1:5580`, or another port when 5580 is taken |
 | `MatterController` | `ble/router` (optional) | the runtime's router | `self.peripherals.instance("ble")`, lent to matterjs-server's `/ble` |
 | `matterjs-server` | `thread/otbr-rest` (optional) | `otbr`, from the SDK runtime | `{peripherals.thread.url}` in its compose: `http://127.0.0.1:8081` |
-| `matterjs-server` | `ble/bluez` (optional) | an adapter [reserved](#reservations) for it, else unbound | `{peripherals.ble.params[index]}` in its compose |
+| `matterjs-server` | `ble/bluez` (optional) | an adapter [reserved](#reservations) for it, else unbound | `{peripherals.ble.params[index]}` in its compose; the controller sees it as the `adapter` param of its `matter` endpoint |
 | `otbr` | `thread/spinel` | a Thread stick | `{peripherals.thread.url}` in its compose: the stick's path |
 
 A controller that declares `Need("thread", ["otbr-rest"])` itself, as ESPHome does [below](#esphome-an-optional-border-router-and-offers), finds the same URL in `self.peripherals.endpoint("thread").url`.

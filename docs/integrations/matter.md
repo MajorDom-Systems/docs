@@ -15,7 +15,7 @@
 - **Services it brings:** `matterjs-server`, which the Hub runs while Matter is in use. Thread is an optional need of the service, so a border router runs whenever a stick can serve one.
 - **Settings:** *Bluetooth* (`ble_mode`): `router` (the default) or `direct`, see [below](#bluetooth).
 - **Context:** the Hub's Wi-Fi (`context.wifi`) and Thread network (`context.thread_dataset`), handed to matterjs-server so new devices join them.
-- **OS / permissions:** Bluetooth for commissioning: the Hub's, through BlueZ (D-Bus), in `router` mode; only matterjs-server's in `direct` mode. mDNS on the LAN for on-network discovery.
+- **OS / permissions:** Bluetooth for commissioning: the Hub's, through BlueZ (D-Bus), in `router` mode; matterjs-server's, through the host's BlueZ over the system bus, in `direct` mode. mDNS on the LAN for on-network discovery.
 
 ## Bluetooth
 
@@ -34,11 +34,25 @@ PUT /v1/api/hardware/reservations/matterjs-server/ble
 {"url": "hci1"}
 ```
 
-The runtime binds that adapter to matterjs-server's optional `ble/bluez` need, ahead of the router. Its compose gets `BLUETOOTH_ADAPTER` (the adapter's `index`) and `BLE_PROXY` off (`{peripherals.ble.url:!true}` renders empty once an adapter is bound). `BLUETOOTH_ADAPTER` follows matterjs-server's `--bluetooth-adapter` flag; its README documents only the flag, so the environment name is unverified.
+The runtime binds that adapter to matterjs-server's optional `ble/bluez` need, ahead of the router. Its compose then gets:
+
+- `BLUETOOTH_ADAPTER`: the adapter's `index` (`0` for `hci0`), matterjs-server's `--bluetooth-adapter`.
+- `BLE_PROXY` off: `{peripherals.ble.url:!true}` renders empty once an adapter is bound. matterjs-server would prefer the proxy over the adapter, with a warning, if both were set.
+- `NOBLE_BINDINGS=dbus` and the system bus, `/run/dbus:/run/dbus:ro`. noble's default backend opens a raw HCI socket, which needs root; matterjs-server runs as the hub's user, so it talks to the host's `bluetoothd` over D-Bus instead. D-Bus authenticates it by its uid, which matches the host's as the service runs with `userns_mode: host`.
+
+In `router` mode none of these are set and the system bus stays out of the container. The matter endpoint's `adapter` param tells the controller which adapter matterjs-server got: empty while none is bound.
+
+Requirements on the host:
+
+- BlueZ (`bluetoothd`) running, and the adapter powered (`bluetoothctl power on`, or `AutoEnable=true` in `/etc/bluetooth/main.conf`).
+- A D-Bus policy that lets the hub's user call `org.bluez`. BlueZ's stock policy lets any user; a stricter one must allow it.
+- The adapter left alone by anything else: the reservation keeps it from the Hub's router.
+
+If `ble_mode` is `direct` but no adapter is reserved for matterjs-server, or the reserved one is gone, the integration reports the error `ble-adapter-not-reserved`: devices can't be added over Bluetooth until an adapter is reserved for matterjs-server or Bluetooth is set to `router`. Either change restarts the integration, which clears the error. A matter-server you run yourself (pinned) has no `adapter` param, so the integration doesn't warn about it.
 
 matterjs-server's API can commission over Bluetooth (`commission_with_code`) but can't list commissionable Bluetooth devices: `discover_commissionable_nodes` is mDNS only. So in this mode the controller lists no Bluetooth devices. It offers one discovery, "Matter device (enter its pairing code)", which takes a manual pairing code or the QR. matterjs-server then finds the device over Bluetooth by the code's discriminator and commissions it. The discovery is offered again after each pairing, so more devices can be added the same way. On-network (mDNS) discovery is the same in both modes.
 
-Use it where the Hub process has no usable Bluetooth or D-Bus. The case it was made for: the CI hardware runner, a de-rooted (userns-remapped) container, where D-Bus SASL EXTERNAL rejects the remapped uid, so the Hub's adapters can't reach `bluetoothd`. Passing Bluetooth into that container would need `userns=host` (real root) and re-privilege the runner. In `direct` mode only matterjs-server, which already runs with `userns_mode: host`, touches the radio, so the runner stays de-rooted.
+Use it where the Hub process has no usable Bluetooth or D-Bus. The case it was made for: the CI hardware runner, a de-rooted (userns-remapped) container, where D-Bus SASL EXTERNAL rejects the remapped uid, so the Hub's adapters can't reach `bluetoothd`. Passing Bluetooth into that container would need `userns=host` (real root) and re-privilege the runner. In `direct` mode only matterjs-server, which already runs with `userns_mode: host`, touches the radio: over D-Bus with a uid `bluetoothd` accepts, so the runner stays de-rooted.
 
 A permanent "enter code" discovery stands in for a dedicated "add a Matter device by code" action, which would be the nicer flow.
 

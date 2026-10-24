@@ -95,6 +95,8 @@ When two radios can serve the same family, e.g. two Thread sticks, the user can 
 
 A reservation keeps one endpoint for one consumer (an integration slug or a service name), bound to it before anyone else, the providers' `many` needs included. It is how one Bluetooth adapter goes to `matterjs-server` instead of the router (Matter's [direct mode](../integrations/matter.md#bluetooth)): `PUT /hardware/reservations/matterjs-server/ble` with `{"url": "hci1"}`. `{"url": null}` gives it back. In library mode: `await runtime.reserve(owner, family, url)`.
 
+A Bluetooth adapter reserved this way is driven through the host's BlueZ over D-Bus, so `bluetoothd` must run and the adapter be powered; see Matter's [direct mode](../integrations/matter.md#direct) for the requirements and the `ble-adapter-not-reserved` error when Matter is in direct mode without a reservation.
+
 ## In-process providers
 
 Besides radios and services, the runtime runs peripherals in its own process, each offered as one shared endpoint with its `instance`:
