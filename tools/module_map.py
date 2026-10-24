@@ -25,7 +25,7 @@ def n(id,label,domain,kind,base='—',impl=None,uses=None,inp=None,out=None,deps
             'inp':inp or [],'out':out or [],'deps':deps or [],'pname':pname}
 N=[
  n('coord','Coordinator','core','class · composition root',impl=['ControllerOutput'],
-   inp=[['ControllerOutput',['controller_did_receive_events(events)','controller_did_receive_discovery / _update_discovery / _lose_discovery','controller_did_connect_device / _lose_device','controller_did_encounter_error / _emit_notification']],
+   inp=[['ControllerOutput',['controller_did_receive_events(events)','controller_did_receive_discovery / _update_discovery / _lose_discovery','controller_did_connect_device / _lose_device','controller_did_encounter_error / _resolve_error / _emit_notification']],
         ['own',['start() / stop()','on_hub_initialized() · factory_reset() · reconnect_cloud()']]],
    out=['ws_sender.send_*: WsMessageSenderRelay   (→ app / cloud)'],
    deps=['controller_service: RelayController','automation_service: AutomationService','service_manager: ServiceManager','event_bus: EventBusImpl','(builds & owns every Service)']),
@@ -90,7 +90,7 @@ N=[
    out=['on_save: Callable   (→ AutomationService.update_automation / update_scene)'],
    deps=['directory: Path   (yaml files)']),
  n('relay','RelayController','devctl','class · domain boundary','—',impl=['ControllerOutput'],uses=['DeviceRepositoryProtocol'],
-   inp=[['ControllerOutput',['controller_did_receive_events(events)   ← from child controllers','controller_did_receive_discovery / _update / _lose_discovery','controller_did_connect_device / _lose_device','controller_did_encounter_error / _emit_notification']],
+   inp=[['ControllerOutput',['controller_did_receive_events(events)   ← from child controllers','controller_did_receive_discovery / _update / _lose_discovery','controller_did_connect_device / _lose_device','controller_did_encounter_error / _resolve_error / _emit_notification']],
         ['own',['send_command(command)   ◂ handlers · WsMessageHandler','pair_device(discovery, credentials) / unpair / identify / fetch','get_discoveries() / get_discovery(id) / ignore_discovery(id)','start_pairing_window(sec) / add_controller(c) / start() / stop()']]],
    out=['platform.output: ControllerOutput   (→ Coordinator)'],
    deps=['platform.make_device_repository(): DeviceRepositoryProtocol   (→ DeviceRepository, scoped)','runtime: Runtime   (binds needs → controller.peripherals / platform)','_controllers: dict[str, AbstractController]   (→ Matter/Zigbee/HomeKit)','_ignored_repo: IgnoredDiscoveryRepository']),
@@ -105,7 +105,7 @@ N=[
    out=['platform.output: ControllerOutput   (→ Hub, via controller_did_*)','platform.offers: Offers   (endpoints it lends others)'],
    deps=['platform.make_device_repository(): DeviceRepositoryProtocol','platform.documents_folder: Path · settings · context · services','peripherals: Peripherals   (needs bound by the runtime: endpoint() / endpoints() / instance())']),
  n('ctrlout','ControllerOutput','sdk','Protocol',pname='ControllerOutput',
-   inp=[['own (protocol)',['controller_did_receive_discovery(controller, discovery)','controller_did_update_discovery / _lose_discovery(id)','controller_did_connect_device(id) / _lose_device(id)','controller_did_receive_events(controller, events)','controller_did_encounter_error(controller, message, still_running)','controller_did_emit_notification(controller, notification)']]]),
+   inp=[['own (protocol)',['controller_did_receive_discovery(controller, discovery)','controller_did_update_discovery / _lose_discovery(id)','controller_did_connect_device(id) / _lose_device(id)','controller_did_receive_events(controller, events)','controller_did_encounter_error(controller, error)','controller_did_resolve_error(controller, error_id)','controller_did_emit_notification(controller, notification)']]]),
  n('dzc','DNSSD','sdk','mdns/dns-sd · runtime provider ZeroconfDiscoveryService',
    inp=[['own',['register(listener, services: set[str]) -> cancel','start() / stop() · async_zeroconf']]],
    out=['listener: ZeroconfDiscoveryListener   (zeroconf_did_discover / _update / _remove_service(ZeroconfDiscoveryInfo))']),

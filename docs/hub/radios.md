@@ -40,10 +40,11 @@ The Hub and the standalone runner install `majordom-integration-sdk[runtime,ble,
 5. **Peripherals.** Each integration gets its bound endpoints by family (`Runtime.peripherals(slug)`), or `None` while a required need can't be met (`Runtime.unbound(slug)` says why), and its `Platform` with its settings, the context, its services and its offers (`Runtime.platform(slug, base)`). Each provider hears about what was bound to it.
 6. **Sync.** The Hub brings every integration in line:
     - it starts an integration once its required needs are bound;
-    - it stops one when a required need is lost, and tells the user it resumes when the radio is back;
+    - it stops one when a required need is lost, and tells the user it resumes when the radio is back (error `needs-unbound`);
     - it restarts one when its peripherals, settings or context changed, unless its hooks (`peripheral_did_change()`, …) handled them;
-    - it retries a failed start after 5, 30 and 120 seconds, then reports the integration failed;
-    - it restarts a running integration that reports `still_running=False`.
+    - it retries a failed start after 5, 30 and 120 seconds, then reports the integration failed (error `start-failed`);
+    - it restarts a running integration that reports `still_running=False`;
+    - it keeps each integration's active errors in memory, sends the app `majordom_did_encounter_error` when one is new or changed and `majordom_did_resolve_error` when it is resolved, and drops them all when the integration stops or restarts.
 
 ### The Thread network
 
@@ -117,7 +118,7 @@ All paths are under `/v1/api`; schemas are in the [API Reference](api.md). A rad
 | `POST` | `/hardware/radios/{id}/forget` | forget what a radio is; it is identified again while plugged in |
 | `PUT` | `/hardware/providers/{family}` | prefer a radio or service for a family |
 | `PUT` | `/hardware/reservations/{owner}/{family}` | keep one endpoint (`{"url": "hci1"}`) for one integration or service, ahead of the router; `null` gives it back |
-| `GET` | `/integrations` | per integration: `status` (`running`, `starting`, `waiting` for a radio, `failed`), `error`, its needs, and its settings scopes |
+| `GET` | `/integrations` | per integration: `status` (`running`, `starting`, `waiting` for a radio, `failed`), `error`, the active `errors` (`id`, `message`, `still_running`), its needs, and its settings scopes |
 | `GET` | `/settings/{scope}` | values and JSON schema of an integration's (slug), a service's (name) or the hub's (`hub`) settings |
 | `PATCH` | `/settings/{scope}` | change some values; whatever uses them restarts |
 
