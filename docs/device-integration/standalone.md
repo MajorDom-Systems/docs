@@ -134,7 +134,7 @@ To have the runtime bind the needs instead, drive the controller through a `Runn
 from pathlib import Path
 from majordom_integration_sdk.dev import Runner, build_platform, build_runtime
 
-runtime = build_runtime(ExampleController, Path(".majordom-dev/runtime"), docker=False)
+runtime = build_runtime(ExampleController, Path(".majordom-dev/runtime"), is_docker_enabled=False)
 runner = Runner(ExampleController, build_platform(integration=ExampleController.name), runtime)
 await runner.start()  # starts the runtime; the controller starts once its required needs are bound
 controller = runner.controller
@@ -150,7 +150,7 @@ under the Hub. How much of it runs is up to you:
 | Level | You run | The runtime runs | Pass |
 |---|---|---|---|
 | Full | nothing | everything: providers, radios, services in Docker | nothing |
-| Partial | some of it, e.g. your own border router or no Docker | the rest | `pinned={...}`, `docker=False`, `scan=False` |
+| Partial | some of it, e.g. your own border router or no Docker | the rest | `pinned={...}`, `is_docker_enabled=False`, `is_scan_enabled=False` |
 | Bare | the radio or server | nothing (library mode) | `peripherals={...}` |
 
 ### Full: everything automatic
@@ -178,8 +178,8 @@ from majordom_zwave import ZwaveController
 
 asyncio.run(run_controller(
     ZwaveController,
-    docker=False,  # run the containers yourself; the runtime still writes the compose.json it would have run
-    scan=False,  # the stick lives behind your zwave-js-server
+    is_docker_enabled=False,  # run the containers yourself; the runtime still writes the compose.json it would have run
+    is_scan_enabled=False,  # the stick lives behind your zwave-js-server
     pinned={"zwave": Endpoint("zwave", "zwave-js-ws", "ws://localhost:3000")},
 ))
 ```
@@ -224,7 +224,7 @@ runtime = Runtime(
     Path("radios"),  # where it keeps its state and the services' data
     {"matter": MatterController, "zwave": ZwaveController},  # by slug, bound in this order
     pinned={"zwave": Endpoint("zwave", "zwave-js-ws", "ws://my-zwave:3000")},
-    scan=False,  # or devices={"stick": "/dev/ttyUSB0"}: this device only
+    is_scan_enabled=False,  # or devices={"stick": "/dev/ttyUSB0"}: this device only
 )
 await runtime.start()  # starts the providers, finds sticks, binds, runs services, keeps watching
 runtime.peripherals("matter")  # {"matter": Endpoint("matter", "matter-server", "ws://127.0.0.1:5580"), "ble": …}; None while a required need is unbound

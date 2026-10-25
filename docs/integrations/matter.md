@@ -58,6 +58,6 @@ A permanent "enter code" discovery stands in for a dedicated "add a Matter devic
 
 ## Standalone
 
-`run_controller(MatterController)` runs matterjs-server in Docker, as the Hub does. Without Docker, run a matter-server yourself and pin its base URL: `run_controller(MatterController, docker=False, pinned={"matter": Endpoint("matter", "matter-server", "ws://localhost:5580")})`, or `pin matter ws://localhost:5580` in the CLI. Thread devices also need an OpenThread Border Router. See [Standalone Mode](../device-integration/standalone.md#connecting-to-radios-and-services).
+`run_controller(MatterController)` runs matterjs-server in Docker, as the Hub does. Without Docker, run a matter-server yourself and pin its base URL: `run_controller(MatterController, is_docker_enabled=False, pinned={"matter": Endpoint("matter", "matter-server", "ws://localhost:5580")})`, or `pin matter ws://localhost:5580` in the CLI. Thread devices also need an OpenThread Border Router. See [Standalone Mode](../device-integration/standalone.md#connecting-to-radios-and-services).
 
 For the code behind this, see [Connecting to Radios and Services](../device-integration/radios.md#matter-with-its-own-service).

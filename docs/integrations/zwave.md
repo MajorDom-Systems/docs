@@ -21,4 +21,4 @@
 
 ## Standalone
 
-`run_controller(ZwaveController)` finds the stick and runs `zwave-js-server` for it, as the Hub does. Without Docker, run `zwave-js-server` yourself and pin it: `run_controller(ZwaveController, docker=False, pinned={"zwave": Endpoint("zwave", "zwave-js-ws", "ws://localhost:3000")})`. See [Standalone Mode](../device-integration/standalone.md#connecting-to-radios-and-services).
+`run_controller(ZwaveController)` finds the stick and runs `zwave-js-server` for it, as the Hub does. Without Docker, run `zwave-js-server` yourself and pin it: `run_controller(ZwaveController, is_docker_enabled=False, pinned={"zwave": Endpoint("zwave", "zwave-js-ws", "ws://localhost:3000")})`. See [Standalone Mode](../device-integration/standalone.md#connecting-to-radios-and-services).
