@@ -87,13 +87,13 @@ The runtime runs the Bluetooth router (`ble/router`), DNS-SD (`mdns/dns-sd`) and
 needs = [Need("mdns", ["dns-sd"]), Need("ble", ["router"], required=False)]
 
 async def start(self):
-    dns_sd: DNSSD = self.peripherals.instance("mdns")
-    self._cancel = dns_sd.register(self, {"_myprotocol._tcp.local."})
+    zeroconf: Zeroconf = self.peripherals.instance("mdns")
+    self._cancel = zeroconf.register(self, {"_myprotocol._tcp.local."})
     if router := self.peripherals.instance("ble"):  # None on a hub without Bluetooth
         self._cancel_ble = router.register(self, [MY_SERVICE_UUID])
 ```
 
-Their contracts (`DNSSD`, `SSDP`, `BLERouter`, …) are in `majordom_integration_sdk.capabilities`; see [Discovery Services](discovery/index.md).
+Their contracts (`Zeroconf`, `SSDP`, `BLERouter`, …) are in `majordom_integration_sdk.capabilities`; see [Discovery Services](discovery/index.md).
 
 ### Offering endpoints
 

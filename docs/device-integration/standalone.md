@@ -337,6 +337,6 @@ the ones you care about.
 
 For tests, prefer the offline doubles in `majordom_integration_sdk.testing` —
 `build_test_platform()` (in-memory repository, temp-dir storage) plus `RecordingControllerOutput`
-(captures discoveries/events for assertions), and `FakeDNSSD`, `FakeSSDP`, `FakeBLERouter` with
+(captures discoveries/events for assertions), and `FakeZeroconf`, `FakeSSDP`, `FakeBLERouter` with
 `FakeBLESource`s and `FakeOffers` for the peripherals — over `build_platform` and real hardware. See
 [Example Integration](example-integration.md#testing) and any integration's `tests/`.

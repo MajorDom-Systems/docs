@@ -6,7 +6,7 @@ Three are available:
 
 | Capability | Need | Contract | Protocol |
 |---|---|---|---|
-| `mdns/dns-sd` | `Need("mdns", ["dns-sd"])` | [`DNSSD`](zeroconf.md) | mDNS / DNS-SD |
+| `mdns/dns-sd` | `Need("mdns", ["dns-sd"])` | [`Zeroconf`](zeroconf.md) | mDNS / DNS-SD |
 | `upnp/ssdp` | `Need("upnp", ["ssdp"])` | [`SSDP`](ssdp.md) | UPnP SSDP |
 | `ble/router` | `Need("ble", ["router"])` | [`BLERouter`](ble.md) | Bluetooth Low Energy, through every radio the hub has |
 

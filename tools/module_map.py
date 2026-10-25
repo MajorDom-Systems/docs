@@ -106,7 +106,7 @@ N=[
    deps=['platform.make_device_repository(): DeviceRepositoryProtocol','platform.documents_folder: Path · settings · context · services','peripherals: Peripherals   (needs bound by the runtime: endpoint() / endpoints() / instance())']),
  n('ctrlout','ControllerOutput','sdk','Protocol',pname='ControllerOutput',
    inp=[['own (protocol)',['controller_did_receive_discovery(controller, discovery)','controller_did_update_discovery / _lose_discovery(id)','controller_did_connect_device(id) / _lose_device(id)','controller_did_receive_events(controller, events)','controller_did_encounter_error(controller, error)','controller_did_resolve_error(controller, error_id)','controller_did_emit_notification(controller, notification)']]]),
- n('dzc','DNSSD','sdk','mdns/dns-sd · runtime provider ZeroconfDiscoveryService',
+ n('dzc','Zeroconf','sdk','mdns/dns-sd · runtime provider ZeroconfDiscoveryService',
    inp=[['own',['register(listener, services: set[str]) -> cancel','start() / stop() · async_zeroconf']]],
    out=['listener: ZeroconfDiscoveryListener   (zeroconf_did_discover / _update / _remove_service(ZeroconfDiscoveryInfo))']),
  n('dssdp','SSDP','sdk','upnp/ssdp · runtime provider SSDPDiscoveryService',
@@ -198,7 +198,7 @@ NAME2ID.update({'AbstractController':'absctrl','ControllerOutput':'ctrlout','Dev
 'GpioService':'gpio','HotspotService':'hotspot','MinuteTickerService':'ticker','schemas':'schemas','models':'models',
 'DeviceParameterChecker':'ckdev','RoomUnitChecker':'ckroom','CronChecker':'ckcron','TimeIntervalChecker':'cktime',
 'DeviceActionHandler':'hdev','FunctionActionHandler':'hfunc','TextActionHandler':'htext',
-'DNSSD':'dzc','SSDP':'dssdp','BLERouter':'dble'})
+'Zeroconf':'dzc','SSDP':'dssdp','BLERouter':'dble'})
 
 SECT={'core':(0,0),'server':(2,1),'automation':(90,1),'devctl':(180,1),'cloud':(-58,1),'hardware':(258,1),
 'providers':(26,2),'repositories':(-20,2),'integrations':(157,2),'sdk':(203,2),'model':(0,3),'utils':(-40,3)}

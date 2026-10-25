@@ -287,5 +287,5 @@ shape of the interface itself:
 ## Testing
 
 Test your controller against simulated devices with the SDK's `majordom_integration_sdk.testing`
-doubles — `build_test_platform()` plus `RecordingControllerOutput`, and `FakeDNSSD` for the `mdns` need — rather than real hardware.
+doubles — `build_test_platform()` plus `RecordingControllerOutput`, and `FakeZeroconf` for the `mdns` need — rather than real hardware.
 See [Testing](index.md#testing) and the template's own `tests/` for the pattern.

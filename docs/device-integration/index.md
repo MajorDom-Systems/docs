@@ -98,7 +98,7 @@ It needs the runtime extras: `pip install "majordom-integration-sdk[runtime,ble,
 
 ## Testing
 
-Integrations run their tests against a virtual/simulated device where possible, so CI doesn't need physical hardware. The SDK's `majordom_integration_sdk.testing` module provides the doubles: `build_test_platform()` wires a `RecordingControllerOutput`, an in-memory repository and temp-dir storage, and `FakeDNSSD`, `FakeSSDP`, `FakeBLERouter` (with `FakeBLESource`s) and `FakeOffers` stand in for the peripherals, so a test can drive your controller and assert on what it reported. The template's `tests/` show the pattern. (Real-hardware validation lives in the Hub, not in the integration package.)
+Integrations run their tests against a virtual/simulated device where possible, so CI doesn't need physical hardware. The SDK's `majordom_integration_sdk.testing` module provides the doubles: `build_test_platform()` wires a `RecordingControllerOutput`, an in-memory repository and temp-dir storage, and `FakeZeroconf`, `FakeSSDP`, `FakeBLERouter` (with `FakeBLESource`s) and `FakeOffers` stand in for the peripherals, so a test can drive your controller and assert on what it reported. The template's `tests/` show the pattern. (Real-hardware validation lives in the Hub, not in the integration package.)
 
 ## Notes
 

@@ -8,17 +8,17 @@ The runtime is part of the SDK: [`majordom_integration_sdk.runtime`](https://git
 majordom_integration_sdk/
 ├── peripherals/         # the language: Need, Endpoint, Service, Peripherals, PeripheralChange
 ├── capabilities/        # contracts of the in-process peripherals: BLERouter, BLESource, BLEConnection, BLELease,
-│                        #   BLEMatcher, SecureChannel (ble, ble_security), DNSSD (dns_sd), SSDP (ssdp)
+│                        #   BLEMatcher, SecureChannel (ble, ble_security), Zeroconf (zeroconf), SSDP (ssdp)
 ├── controller/          # AbstractController; Platform, Context, ServiceControl, Offers (platform.py); ControllerOutput (output.py)
 ├── schemas/             # data models; credentials.py: CredentialsType, CredentialsOption, ProvidedCredentials, WifiCredentials
 ├── repository/          # device repositories: in-memory, SQLite
-├── testing/             # build_test_platform, RecordingControllerOutput, FakeBLESource, FakeBLERouter, FakeDNSSD, FakeSSDP, FakeOffers
+├── testing/             # build_test_platform, RecordingControllerOutput, FakeBLESource, FakeBLERouter, FakeZeroconf, FakeSSDP, FakeOffers
 ├── dev/                 # the standalone runner (run_controller, build_platform, build_runtime, Runner) and CLI (run_cli)
 └── runtime/             # Runtime, Radio, PlatformSettings (runtime.py)
     └── peripherals/
         ├── hardware/    # radio drivers and their firmware (drivers.py)
         ├── services/    # the services the runtime brings (builtin.py: silabs-multiprotocol, otbr) and their images/
-        └── providers/   # in-process: ble/ (router.py, bluez.py, cpc_hci.py), dns_sd.py, ssdp.py
+        └── providers/   # in-process: ble/ (router.py, bluez.py, cpc_hci.py), zeroconf.py, ssdp.py
 ```
 
 | Extra | Installs | For |
@@ -29,7 +29,7 @@ majordom_integration_sdk/
 | `ble` | bleak, dbus-fast (Linux) | the Bluetooth router's adapters, pairing through BlueZ |
 | `discovery` | zeroconf | DNS-SD over mDNS |
 
-The Hub and the standalone runner install `majordom-integration-sdk[runtime,ble,discovery]`. An integration depends on the bare SDK, plus the extras its tests use (`ble` for `FakeBLESource`, `discovery` for `FakeDNSSD`).
+The Hub and the standalone runner install `majordom-integration-sdk[runtime,ble,discovery]`. An integration depends on the bare SDK, plus the extras its tests use (`ble` for `FakeBLESource`, `discovery` for `FakeZeroconf`).
 
 ## From a stick to a running integration
 

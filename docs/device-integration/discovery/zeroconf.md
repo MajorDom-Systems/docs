@@ -1,8 +1,8 @@
 # Zeroconf (mDNS / DNS-SD / Bonjour) Discovery
 
-## `DNSSD`
+## `Zeroconf`
 
-The `mdns/dns-sd` peripheral. Declare `Need("mdns", ["dns-sd"])`, and the runtime's browser (`ZeroconfDiscoveryService`, the SDK's `discovery` extra) arrives as `self.peripherals.instance("mdns")`. Its contract is `majordom_integration_sdk.capabilities.DNSSD`.
+The `mdns/dns-sd` peripheral. Declare `Need("mdns", ["dns-sd"])`, and the runtime's browser (`ZeroconfDiscoveryService`, the SDK's `discovery` extra) arrives as `self.peripherals.instance("mdns")`. Its contract is `majordom_integration_sdk.capabilities.Zeroconf`.
 
 ### `register`
 
@@ -36,19 +36,19 @@ The underlying `AsyncZeroconf` instance; `None` until it starts. Use only when y
 class ZeroconfDiscoveryListener(Protocol):
     async def zeroconf_did_discover_service(
         self,
-        zeroconf: DNSSD,
+        zeroconf: Zeroconf,
         info: ZeroconfDiscoveryInfo,
     ): ...
 
     async def zeroconf_did_update_service(
         self,
-        zeroconf: DNSSD,
+        zeroconf: Zeroconf,
         info: ZeroconfDiscoveryInfo,
     ): ...
 
     async def zeroconf_did_remove_service(
         self,
-        zeroconf: DNSSD,
+        zeroconf: Zeroconf,
         type_: str,
         name: str,
     ): ...
@@ -116,17 +116,17 @@ async def stop(self):
 
 # ZeroconfDiscoveryListener Implementation
 
-async def zeroconf_did_discover_service(self, zeroconf: DNSSD, info: ZeroconfDiscoveryInfo):
+async def zeroconf_did_discover_service(self, zeroconf: Zeroconf, info: ZeroconfDiscoveryInfo):
     if discovery := self._mapper._map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
         await self.platform.output.controller_did_receive_discovery(self, discovery)
 
-async def zeroconf_did_update_service(self, zeroconf: DNSSD, info: ZeroconfDiscoveryInfo):
+async def zeroconf_did_update_service(self, zeroconf: Zeroconf, info: ZeroconfDiscoveryInfo):
     if discovery := self._mapper._map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
         await self.platform.output.controller_did_update_discovery(self, discovery)
 
-async def zeroconf_did_remove_service(self, zeroconf: DNSSD, type_: str, name: str):
+async def zeroconf_did_remove_service(self, zeroconf: Zeroconf, type_: str, name: str):
     if discovery_id := self._mapper._name_to_id(name) and discovery_id in self._discoveries:
       self._discoveries.pop(discovery_id, None)
       await self.platform.output.controller_did_lose_discovery(self, discovery_id)
