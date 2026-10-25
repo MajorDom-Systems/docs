@@ -93,9 +93,9 @@ When two radios can serve the same family, e.g. two Thread sticks, the user can 
 
 ## Reservations
 
-A reservation keeps one endpoint for one consumer (an integration slug or a service name), bound to it before anyone else, the providers' `many` needs included. It is how one Bluetooth adapter goes to `matterjs-server` instead of the router (Matter's [direct mode](../integrations/matter.md#bluetooth)): `PUT /hardware/reservations/matterjs-server/ble` with `{"url": "hci1"}`. `{"url": null}` gives it back. In library mode: `await runtime.reserve(owner, family, url)`.
+A reservation keeps one endpoint for one consumer (an integration slug or a service name), bound to it before anyone else, the providers' `many` needs included. It is how one Bluetooth adapter goes to `matterjs-server` instead of the router (Matter's [own adapter](../integrations/matter.md#on-its-own-adapter)): `PUT /hardware/reservations/matterjs-server/ble` with `{"url": "hci1"}`. `{"url": null}` gives it back. In library mode: `await runtime.reserve(owner, family, url)`.
 
-A Bluetooth adapter reserved this way is driven through the host's BlueZ over D-Bus, so `bluetoothd` must run and the adapter be powered; see Matter's [direct mode](../integrations/matter.md#direct) for the requirements and the `ble-adapter-not-reserved` error when Matter is in direct mode without a reservation.
+A Bluetooth adapter reserved this way is driven through the host's BlueZ over D-Bus, so `bluetoothd` must run and the adapter be powered; see Matter's [own adapter](../integrations/matter.md#on-its-own-adapter) for the requirements.
 
 ## In-process providers
 
@@ -148,7 +148,7 @@ An ESPHome node's Bluetooth proxy serves one hub at a time. Turn the ESPHome int
 
 `system/setup.sh` installs Docker and BlueZ, adds the `majordom` user to the `docker`, `dialout` and `bluetooth` groups, and installs `universal-silabs-flasher`. It also turns on IPv6 forwarding with `accept_ra=2`, so the hub keeps learning the routes other border routers announce.
 
-`RADIOS=false` (in `.env`) turns off scanning and Docker: only pinned endpoints, the host's capabilities and the in-process providers are bound. `--virtual` sets it, and also turns off the router, DNS-SD and SSDP (`BLEService`, `ZeroconfDiscoveryService`, `SSDPDiscoveryService`).
+`--virtual` turns the runtime's hardware off (`Runtime` among the services it disables): no scanning and no Docker, so only pinned endpoints, the host's capabilities and the in-process providers are bound. It also turns off the router, zeroconf and SSDP (`BLEService`, `ZeroconfDiscoveryService`, `SSDPDiscoveryService`).
 
 ## Troubleshooting
 
