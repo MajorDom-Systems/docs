@@ -193,8 +193,9 @@ Matter drives matterjs-server over its WebSocket API, so it brings matterjs-serv
 ```python
 MATTERJS_SERVER = Service(
     "matterjs-server",
-    # Thread is optional: without a border router Matter still works over Wi-Fi and Ethernet. Bluetooth too: it has an
-    # adapter of its own only when one is reserved for it (ble_mode "direct"), the router has every other.
+    # Thread is optional: without a border router Matter still works over Wi-Fi and Ethernet. Bluetooth too: an adapter
+    # of its own only when one is reserved for it. The router is an in-process object a container can't bind: it
+    # reaches matterjs-server through the controller (ble_delegate, over /ble) instead.
     needs=[Need("ip"), Need("thread", ["otbr-rest"], required=False), Need("ble", ["bluez"], required=False)],
     # the base URL: /ws, /ble; "adapter" tells the controller whether an adapter is bound here (empty: none)
     provides=[
@@ -229,7 +230,6 @@ class MatterController(AbstractController):
     # ble: the router, which MatterServerBLEDelegate lends matterjs-server for commissioning
     needs = [Need("matter", ["matter-server"]), Need("ble", ["router"], required=False)]
     services = [MATTERJS_SERVER]
-    settings = MatterSettings
 
     async def start(self):
         ...
@@ -237,6 +237,11 @@ class MatterController(AbstractController):
         self._matter_client = MatterClient(f"{self._server_url}/ws", self._matter_client_session)
         await self._matter_client.connect()
         ...
+        # Bluetooth follows the bindings: an adapter of matterjs-server's own, else the router, else none
+        if self.peripherals.endpoint("matter").params.get("adapter"):
+            await self._offer_commissioning_by_code()
+        elif router := self.peripherals.instance("ble"):
+            ...  # lent to matterjs-server's /ble
         # Networks new devices get commissioned onto.
         if wifi := self.platform.context.wifi:
             await self._matter_client.set_wifi_credentials(wifi.ssid, wifi.password)
