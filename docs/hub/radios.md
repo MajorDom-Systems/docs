@@ -35,7 +35,7 @@ The Hub and the standalone runner install `majordom-integration-sdk[runtime,ble,
 
 1. **Find.** Every 2 seconds the Hub lists `/dev/serial/by-id/` (USB sticks) and the radios of the [board profile](#board-profiles). A change counts once it held for one more look, so a stick that re-enumerates doesn't trigger twice.
 2. **Identify.** A stick seen for the first time is identified once, in this order: the Z-Wave Serial API (one short frame), Silicon Labs firmware through `universal-silabs-flasher probe` (EZSP: Zigbee, Spinel: Thread, CPC: multi-PAN), then each integration's `probe()`. The result is saved. A stick nobody recognises offers nothing. A multi-PAN radio is also checked once for [Bluetooth over CPC](radio-images.md#bluetooth-over-cpc).
-3. **Bind.** The [in-process providers](#in-process-providers) are bound first, then each integration in order. Every need is matched to what's on offer: endpoints [reserved](#reservations) for that consumer, endpoints pinned in library mode, the host (`ip`, each Bluetooth adapter as `ble/bluez`), radios by their firmware, services, the providers (`ble/router`, `mdns/zeroconf`, `upnp/ssdp`) and what integrations [offer](../device-integration/radios.md#offering-endpoints). A service is on offer only when its own required needs can be bound, so chains form by themselves: Matter → `matterjs-server` → `otbr` → a Thread stick. An exclusive endpoint goes to one consumer; a `many` need takes every free one. The provider the user [picked](#pins) for a family is tried first. A need left unbound keeps its reason (`unbound`), with a hint when there is something to do.
+3. **Bind.** The [in-process providers](#in-process-providers) are bound first, then each integration in order. Every need is matched to what's on offer: endpoints [reserved](#reservations) for that consumer, endpoints pinned in library mode, the host (`ip`, each Bluetooth adapter as `ble/bluez`), radios by their firmware, services, the providers (`ble/router`, `mdns/zeroconf`, `upnp/ssdp`) and what integrations [offer](../device-integration/radios.md#offering-endpoints). A service is on offer only when its own required needs can be bound, so chains form by themselves: Matter → `matterjs-server` → `otbr` → a Thread stick. An exclusive endpoint goes to one consumer; an `is_many` need takes every free one. The provider the user [picked](#pins) for a family is tried first. A need left unbound keeps its reason (`unbound`), with a hint when there is something to do.
 4. **Compose.** The services that ended up bound are written to `compose.json` (project `majordom`) and started with `docker compose up -d --remove-orphans`, which also removes services nothing uses any more. With none left, the Hub runs `docker compose down`.
 5. **Peripherals.** Each integration gets its bound endpoints by family (`Runtime.peripherals(slug)`), or `None` while a required need can't be met (`Runtime.unbound(slug)` says why), and its `Platform` with its settings, the context, its services and its offers (`Runtime.platform(slug, base)`). Each provider hears about what was bound to it.
 6. **Sync.** The Hub brings every integration in line:
@@ -67,7 +67,7 @@ Back up `state.json` with the rest of the data folder: it holds the generated Z-
 
 A Silicon Labs stick can run Zigbee (EZSP, firmware `zigbee-ncp`), Thread (Spinel, `thread-rcp`) or multi-PAN (CPC, `multipan-rcp`) firmware; a Z-Wave stick runs `serial-api`. For each radio, `GET /hardware/radios` lists `options`: the firmware it can switch to, and which of the families integrations ask for each one would serve. Switching takes about a minute:
 
-1. The radio is marked `busy`. Whatever used it is stopped or unbound.
+1. The radio is marked `is_busy`. Whatever used it is stopped or unbound.
 2. The build is downloaded into `firmware/` and checked against its SHA-256.
 3. `universal-silabs-flasher` writes it, and the stick is identified again.
 
@@ -93,7 +93,7 @@ When two radios can serve the same family, e.g. two Thread sticks, the user can 
 
 ## Reservations
 
-A reservation keeps one endpoint for one consumer (an integration slug or a service name), bound to it before anyone else, the providers' `many` needs included. It is how one Bluetooth adapter goes to `matterjs-server` instead of the router (Matter's [own adapter](../integrations/matter.md#on-its-own-adapter)): `PUT /hardware/reservations/matterjs-server/ble` with `{"url": "hci1"}`. `{"url": null}` gives it back. In library mode: `await runtime.reserve(owner, family, url)`.
+A reservation keeps one endpoint for one consumer (an integration slug or a service name), bound to it before anyone else, the providers' `is_many` needs included. It is how one Bluetooth adapter goes to `matterjs-server` instead of the router (Matter's [own adapter](../integrations/matter.md#on-its-own-adapter)): `PUT /hardware/reservations/matterjs-server/ble` with `{"url": "hci1"}`. `{"url": null}` gives it back. In library mode: `await runtime.reserve(owner, family, url)`.
 
 A Bluetooth adapter reserved this way is driven through the host's BlueZ over D-Bus, so `bluetoothd` must run and the adapter be powered; see Matter's [own adapter](../integrations/matter.md#on-its-own-adapter) for the requirements.
 
@@ -103,7 +103,7 @@ Besides radios and services, the runtime runs peripherals in its own process, ea
 
 | Provider | Offers | Needs | Extra |
 |---|---|---|---|
-| `ble-router` (`BLEService`) | `ble/router` | `ble/bluez`, `ble/silabs-cpc-hci`, `ble/esphome-proxy`, `many`, optional | `ble` for the host adapters |
+| `ble-router` (`BLEService`) | `ble/router` | `ble/bluez`, `ble/silabs-cpc-hci`, `ble/esphome-proxy`, `is_many`, optional | `ble` for the host adapters |
 | `ZeroconfDiscoveryService` | `mdns/zeroconf` | — | `discovery` |
 | `SSDPDiscoveryService` | `upnp/ssdp` | — | — |
 
@@ -115,7 +115,7 @@ All paths are under `/v1/api`; schemas are in the [API Reference](api.md). A rad
 
 | Method | Path | Does |
 |---|---|---|
-| `GET` | `/hardware/radios` | radios: `id`, `path`, `present`, `driver`, `firmware`, what they serve (`offers`), what each firmware would serve (`options`), `used_by`, `busy` |
+| `GET` | `/hardware/radios` | radios: `id`, `path`, `is_present`, `driver`, `firmware`, what they serve (`offers`), what each firmware would serve (`options`), `used_by`, `is_busy` |
 | `POST` | `/hardware/radios/{id}/firmware?firmware=<firmware>` | switch firmware in the background; answers `202` |
 | `POST` | `/hardware/radios/{id}/forget` | forget what a radio is; it is identified again while plugged in |
 | `PUT` | `/hardware/providers/{family}` | prefer a radio or service for a family |
@@ -128,10 +128,10 @@ Each need in `GET /integrations`:
 
 | Field | Holds |
 |---|---|
-| `family`, `required` | the need |
-| `many` | `true` when it binds every free matching endpoint; `endpoint` is then a list |
-| `provider` | who serves it: a radio id, a service or provider name, an integration that offered it, `host` or `pinned`; comma-separated for a `many` need; `null` while unbound |
-| `endpoint` | what it is bound to: `family`, `dialect`, `url`, `shared`, `params` (never the in-process instance) |
+| `family`, `is_required` | the need |
+| `is_many` | `true` when it binds every free matching endpoint; `endpoint` is then a list |
+| `provider` | who serves it: a radio id, a service or provider name, an integration that offered it, `host` or `pinned`; comma-separated for an `is_many` need; `null` while unbound |
+| `endpoint` | what it is bound to: `family`, `dialect`, `url`, `is_shared`, `params` (never the in-process instance) |
 | `unbound` | why it isn't bound, with what to do when there is something, e.g. `need ble/bluez: every provider taken by ble-router — use Need("ble", ["router"])` |
 
 The API Reference is generated from the Hub's OpenAPI schema, which the OpenAPI sync bot regenerates; don't edit it by hand.

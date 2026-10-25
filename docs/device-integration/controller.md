@@ -193,7 +193,7 @@ The Hub constructs the controller as `Controller(platform, peripherals)` before 
 | Call | Returns |
 |---|---|
 | `self.peripherals.endpoint("zigbee")` | the `Endpoint` bound to that need; `KeyError` while it is unbound |
-| `self.peripherals.endpoints("ble")` | every endpoint bound to a `many` need, as a list; empty while unbound |
+| `self.peripherals.endpoints("ble")` | every endpoint bound to an `is_many` need, as a list; empty while unbound |
 | `self.peripherals.instance("ble")` | the in-process peripheral bound to that need: the Bluetooth router, DNS-SD, SSDP; `None` while unbound |
 
 Device paths, server URLs, discovery and options all arrive here. Don't read them from environment variables or config files, and don't start your own mDNS, SSDP or Bluetooth stack.
@@ -238,7 +238,7 @@ Optional. When the Hub finds a USB stick that none of its drivers recognise, it 
 async def peripheral_did_change(self, change: PeripheralChange) -> bool: ...
 ```
 
-Optional. Called while the controller runs, when one of its bound needs appeared, moved, or an optional one was lost. `self.peripherals` already holds the new ones. `change.family` names the need; `change.before` is `None` when it appeared, `change.after` is `None` when it was lost (a list for a `many` need).
+Optional. Called while the controller runs, when one of its bound needs appeared, moved, or an optional one was lost. `self.peripherals` already holds the new ones. `change.family` names the need; `change.before` is `None` when it appeared, `change.after` is `None` when it was lost (a list for an `is_many` need).
 
 - Return `True` when you handled it in place. The controller keeps running.
 - Return `False` (the default) to let the Hub restart the controller with the new peripherals.

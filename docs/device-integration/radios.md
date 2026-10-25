@@ -37,17 +37,17 @@ A need is what your integration requires from its environment: a dependency that
 class Need:
     family: str
     dialects: Sequence[str] = ()  # empty: any dialect of the family
-    required: bool = True
-    many: bool = False
+    is_required: bool = True
+    is_many: bool = False
 ```
 
 - `Need("matter", ["matter-server"])` accepts only the listed dialects. List every dialect your client speaks: Zigbee lists every zigpy radio library's (`ZIGPY_DIALECTS`) and reads the bound one from `self.peripherals.endpoint("zigbee").dialect`.
 - `Need("ip")`, with no dialects, accepts any: only for what the host shares.
-- `many=True` binds every matching endpoint that is free, as a list (`self.peripherals.endpoints(family)`). The Bluetooth router needs raw Bluetooth this way, to hear through every radio.
+- `is_many=True` binds every matching endpoint that is free, as a list (`self.peripherals.endpoints(family)`). The Bluetooth router needs raw Bluetooth this way, to hear through every radio.
 
 A need is **required** by default. The Hub starts the integration only once every required need is bound, and stops it when one is lost. Meanwhile the Hub reports the integration as waiting for its radio.
 
-An **optional** need (`required=False`) doesn't hold the integration back. The Hub binds it when it can. Until then it is missing from `self.peripherals`.
+An **optional** need (`is_required=False`) doesn't hold the integration back. The Hub binds it when it can. Until then it is missing from `self.peripherals`.
 
 An unbound need carries the reason, for the user and for you: `need zigbee/ezsp|znp|…: nothing offers it`, or, when what took the endpoint offers the same family itself, what to need instead: `need ble/bluez: every provider taken by ble-router — use Need("ble", ["router"])`. The Hub shows it on the integration (`unbound` in [`GET /v1/api/integrations`](../hub/radios.md#rest-api)); standalone, the `needs` command prints it.
 
@@ -59,7 +59,7 @@ class Endpoint:
     family: str
     dialect: str = ""
     url: str = ""
-    shared: bool = False
+    is_shared: bool = False
     params: Mapping[str, Any] = field(default_factory=dict)
     instance: Any = None  # not compared
 ```
@@ -77,14 +77,14 @@ The runtime binds its own peripherals first, then the integrations in order, eac
 
 ### Reservations
 
-A reservation keeps one endpoint for one consumer (an integration or a service), bound to it before anyone else, the runtime's `many` needs included: e.g. `ble/bluez hci1` for `matterjs-server` to use directly, ahead of the router. The user sets it with [`PUT /v1/api/hardware/reservations/{owner}/{family}`](../hub/radios.md#rest-api) (`{"url": "hci1"}`; `null` gives it back); in library mode, `await runtime.reserve(owner, family, url)`. Others see the endpoint as `reserved for <owner>`.
+A reservation keeps one endpoint for one consumer (an integration or a service), bound to it before anyone else, the runtime's `is_many` needs included: e.g. `ble/bluez hci1` for `matterjs-server` to use directly, ahead of the router. The user sets it with [`PUT /v1/api/hardware/reservations/{owner}/{family}`](../hub/radios.md#rest-api) (`{"url": "hci1"}`; `null` gives it back); in library mode, `await runtime.reserve(owner, family, url)`. Others see the endpoint as `reserved for <owner>`.
 
 ### In-process peripherals
 
 The runtime runs the Bluetooth router (`ble/router`), DNS-SD (`mdns/zeroconf`) and SSDP (`upnp/ssdp`) in its own process, and offers each as a shared endpoint with its `instance`. Need them like any other:
 
 ```python
-needs = [Need("mdns", ["zeroconf"]), Need("ble", ["router"], required=False)]
+needs = [Need("mdns", ["zeroconf"]), Need("ble", ["router"], is_required=False)]
 
 async def start(self):
     zeroconf: Zeroconf = self.peripherals.instance("mdns")
@@ -128,7 +128,7 @@ Strings in `compose` are templates:
 | Template | Becomes |
 |---|---|
 | `{data}` | the service's own data folder on the hub; mount it to keep state |
-| `{peripherals.<family>.url}` | the URL bound to one of the service's needs, e.g. `{peripherals.zwave.url}` is the stick's path; empty while an optional need is unbound; the first endpoint of a `many` need |
+| `{peripherals.<family>.url}` | the URL bound to one of the service's needs, e.g. `{peripherals.zwave.url}` is the stick's path; empty while an optional need is unbound; the first endpoint of an `is_many` need |
 | `{peripherals.<family>.params[<name>]}` | a parameter of that endpoint: a serial port's `baud` or `flow_control`, a host Bluetooth adapter's `index`; empty when it has none |
 | `{ports.<name>}` | the host port the runtime picked for the service's port `<name>` |
 | `{settings.<field>}` | a field of the service's `settings` |
@@ -196,7 +196,7 @@ MATTERJS_SERVER = Service(
     # Thread is optional: without a border router Matter still works over Wi-Fi and Ethernet. Bluetooth too: an adapter
     # of its own only when one is reserved for it. The router is an in-process object a container can't bind: it
     # reaches matterjs-server through the controller (ble_delegate, over /ble) instead.
-    needs=[Need("ip"), Need("thread", ["otbr-rest"], required=False), Need("ble", ["bluez"], required=False)],
+    needs=[Need("ip"), Need("thread", ["otbr-rest"], is_required=False), Need("ble", ["bluez"], is_required=False)],
     # the base URL: /ws, /ble; "adapter" tells the controller whether an adapter is bound here (empty: none)
     provides=[
         Endpoint("matter", "matter-server", "ws://127.0.0.1:{ports.api}", params={"adapter": "{peripherals.ble.url}"})
@@ -228,7 +228,7 @@ The controller needs what the service provides and the router, and hands the hub
 class MatterController(AbstractController):
     # matter: matterjs-server's base URL (its API at /ws, its BLE proxy at /ble);
     # ble: the router, which MatterServerBLEDelegate lends matterjs-server for commissioning
-    needs = [Need("matter", ["matter-server"]), Need("ble", ["router"], required=False)]
+    needs = [Need("matter", ["matter-server"]), Need("ble", ["router"], is_required=False)]
     services = [MATTERJS_SERVER]
 
     async def start(self):
@@ -278,8 +278,8 @@ class ESPhomeController(AbstractController[ESPhomeDevice, ESPhomeParameter]):
     # The router sets unprovisioned nodes up over Improv BLE; the nodes that proxy Bluetooth are offered back to it.
     needs = [
         Need("mdns", ["zeroconf"]),
-        Need("thread", ["otbr-rest"], required=False),
-        Need("ble", ["router"], required=False),
+        Need("thread", ["otbr-rest"], is_required=False),
+        Need("ble", ["router"], is_required=False),
     ]
 ```
 

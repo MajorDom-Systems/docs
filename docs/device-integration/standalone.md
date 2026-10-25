@@ -185,7 +185,7 @@ asyncio.run(run_controller(
 ```
 
 The router, DNS-SD and SSDP still run in-process, so discovery works without Docker. Pin `thread`
-(`Endpoint("thread", "otbr-rest", "http://my-otbr:8081", shared=True)`) to keep matterjs-server
+(`Endpoint("thread", "otbr-rest", "http://my-otbr:8081", is_shared=True)`) to keep matterjs-server
 running here, but behind your border router. In the CLI, `pin` and `unpin` do the same while it runs.
 
 Under the runtime, settings and context come from it, as under the Hub: change them with

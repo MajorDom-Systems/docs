@@ -19,7 +19,7 @@ All three services share the same usage contract:
 - Call `register(...)` to subscribe. It returns a **cancel closure**.
 - Store the cancel closure and call it in your controller's `stop()`.
 - The runtime starts and stops them — do not call `start()` or `stop()` on them yourself.
-- Declare the need `required=False` when the integration works without it: a hub without Bluetooth then still runs it, with `instance("ble")` returning `None`.
+- Declare the need `is_required=False` when the integration works without it: a hub without Bluetooth then still runs it, with `instance("ble")` returning `None`.
 
 
 ---

@@ -2,7 +2,7 @@
 
 ## `BLERouter`
 
-The `ble/router` peripheral. Declare `Need("ble", ["router"])` (`required=False` when the integration works without Bluetooth), and the router arrives as `self.peripherals.instance("ble")`. Its contract is `majordom_integration_sdk.capabilities.BLERouter`; the runtime's implementation is `BLEService` (provider `ble-router`, the SDK's `ble` extra).
+The `ble/router` peripheral. Declare `Need("ble", ["router"])` (`is_required=False` when the integration works without Bluetooth), and the router arrives as `self.peripherals.instance("ble")`. Its contract is `majordom_integration_sdk.capabilities.BLERouter`; the runtime's implementation is `BLEService` (provider `ble-router`, the SDK's `ble` extra).
 
 One router hears every Bluetooth radio the hub has and reaches every device through them. Its sources are the raw Bluetooth endpoints the runtime binds to it:
 
@@ -12,7 +12,7 @@ One router hears every Bluetooth radio the hub has and reaches every device thro
 | `ble/silabs-cpc-hci` | the Bluetooth of a Silicon Labs multi-PAN radio, when its firmware has it (see [Multi-PAN radio images](../../hub/radio-images.md#bluetooth-over-cpc)) |
 | `ble/esphome-proxy` | each ESPHome node with [`bluetooth_proxy`](https://esphome.io/components/bluetooth_proxy/), [offered](../radios.md#offering-endpoints) by the ESPHome integration while it is connected |
 
-The router needs `Need("ble", ["bluez", "silabs-cpc-hci", "esphome-proxy"], many=True, required=False)`, and the runtime binds its providers before any integration, so it takes every raw adapter. The router is the only supported way for an integration to use Bluetooth. Don't need `ble/bluez`, open adapters or scan with `bleak` directly: such a need stays unbound, with the reason and the fix (`every provider taken by ble-router — use Need("ble", ["router"])`), and a direct scan competes with the hub's own radios and bypasses the proxies. The one exception is an adapter the user [reserves](../radios.md#reservations) for one consumer, as Matter's [direct mode](../../integrations/matter.md#bluetooth) does. (`ble/majordom` is kept for a future MajorDom Bluetooth chip.)
+The router needs `Need("ble", ["bluez", "silabs-cpc-hci", "esphome-proxy"], is_many=True, is_required=False)`, and the runtime binds its providers before any integration, so it takes every raw adapter. The router is the only supported way for an integration to use Bluetooth. Don't need `ble/bluez`, open adapters or scan with `bleak` directly: such a need stays unbound, with the reason and the fix (`every provider taken by ble-router — use Need("ble", ["router"])`), and a direct scan competes with the hub's own radios and bypasses the proxies. The one exception is an adapter the user [reserves](../radios.md#reservations) for one consumer, as Matter's [direct mode](../../integrations/matter.md#bluetooth) does. (`ble/majordom` is kept for a future MajorDom Bluetooth chip.)
 
 Your integration registers what it wants to hear about and connects by address. It never knows which radio heard the device or carries the connection. You make no scanning calls: sources listen continuously, and a source that hears nothing for a minute is restarted (its radio went away, e.g. `bluetoothd` restarted).
 
