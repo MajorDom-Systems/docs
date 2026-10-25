@@ -2,7 +2,7 @@
 
 ## `Zeroconf`
 
-The `mdns/dns-sd` peripheral. Declare `Need("mdns", ["dns-sd"])`, and the runtime's browser (`ZeroconfDiscoveryService`, the SDK's `discovery` extra) arrives as `self.peripherals.instance("mdns")`. Its contract is `majordom_integration_sdk.capabilities.Zeroconf`.
+The `mdns/zeroconf` peripheral. Declare `Need("mdns", ["zeroconf"])`, and the runtime's browser (`ZeroconfDiscoveryService`, the SDK's `discovery` extra) arrives as `self.peripherals.instance("mdns")`. Its contract is `majordom_integration_sdk.capabilities.Zeroconf`.
 
 ### `register`
 

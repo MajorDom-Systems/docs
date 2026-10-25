@@ -23,7 +23,7 @@ An integration must never take the Hub down, and never spam the logs. The Hub is
 - [ ] **Availability is live.** Offline/online is detected while the Hub is running, not only on reboot (this also appears on the implementation checklist — it's a reliability requirement, so it's repeated here).
 - [ ] **Stable identity.** Device and parameter UUIDs are derived through the SDK helpers, so they stay identical across restarts and re-pairs — state and automations survive.
 - [ ] **No environment variables and no device paths.** Radios, servers, discovery and options arrive from the Hub. Nothing is read from the environment or hardcoded, so the integration works with whatever stick the user plugs in.
-- [ ] **Everything external declared as a [`Need`](radios.md#needs)** — radios, `ble/router`, `mdns/dns-sd`, `upnp/ssdp`, and the companion servers it brings as [`Service`](radios.md#bringing-your-own-service)s. Never raw Bluetooth (`ble/bluez`): the router holds every adapter. Optional where the integration still works without it.
+- [ ] **Everything external declared as a [`Need`](radios.md#needs)** — radios, `ble/router`, `mdns/zeroconf`, `upnp/ssdp`, and the companion servers it brings as [`Service`](radios.md#bringing-your-own-service)s. Never raw Bluetooth (`ble/bluez`): the router holds every adapter. Optional where the integration still works without it.
 - [ ] **Resolved needs read from `self.peripherals`**, and the Hub-provided app services (output, repository, settings, context) from `self.platform`.
 - [ ] **Integration-level problems reported with a stable error id** (`IntegrationError`) and resolved when they clear (`controller_did_resolve_error`), e.g. once the server is back.
 

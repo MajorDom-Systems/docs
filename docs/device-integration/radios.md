@@ -6,7 +6,7 @@ The language lives in the SDK ([`majordom_integration_sdk.peripherals`](https://
 
 ## Capabilities
 
-A capability is a `family/dialect` pair. The family says what it is (`zigbee`, `thread`); the dialect says how to talk to it (`ezsp`, `otbr-rest`). A dialect names the exact protocol or API, after its spec or the upstream server that defines it, so one client library implements it. It is never a transport word (`uart`, `serial`, `ws`, `tcp`): the transport is the URL scheme (`/dev/…`, `socket://`, `ws://`, `http://`).
+A capability is a `family/dialect` pair. The family says what it is (`zigbee`, `thread`); the dialect says how to talk to it (`ezsp`, `otbr-rest`). A dialect names the exact protocol or API, after its spec or the implementation that defines it (an upstream server, or a library: `mdns/zeroconf` is a browser over python-zeroconf), so one client library implements it. It is never a transport word (`uart`, `serial`, `ws`, `tcp`): the transport is the URL scheme (`/dev/…`, `socket://`, `ws://`, `http://`).
 
 | Capability | What it is | Offered by | Used by |
 |---|---|---|---|
@@ -23,7 +23,7 @@ A capability is a `family/dialect` pair. The family says what it is (`zigbee`, `
 | `ble/bluez` | one Bluetooth adapter of the hub (`hci0`, `hci1`, …), each its own endpoint | the host | the router; `matterjs-server` when one is [reserved](#reservations) for it |
 | `ble/silabs-cpc-hci` | the Bluetooth of a multi-PAN radio, when its firmware has it | a Silicon Labs stick with multi-PAN firmware | the router |
 | `ble/esphome-proxy` | an ESPHome node's Bluetooth proxy | the ESPHome integration, [offered](#offering-endpoints) while it runs | the router |
-| `mdns/dns-sd` | [DNS-SD over mDNS](discovery/zeroconf.md) (shared) | the runtime, in-process | HomeKit, ESPHome |
+| `mdns/zeroconf` | [DNS-SD over mDNS](discovery/zeroconf.md) (shared) | the runtime, in-process | HomeKit, ESPHome |
 | `upnp/ssdp` | [SSDP](discovery/ssdp.md) (shared) | the runtime, in-process | — |
 
 `silabs-multiprotocol` runs one multi-PAN stick as both a Zigbee coordinator and a Thread border router. `otbr` is a border router on a plain Thread stick. Both come with the SDK runtime; `matterjs-server` and `zwave-js-server` come with the Matter and Z-Wave integrations. `ble/majordom` is kept for a future MajorDom Bluetooth chip.
@@ -81,10 +81,10 @@ A reservation keeps one endpoint for one consumer (an integration or a service),
 
 ### In-process peripherals
 
-The runtime runs the Bluetooth router (`ble/router`), DNS-SD (`mdns/dns-sd`) and SSDP (`upnp/ssdp`) in its own process, and offers each as a shared endpoint with its `instance`. Need them like any other:
+The runtime runs the Bluetooth router (`ble/router`), DNS-SD (`mdns/zeroconf`) and SSDP (`upnp/ssdp`) in its own process, and offers each as a shared endpoint with its `instance`. Need them like any other:
 
 ```python
-needs = [Need("mdns", ["dns-sd"]), Need("ble", ["router"], required=False)]
+needs = [Need("mdns", ["zeroconf"]), Need("ble", ["router"], required=False)]
 
 async def start(self):
     zeroconf: Zeroconf = self.peripherals.instance("mdns")
@@ -277,7 +277,7 @@ class ESPhomeController(AbstractController[ESPhomeDevice, ESPhomeParameter]):
     # Nodes are found over mDNS. Devices on Thread reach the hub through a border router; Wi-Fi devices need nothing.
     # The router sets unprovisioned nodes up over Improv BLE; the nodes that proxy Bluetooth are offered back to it.
     needs = [
-        Need("mdns", ["dns-sd"]),
+        Need("mdns", ["zeroconf"]),
         Need("thread", ["otbr-rest"], required=False),
         Need("ble", ["router"], required=False),
     ]

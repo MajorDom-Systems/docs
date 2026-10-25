@@ -75,7 +75,7 @@ you implement them. The list below is the reference.
 - [ ] `identify`, `unpair`, and `fetch` are implemented
 - [ ] Paired devices going offline/coming back online *while the Hub is running* (not just on reboot) — set `device.available` accordingly, and clear/set `last_error` to match
 - [ ] Graceful shutdown in `stop`
-- [ ] Everything external declared as a `Need` — radios, `ble/router`, `mdns/dns-sd`, `upnp/ssdp`, the services it brings; never raw Bluetooth
+- [ ] Everything external declared as a `Need` — radios, `ble/router`, `mdns/zeroconf`, `upnp/ssdp`, the services it brings; never raw Bluetooth
 - [ ] Resolved needs read from `self.peripherals`, Hub-provided app services from `self.platform`
 - [ ] Integration-level problems reported with a stable error id (`IntegrationError`) and resolved when they clear
 - [ ] **Quality:** once it's functional, the integration meets the [Quality Checklist](quality.md) — reliability, tests, and maintainability — before release
@@ -105,4 +105,4 @@ Integrations run their tests against a virtual/simulated device where possible, 
 ### For IP Devices
 
 - **Handle IP changes.** DHCP can reassign addresses. Identify devices by a stable ID (MAC, serial, mDNS hostname, domain-provided id) rather than IP. Monitor ip address regularly and keep it up to date.
-- **Use the Hub's provided discovery.** Declare `Need("mdns", ["dns-sd"])` and register your mDNS service types via `self.peripherals.instance("mdns").register(...)`, and similar for SSDP and BLE. See [Discovery Services](discovery/index.md) for details. Do not spin up your own discovery stack unless absolutely needed.
+- **Use the Hub's provided discovery.** Declare `Need("mdns", ["zeroconf"])` and register your mDNS service types via `self.peripherals.instance("mdns").register(...)`, and similar for SSDP and BLE. See [Discovery Services](discovery/index.md) for details. Do not spin up your own discovery stack unless absolutely needed.

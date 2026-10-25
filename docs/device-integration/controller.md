@@ -221,7 +221,7 @@ class ZigBeeController(AbstractController):
         ...
 ```
 
-HomeKit, which only uses the network, needs just DNS-SD: `[Need("mdns", ["dns-sd"])]`. See [Connecting to Radios and Services](radios.md) and [Settings](settings.md).
+HomeKit, which only uses the network, needs just DNS-SD: `[Need("mdns", ["zeroconf"])]`. See [Connecting to Radios and Services](radios.md) and [Settings](settings.md).
 
 ### `probe(path)`
 

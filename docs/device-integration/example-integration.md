@@ -148,7 +148,7 @@ from .models import AcmeDevice, AcmeParameter
 
 class AcmeController(AbstractController[AcmeDevice, AcmeParameter]):
     name = "Acme"                 # class-level identity — the Hub reads it before constructing you
-    needs = [Need("mdns", ["dns-sd"])]  # Acme devices announce themselves over mDNS
+    needs = [Need("mdns", ["zeroconf"])]  # Acme devices announce themselves over mDNS
     _mapper = AcmeMapper()        # stateless, so one shared instance is fine
 ```
 

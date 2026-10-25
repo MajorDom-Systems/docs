@@ -6,7 +6,7 @@
 
 | Capability | Required | Provided by |
 |---|---|---|
-| `mdns/dns-sd` | yes | the runtime's DNS-SD: nodes are found over mDNS |
+| `mdns/zeroconf` | yes | the runtime's DNS-SD: nodes are found over mDNS |
 | `thread/otbr-rest` | no | a Thread border router: the `otbr` or `silabs-multiprotocol` service on a Thread-capable stick. Only devices on Thread need it; Wi-Fi and Ethernet devices need nothing |
 | `ble/router` | no | the Hub's [Bluetooth router](../device-integration/discovery/ble.md): it sets unprovisioned nodes up over Improv BLE |
 

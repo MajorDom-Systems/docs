@@ -6,7 +6,7 @@ Three are available:
 
 | Capability | Need | Contract | Protocol |
 |---|---|---|---|
-| `mdns/dns-sd` | `Need("mdns", ["dns-sd"])` | [`Zeroconf`](zeroconf.md) | mDNS / DNS-SD |
+| `mdns/zeroconf` | `Need("mdns", ["zeroconf"])` | [`Zeroconf`](zeroconf.md) | mDNS / DNS-SD |
 | `upnp/ssdp` | `Need("upnp", ["ssdp"])` | [`SSDP`](ssdp.md) | UPnP SSDP |
 | `ble/router` | `Need("ble", ["router"])` | [`BLERouter`](ble.md) | Bluetooth Low Energy, through every radio the hub has |
 
@@ -29,7 +29,7 @@ All three services share the same usage contract:
 A controller can register with multiple discovery protocols simultaneously, or with a few service types using the same protocol. Usage doesn't change.
 
 ```python
-needs = [Need("mdns", ["dns-sd"]), Need("ble", ["router"])]
+needs = [Need("mdns", ["zeroconf"]), Need("ble", ["router"])]
 
 async def start(self):
     self._cancels: set[Callable[[], None]] = set()
