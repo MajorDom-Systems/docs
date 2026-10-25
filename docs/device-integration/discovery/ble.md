@@ -49,7 +49,7 @@ The router orders the candidates by:
 ### `exclusive`
 
 ```python
-async with ble.exclusive(address, owner="myintegration", pairing=False) as lease:
+async with ble.exclusive(address, owner="myintegration", is_pairing_needed=False) as lease:
     connection = await lease.connect(on_lost)
     ...  # pair, commission, update firmware
 ```
@@ -58,7 +58,7 @@ Leases the source hearing the device best to you, e.g. while pairing it. That so
 
 A lease **pauses** a source that can (`PausableBLESource`), and stops the others. A proxy is paused, not stopped: it answers connects only while it stays subscribed. Leaving the block releases the source and resumes it (or starts it again). Disconnect before you leave.
 
-A source someone else holds is waited for `wait` seconds (default 1), then the next best is tried, round after round. After `timeout` seconds (default 30) it raises `BLEBusyError`, a `ConnectionError`. With `pairing=True` only sources that can pair (`can_pair`) are leased; when none hears the device it raises `BLEPairingError`.
+A source someone else holds is waited for `wait` seconds (default 1), then the next best is tried, round after round. After `timeout` seconds (default 30) it raises `BLEBusyError`, a `ConnectionError`. With `is_pairing_needed=True` only sources that can pair (`is_pairable`) are leased; when none hears the device it raises `BLEPairingError`.
 
 ### `scan_actively`
 
@@ -159,14 +159,14 @@ Credentials (a Wi-Fi password, a Thread network key) go to a device only over a 
 
 ```python
 channel = LESecureConnections()
-async with ble.exclusive(address, owner=OWNER, pairing=channel.needs_pairing) as lease:
+async with ble.exclusive(address, owner=OWNER, is_pairing_needed=channel.is_pairing_needed) as lease:
     async with channel.secure(await lease.connect()) as connection:
         await connection.write(handle, credentials)
 ```
 
 | Channel | What it does |
 |---|---|
-| `LESecureConnections(forget=True)` | Pairs "Just Works" before anything is written, so the link is encrypted, or raises `BLEPairingError` (fail closed). The device decides LE Secure Connections over legacy pairing. `forget` unpairs once done |
+| `LESecureConnections(is_pairing_kept=False)` | Pairs "Just Works" before anything is written, so the link is encrypted, or raises `BLEPairingError` (fail closed). The device decides LE Secure Connections over legacy pairing. It unpairs once done unless `is_pairing_kept` |
 | `Unsecured()` | Writes over the link as it is: only for firmware that can't pair, chosen explicitly |
 
 "Just Works" is all a headless Hub can do: it stops passive sniffing, not an active man in the middle during the pairing itself.
@@ -177,7 +177,7 @@ A connection that can pair is a `PairableBLEConnection` (`pair()`, `unpair()`). 
 
 ## Sources
 
-A source is anything that hears advertisements and can connect: `BLESource` with `name`, `start(on_advertisement)`, `stop()` and `connect(address, on_disconnect)`. The router reads two optional attributes: `can_pair` (its connections are `PairableBLEConnection`s) and `free_slots` (the connections it can still open, `None` when it can't tell). Two optional protocols:
+A source is anything that hears advertisements and can connect: `BLESource` with `name`, `start(on_advertisement)`, `stop()` and `connect(address, on_disconnect)`. The router reads two optional attributes: `is_pairable` (its connections are `PairableBLEConnection`s) and `free_slots` (the connections it can still open, `None` when it can't tell). Two optional protocols:
 
 | Protocol | Methods | Used for |
 |---|---|---|
@@ -189,7 +189,7 @@ To lend the router a source of your own (as ESPHome does with its proxies), offe
 In library mode, `BLEService(sources=[...])` hears through the sources you give it, besides the ones bound to it; `await ble.add_source(source)` and `await ble.remove_source(name)` change them while it runs. In tests, use the doubles from `majordom_integration_sdk.testing` (the `ble` extra):
 
 ```python
-radio = FakeBLESource("hci0", connection=my_fake_connection, can_pair=True, free_slots=3)
+radio = FakeBLESource("hci0", connection=my_fake_connection, is_pairable=True, free_slots=3)
 router = FakeBLERouter(sources=[radio])  # no background tasks
 await router.start()
 controller = MyController(build_test_platform(), {"ble": router.endpoint})
