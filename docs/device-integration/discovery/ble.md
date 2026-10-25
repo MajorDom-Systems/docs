@@ -66,7 +66,7 @@ A source someone else holds is waited for `wait` seconds (default 1), then the n
 async def scan_actively(duration: float) -> None: ...
 ```
 
-Scans actively for `duration` seconds, e.g. in [`start_pairing_window`](../controller.md#start_pairing_windowduration_sec-credentialsnone). Sources scan passively by default: they hear every advertiser and the matchers choose. An active scan also asks for the scan responses, which often carry the name. The router switches each source that can (`ScanModeBLESource`) with `set_scan_mode(active)`, before `start` too, and back once the burst ends.
+Scans actively for `duration` seconds, e.g. in [`start_pairing_window`](../controller.md#start_pairing_windowduration_sec-credentialsnone). Sources scan passively by default: they hear every advertiser and the matchers choose. An active scan also asks for the scan responses, which often carry the name. The router switches each source that can (`ScanModeBLESource`) with `set_scan_mode(is_active)`, before `start` too, and back once the burst ends.
 
 ### `devices`
 
@@ -143,7 +143,7 @@ class BLEConnection(Protocol):
     mtu: int
     async def services(self) -> list[GattService]: ...       # each with its characteristics, uuid + handle + properties
     async def read(self, handle: int) -> bytes: ...
-    async def write(self, handle: int, data: bytes, response: bool = True) -> None: ...
+    async def write(self, handle: int, data: bytes, is_response_needed: bool = True) -> None: ...
     async def start_notify(self, handle: int, callback: Callable[[bytes], None]) -> None: ...  # notifications and indications
     async def stop_notify(self, handle: int) -> None: ...
     async def disconnect(self) -> None: ...
@@ -182,7 +182,7 @@ A source is anything that hears advertisements and can connect: `BLESource` with
 | Protocol | Methods | Used for |
 |---|---|---|
 | `PausableBLESource` | `pause_scanning()`, `resume_scanning()` | a lease, without letting go of the radio |
-| `ScanModeBLESource` | `set_scan_mode(active)` | passive or active scanning |
+| `ScanModeBLESource` | `set_scan_mode(is_active)` | passive or active scanning |
 
 To lend the router a source of your own (as ESPHome does with its proxies), offer it as an endpoint with the source as its `instance`, see [Offering endpoints](../radios.md#offering-endpoints). The runtime binds it to the router and withdraws it with you.
 
