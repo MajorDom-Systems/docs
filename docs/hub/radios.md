@@ -43,7 +43,7 @@ The Hub and the standalone runner install `majordom-integration-sdk[runtime,ble,
     - it stops one when a required need is lost, and tells the user it resumes when the radio is back (error `hub-needs-unbound`);
     - it restarts one when its peripherals, settings or context changed, unless its hooks (`peripheral_did_change()`, …) handled them;
     - it retries a failed start after 5, 30 and 120 seconds, then reports the integration failed (error `hub-start-failed`);
-    - it restarts a running integration that reports `still_running=False`;
+    - it restarts a running integration that reports `is_still_running=False`;
     - it keeps each integration's active errors in memory, sends the app `majordom_did_encounter_error` when one is new or changed and `majordom_did_resolve_error` when it is resolved, and drops them all when the integration stops or restarts.
 
 ### The Thread network
@@ -120,7 +120,7 @@ All paths are under `/v1/api`; schemas are in the [API Reference](api.md). A rad
 | `POST` | `/hardware/radios/{id}/forget` | forget what a radio is; it is identified again while plugged in |
 | `PUT` | `/hardware/providers/{family}` | prefer a radio or service for a family |
 | `PUT` | `/hardware/reservations/{owner}/{family}` | keep one endpoint (`{"url": "hci1"}`) for one integration or service, ahead of the router; `null` gives it back |
-| `GET` | `/integrations` | per integration: `status` (`running`, `starting`, `waiting` for a radio, `failed`), `error`, the active `errors` (`id`, `message`, `still_running`), its needs, and its settings scopes |
+| `GET` | `/integrations` | per integration: `status` (`running`, `starting`, `waiting` for a radio, `failed`), `error`, the active `errors` (`id`, `message`, `is_still_running`), its needs, and its settings scopes |
 | `GET` | `/settings/{scope}` | values and JSON schema of an integration's (slug), a service's (name) or the hub's (`hub`) settings |
 | `PATCH` | `/settings/{scope}` | change some values; whatever uses them restarts |
 

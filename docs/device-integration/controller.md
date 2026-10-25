@@ -55,7 +55,7 @@ await self.platform.output.controller_did_connect_device(self, device_id)
 # Device reported new parameter values or events
 await self.platform.output.controller_did_receive_events(self, events)
 
-# A user-facing problem with the whole integration — a CTA, or (still_running=False) a failure
+# A user-facing problem with the whole integration — a CTA, or (is_still_running=False) a failure
 # that leaves it inactive. Plain language for the user; technical detail goes to the logs.
 await self.platform.output.controller_did_encounter_error(
     self, IntegrationError("server-unreachable", "The Acme server is unreachable — check that it is running")
@@ -100,7 +100,7 @@ The natural places to clear it depend on the error kind — for connection error
 class IntegrationError:  # from majordom_integration_sdk import IntegrationError
     id: str
     message: str
-    still_running: bool = True
+    is_still_running: bool = True
 
 
 async def controller_did_encounter_error(self, controller, error: IntegrationError) -> None: ...
@@ -109,9 +109,9 @@ async def controller_did_resolve_error(self, controller, error_id: str) -> None:
 
 - **`id`** — stable per condition, e.g. `"server-unreachable"` or `"stick-unplugged"`: it links the report to its resolve. Reporting an active id again replaces it, so you can report on every failed attempt without piling up duplicates. Several ids can be active at once. Ids are scoped to your integration (the Hub and the app key an error by integration and id), and the `hub-` prefix is reserved for the errors the Hub reports on an integration's behalf.
 - **`message`** — plain language for the user, never a traceback. Put technical detail in the logs; put here only what the user should see, and fold any call-to-action right into the text.
-- **`still_running`** — `False` when the controller can no longer run. The Hub marks the integration **inactive** and tells the user it failed (and what to do, if actionable) — no technical dump. If the controller was running, the Hub then restarts it; when `start()` raises, it retries after 5, 30 and 120 seconds before it gives up. Keep the default `True` for a problem the integration keeps running through but the user should know about (a lost server it reconnects to, a user-fixable misconfiguration).
+- **`is_still_running`** — `False` when the controller can no longer run. The Hub marks the integration **inactive** and tells the user it failed (and what to do, if actionable) — no technical dump. If the controller was running, the Hub then restarts it; when `start()` raises, it retries after 5, 30 and 120 seconds before it gives up. Keep the default `True` for a problem the integration keeps running through but the user should know about (a lost server it reconnects to, a user-fixable misconfiguration).
 
-Call `controller_did_resolve_error` with the id once the condition no longer holds: the connection is back, the user fixed the setup. Resolving an id that isn't active does nothing, so you can resolve after every successful connection. The Hub keeps active errors in memory only (they are not saved) and drops all of an integration's errors when it stops or restarts, so a `still_running=False` error is gone once the Hub restarts the integration.
+Call `controller_did_resolve_error` with the id once the condition no longer holds: the connection is back, the user fixed the setup. Resolving an id that isn't active does nothing, so you can resolve after every successful connection. The Hub keeps active errors in memory only (they are not saved) and drops all of an integration's errors when it stops or restarts, so a `is_still_running=False` error is gone once the Hub restarts the integration.
 
 #### Which one do I use?
 
@@ -120,7 +120,7 @@ There are three places an error can go. Pick by asking who it's for and how long
 | Surface | Use it for | How long it lives |
 |---|---|---|
 | `Device.last_error` / `Discovery.last_error` | a problem with one device | stays until *you* clear it |
-| `controller_did_encounter_error` | the whole integration has a problem; `still_running=False` = it failed and stopped | until resolved, or the integration restarts |
+| `controller_did_encounter_error` | the whole integration has a problem; `is_still_running=False` = it failed and stopped | until resolved, or the integration restarts |
 | logs (`logger.*`) | technical detail, for you the developer | log retention |
 
 **What about a parameter failing?** Parameters don't have an error field, on purpose. If one
@@ -354,7 +354,7 @@ async def _stay_connected(self):
         await self.platform.output.controller_did_resolve_error(self, "server-unreachable")
 ```
 
-`still_running=True` (the default) tells the user the integration is degraded, not failed, until the error is resolved. While the connection is down, report the devices you reach through it as lost, and as connected again once it's back.
+`is_still_running=True` (the default) tells the user the integration is degraded, not failed, until the error is resolved. While the connection is down, report the devices you reach through it as lost, and as connected again once it's back.
 
 ## Helper Methods
 
