@@ -22,6 +22,7 @@ An integration must never take the Hub down, and never spam the logs. The Hub is
 - [ ] **Fully asynchronous.** No blocking I/O on the event loop; blocking or CPU-heavy work runs off-loop (a thread/executor) so it can't stall the Hub.
 - [ ] **Availability is live.** Offline/online is detected while the Hub is running, not only on reboot (this also appears on the implementation checklist — it's a reliability requirement, so it's repeated here).
 - [ ] **Stable identity.** Device and parameter UUIDs are derived through the SDK helpers, so they stay identical across restarts and re-pairs — state and automations survive.
+- [ ] **No hand-typed keys** — if a typo breaks it, type it: static keys and formatted strings come from the SDK's typed names (`BLE_ROUTER` and `self.peripherals.instance(BLE_ROUTER)`, `SettingsExtraField`, `ComposeService`) or your own enum or constant, never a bare string literal — the same reason ids come from one helper each, not a format string repeated. Error messages and other text for people stay plain strings.
 
 ## Tested — vital
 
