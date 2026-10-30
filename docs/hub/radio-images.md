@@ -27,9 +27,9 @@ Host programs and RCP firmware must come from the same SDK release. With a misma
 
 ### Bluetooth over CPC
 
-A multi-PAN RCP whose firmware also carries the Bluetooth controller serves HCI over CPC next to 802.15.4: `cpcd`'s `cpc-hci-bridge` exposes it as a pty, and `btattach` makes that a BlueZ adapter (`hciN`), which the [Bluetooth router](../device-integration/discovery/ble.md) hears through like any other. The runtime then offers the radio's `ble/silabs-cpc-hci` endpoint too, with the adapter in `params["hci"]` once the multiprotocol service attaches it.
+A multi-PAN RCP whose firmware also carries the Bluetooth controller serves HCI over CPC next to 802.15.4: `cpcd`'s `cpc-hci-bridge` exposes it as a pty, and `btattach` makes that a BlueZ adapter (`hciN`), which the [Bluetooth router](../device-integration/discovery/ble.md) hears through like any other. The radio then provides its `ble/silabs-cpc-hci` endpoint too, with the adapter in `params["hci"]` once the multiprotocol service attaches it.
 
-It is offered only when the radio's firmware has Bluetooth: from the driver's firmware metadata (`RadioDriver.bluetooth`, the firmware names that serve it) where it knows, else from `cpc_hci.has_bluetooth(path)`, asked once per radio and saved. None of the current builds serves Bluetooth: NabuCasa's multi-PAN RCP is 802.15.4 only, so `bluetooth` stays empty.
+It is provided only when the radio's firmware has Bluetooth: from the driver's firmware metadata (`UsbDriver.bluetooth`, the firmware names that serve it) where it knows, else from `cpc_hci.has_bluetooth(path)`, asked once per radio and saved. None of the current builds serves Bluetooth: NabuCasa's multi-PAN RCP is 802.15.4 only, so `bluetooth` stays empty.
 
 `has_bluetooth` is not verified on hardware and answers no for now. To verify on a radio with a Bluetooth-capable multi-PAN build:
 

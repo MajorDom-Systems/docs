@@ -1,20 +1,20 @@
 # Matter
 
-[`majordom-matter`](https://github.com/MajorDom-Systems/integration-matter) drives a matter-server over its WebSocket API. The server owns the Matter fabric and commissioning; it has no radio of its own.
+[`majordom-matter`](https://github.com/MajorDom-Systems/integration-matter) drives [matterjs-server](https://github.com/matter-js/matterjs-server) over its WebSocket API. The server owns the Matter fabric and commissioning; it has no radio of its own.
 
 ## Needs
 
 | Capability | Required | Provided by |
 |---|---|---|
-| `matter/matter-server` | yes | the `matterjs-server` service below; standalone, any matter-server you run. The URL is the server's base (`ws://127.0.0.1:5580`): the integration connects to `/ws` and serves `/ble` |
-| `ble/router` | no | the Hub's [Bluetooth router](../device-integration/discovery/ble.md), which the controller lends matterjs-server unless it has an adapter of its own |
+| `matter/matter-server` | yes | the `matterjs-server` service below; standalone, any matter-server you run. The URL is the server's base (`ws://localhost:5580`; `MATTER_SERVER_URL` when you set it by hand): the integration connects to `/ws` and serves `/ble` |
+| `ble/router` (`BLE_ROUTER`) | no | the Hub's [Bluetooth router](../device-integration/discovery/ble.md), which the controller lends matterjs-server unless it has an adapter of its own |
 | `ip` (for `matterjs-server`) | yes | the host |
 | `thread/otbr-rest` (for `matterjs-server`) | no | a Thread border router: the `otbr` or `silabs-multiprotocol` service on a Thread-capable stick. Without one, Matter works over Wi-Fi and Ethernet |
-| `ble/bluez` (for `matterjs-server`) | no | a host adapter [reserved](../hub/radios.md#reservations) for matterjs-server; otherwise the router holds every adapter and this stays unbound. The router itself can't be bound here: it is an in-process object, and matterjs-server runs in a container, so the controller lends it the router over `/ble` instead |
+| `ble/bluez` (for `matterjs-server`) | no | a free host adapter, while the router is disabled (`ble-router` in `DISABLE_SERVICES`); otherwise the router holds every adapter and this stays unbound. The router itself can't be bound here: it is an in-process object, and matterjs-server runs in a container, so the controller lends it the router over `/ble` instead |
 
-- **Services it brings:** `matterjs-server`, which the Hub runs while Matter is in use. Thread is an optional need of the service, so a border router runs whenever a stick can serve one.
+- **Services it brings:** `matterjs-server`, which the runtime runs while Matter is in use. It listens on `{host.listen_address}`. Thread is an optional need of the service, so a border router runs whenever a stick can serve one.
 - **Settings:** none. Who drives Bluetooth follows from what is bound, see [below](#bluetooth).
-- **Context:** the Hub's Wi-Fi (`context.wifi`) and Thread network (`context.thread_dataset`), handed to matterjs-server so new devices join them.
+- **Platform facts:** the Hub's Wi-Fi (`platform.wifi`) and Thread network (`platform.thread_dataset`, which the Hub learns from the border router), handed to matterjs-server so new devices join them; `platform_facts_did_change()` hands over new ones in place.
 - **OS / permissions:** Bluetooth for commissioning: the Hub's, through BlueZ (D-Bus), through the router; matterjs-server's, through the host's BlueZ over the system bus, on its own adapter. mDNS on the LAN for on-network discovery.
 
 ## Bluetooth
@@ -27,14 +27,7 @@ matterjs-server runs with `BLE_PROXY=true`. The integration's Bluetooth delegate
 
 ### On its own adapter
 
-matterjs-server drives an adapter of its own, which the user reserves for it:
-
-```
-PUT /v1/api/hardware/reservations/matterjs-server/ble
-{"url": "hci1"}
-```
-
-The runtime binds that adapter to matterjs-server's optional `ble/bluez` need, ahead of the router. Its compose then gets:
+matterjs-server drives an adapter of its own when the router leaves one free: disable the router (`DISABLE_SERVICES=ble-router`). The runtime then binds an adapter to matterjs-server's optional `ble/bluez` need. Its compose then gets:
 
 - `BLUETOOTH_ADAPTER`: the adapter's `index` (`0` for `hci0`), matterjs-server's `--bluetooth-adapter`.
 - `BLE_PROXY` off: `{peripherals.ble.url:!true}` renders empty once an adapter is bound. matterjs-server would prefer the proxy over the adapter, with a warning, if both were set.
@@ -46,9 +39,9 @@ Requirements on the host:
 
 - BlueZ (`bluetoothd`) running, and the adapter powered (`bluetoothctl power on`, or `AutoEnable=true` in `/etc/bluetooth/main.conf`).
 - A D-Bus policy that lets the hub's user call `org.bluez`. BlueZ's stock policy lets any user; a stricter one must allow it.
-- The adapter left alone by anything else: the reservation keeps it from the Hub's router.
+- The adapter left alone by anything else.
 
-Reserving an adapter, or giving it back, changes the matter endpoint, which restarts the integration in the other way. A matter-server you run yourself (pinned) with an adapter of its own says so with the param: `Endpoint("matter", "matter-server", url, params={"adapter": "hci0"})`.
+Binding an adapter, or losing it, changes the matter endpoint, which restarts the integration in the other way. A matter-server you run yourself (pinned) with an adapter of its own says so with the param: `Endpoint("matter", "matter-server", url, params={"adapter": "hci0"})`.
 
 matterjs-server's API can commission over Bluetooth (`commission_with_code`) but can't list commissionable Bluetooth devices: `discover_commissionable_nodes` is mDNS only. So on its own adapter the controller lists no Bluetooth devices. It offers one discovery, "Matter device (enter its pairing code)", which takes a manual pairing code or the QR. matterjs-server then finds the device over Bluetooth by the code's discriminator and commissions it. The discovery is offered again after each pairing, so more devices can be added the same way. On-network (mDNS) discovery is the same either way.
 
@@ -58,6 +51,6 @@ A permanent "enter code" discovery stands in for a dedicated "add a Matter devic
 
 ## Standalone
 
-`run_controller(MatterController)` runs matterjs-server in Docker, as the Hub does. Without Docker, run a matter-server yourself and pin its base URL: `run_controller(MatterController, is_docker_enabled=False, pinned={"matter": Endpoint("matter", "matter-server", "ws://localhost:5580")})`, or `pin matter ws://localhost:5580` in the CLI. Thread devices also need an OpenThread Border Router. See [Standalone Mode](../device-integration/standalone.md#connecting-to-radios-and-services).
+`run_controller(majordom_matter.peripherals)` runs matterjs-server in Docker, as the Hub does. Without Docker, run a matter-server yourself and pin its base URL: `run_controller(majordom_matter.peripherals, runtime_peripherals=[HostNetwork()], pinned=[Endpoint("matter", "matter-server", "ws://localhost:5580")])`, or `pin matter ws://localhost:5580` in the CLI. Thread devices also need an OpenThread Border Router. See [Standalone Mode](../device-integration/standalone.md#connecting-to-radios-and-services).
 
-For the code behind this, see [Connecting to Radios and Services](../device-integration/radios.md#matter-with-its-own-service).
+For the code behind this, see [Peripherals and Services](../device-integration/radios.md#matter-with-its-own-service).
