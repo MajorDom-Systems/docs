@@ -223,11 +223,49 @@
         "title": "CreateScene",
         "type": "object"
       },
+      "CredentialsOption": {
+        "description": "One way a discovered device can be paired, with what the UI needs to ask for it.",
+        "properties": {
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Hint"
+          },
+          "mask": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mask"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CredentialsType"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "CredentialsOption",
+        "type": "object"
+      },
       "CredentialsType": {
         "enum": [
           "code",
           "qr",
           "secret",
+          "button",
           "none"
         ],
         "title": "CredentialsType",
@@ -237,6 +275,7 @@
         "type": "string"
       },
       "Device": {
+        "description": "A device with what its integration keeps about it, ``integration_data``, typed as ``TData``: a bare ``Device``\nholds any (a dict once read back), ``class HueDevice(Device[HueData])`` its own model. Unset, it is ``TData``\nvalidated from ``{}`` (the Hub creates a device before its integration pairs it), and stays unset: a save keeps\nthe stored one. For ``Device[HueData | None]`` that ``{}``, unset or stored, is None.",
         "properties": {
           "available": {
             "default": false,
@@ -286,15 +325,6 @@
             "type": "string"
           },
           "integration_data": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "$ref": "#/components/schemas/Base"
-              }
-            ],
             "title": "Integration Data"
           },
           "last_error": {
@@ -787,6 +817,7 @@
         "type": "object"
       },
       "DeviceState": {
+        "description": "A device with its parameters' current states, the data of each typed as ``TParameterData``.",
         "properties": {
           "available": {
             "default": false,
@@ -834,6 +865,9 @@
           "integration": {
             "title": "Integration",
             "type": "string"
+          },
+          "integration_data": {
+            "title": "Integration Data"
           },
           "last_error": {
             "anyOf": [
@@ -892,7 +926,7 @@
           },
           "parameters": {
             "items": {
-              "$ref": "#/components/schemas/ParameterState"
+              "$ref": "#/components/schemas/ParameterState_TypeVar_Any_"
             },
             "title": "Parameters",
             "type": "array"
@@ -965,7 +999,7 @@
           },
           "expected_credentials_options": {
             "items": {
-              "$ref": "#/components/schemas/CredentialsType"
+              "$ref": "#/components/schemas/CredentialsOption"
             },
             "title": "Expected Credentials Options",
             "type": "array"
@@ -1068,6 +1102,58 @@
           "data"
         ],
         "title": "DismissDiscoveryMessage",
+        "type": "object"
+      },
+      "EndpointOut": {
+        "properties": {
+          "dialect": {
+            "title": "Dialect",
+            "type": "string"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "is_shared": {
+            "title": "Is Shared",
+            "type": "boolean"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "family",
+          "dialect",
+          "url",
+          "is_shared"
+        ],
+        "title": "EndpointOut",
+        "type": "object"
+      },
+      "ErrorOut": {
+        "description": "As the WebSocket tells it (`majordom_did_encounter_error`): whether the integration still runs, its status says.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "message"
+        ],
+        "title": "ErrorOut",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1296,8 +1382,12 @@
         "type": "object"
       },
       "IntegrationErrorMessage": {
-        "description": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); `still_running=False` means the integration failed and\nis now inactive. Device-scoped problems travel on the device's `last_error` instead.",
+        "description": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); whether the integration still runs, its status says\n(IntegrationStatusMessage). Device-scoped problems travel on the device's `last_error` instead.\n\n`id` is stable per condition: a later message with the same `integration` and `id` replaces\nthis one, and it stays until an IntegrationErrorResolvedMessage with them.",
         "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
           "integration": {
             "title": "Integration",
             "type": "string"
@@ -1305,10 +1395,6 @@
           "message": {
             "title": "Message",
             "type": "string"
-          },
-          "still_running": {
-            "title": "Still Running",
-            "type": "boolean"
           },
           "type": {
             "const": "majordom_did_encounter_error",
@@ -1319,10 +1405,186 @@
         },
         "required": [
           "integration",
-          "message",
-          "still_running"
+          "id",
+          "message"
         ],
         "title": "IntegrationErrorMessage",
+        "type": "object"
+      },
+      "IntegrationErrorResolvedMessage": {
+        "description": "The integration's error with this `id` is gone: it cleared, or the integration stopped or restarted.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "integration": {
+            "title": "Integration",
+            "type": "string"
+          },
+          "type": {
+            "const": "majordom_did_resolve_error",
+            "default": "majordom_did_resolve_error",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "integration",
+          "id"
+        ],
+        "title": "IntegrationErrorResolvedMessage",
+        "type": "object"
+      },
+      "IntegrationOut": {
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ErrorOut"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StatusKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "needs": {
+            "items": {
+              "$ref": "#/components/schemas/NeedOut"
+            },
+            "title": "Needs",
+            "type": "array"
+          },
+          "settings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Settings",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PeripheralState"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "status",
+          "kind",
+          "errors",
+          "needs",
+          "settings"
+        ],
+        "title": "IntegrationOut",
+        "type": "object"
+      },
+      "IntegrationStatusMessage": {
+        "description": "An integration's state changed: `kind` says why it waits or failed, for the app to act on. A user-facing error\ncomes with the states the user can act on (IntegrationErrorMessage).",
+        "properties": {
+          "integration": {
+            "title": "Integration",
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StatusKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "$ref": "#/components/schemas/PeripheralState"
+          },
+          "type": {
+            "const": "majordom_did_change_status",
+            "default": "majordom_did_change_status",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "integration",
+          "state",
+          "kind"
+        ],
+        "title": "IntegrationStatusMessage",
+        "type": "object"
+      },
+      "NeedOut": {
+        "properties": {
+          "endpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EndpointOut"
+              },
+              {
+                "items": {
+                  "$ref": "#/components/schemas/EndpointOut"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endpoint"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "is_many": {
+            "default": false,
+            "title": "Is Many",
+            "type": "boolean"
+          },
+          "is_required": {
+            "title": "Is Required",
+            "type": "boolean"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          }
+        },
+        "required": [
+          "family",
+          "is_required",
+          "provider",
+          "endpoint"
+        ],
+        "title": "NeedOut",
         "type": "object"
       },
       "Notification": {
@@ -1427,24 +1689,12 @@
         "title": "ParameterRole",
         "type": "string"
       },
-      "ParameterState": {
-        "description": "A parameter plus its current ``value`` (same type ``V`` as the parameter's labels/default).\n\nValues are pythonic and serialize natively (Pydantic handles JSON \u2014 a ``set`` default_value\nbecomes an array, etc.). The Hub persists them as JSON; integrations set ``value`` directly.",
+      "ParameterState_TypeVar_Any_": {
         "properties": {
           "data_type": {
             "$ref": "#/components/schemas/ParameterDataType"
           },
           "default_value": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array",
-                "uniqueItems": true
-              },
-              {},
-              {
-                "type": "null"
-              }
-            ],
             "title": "Default Value"
           },
           "description": {
@@ -1557,12 +1807,6 @@
             "title": "Valid Values"
           },
           "value": {
-            "anyOf": [
-              {},
-              {
-                "type": "null"
-              }
-            ],
             "title": "Value"
           },
           "visibility": {
@@ -1577,7 +1821,7 @@
           "visibility",
           "integration_data"
         ],
-        "title": "ParameterState",
+        "title": "ParameterState[TypeVar, Any]",
         "type": "object"
       },
       "ParameterUnit": {
@@ -1635,6 +1879,17 @@
         "title": "ParameterVisibilityPatch",
         "type": "object"
       },
+      "PeripheralState": {
+        "enum": [
+          "disabled",
+          "waiting",
+          "starting",
+          "running",
+          "failed"
+        ],
+        "title": "PeripheralState",
+        "type": "string"
+      },
       "ProvidedCredentials": {
         "description": "What a pairing request actually supplies \u2014 paired with its type, so pairing can\nvalidate it against Discovery.expected_credentials_options instead of trusting\nwhatever the integration guessed at discovery time.",
         "properties": {
@@ -1656,6 +1911,92 @@
           "type"
         ],
         "title": "ProvidedCredentials",
+        "type": "object"
+      },
+      "RadioOut": {
+        "properties": {
+          "driver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driver"
+          },
+          "firmware": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Firmware"
+          },
+          "held_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Held By"
+          },
+          "is_busy": {
+            "title": "Is Busy",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "offers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Offers",
+            "type": "array"
+          },
+          "options": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Options",
+            "type": "object"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "used_by": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Used By",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "path",
+          "driver",
+          "firmware",
+          "offers",
+          "options",
+          "used_by",
+          "is_busy",
+          "held_by"
+        ],
+        "title": "RadioOut",
         "type": "object"
       },
       "RestRequest": {
@@ -1857,6 +2198,51 @@
         ],
         "title": "ServiceStatusResponse",
         "type": "object"
+      },
+      "SettingsOut": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "json_schema": {
+            "additionalProperties": true,
+            "title": "Json Schema",
+            "type": "object"
+          },
+          "values": {
+            "additionalProperties": true,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "values",
+          "json_schema"
+        ],
+        "title": "SettingsOut",
+        "type": "object"
+      },
+      "StatusKind": {
+        "description": "Why a peripheral waits or failed, for its owner to act on; the status's ``detail`` says it in words.",
+        "enum": [
+          "needs-unbound",
+          "needs-starting",
+          "unused",
+          "retrying",
+          "stopped-itself",
+          "gave-up",
+          "invalid-settings"
+        ],
+        "title": "StatusKind",
+        "type": "string"
       },
       "TokensPair": {
         "properties": {
@@ -2686,6 +3072,163 @@
         ]
       }
     },
+    "/api/hardware/radios": {
+      "get": {
+        "operationId": "get_radios_api_hardware_radios_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RadioOut"
+                  },
+                  "title": "Response Get Radios Api Hardware Radios Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Radios",
+        "tags": [
+          "radios"
+        ]
+      }
+    },
+    "/api/hardware/radios/{key}/firmware": {
+      "post": {
+        "description": "Switch a radio to another firmware (what it serves); takes about a minute, `is_busy` meanwhile. 409 while it is\nbusy.",
+        "operationId": "set_firmware_api_hardware_radios__key__firmware_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "firmware",
+            "required": true,
+            "schema": {
+              "title": "Firmware",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Firmware",
+        "tags": [
+          "radios"
+        ]
+      }
+    },
+    "/api/hardware/radios/{key}/forget": {
+      "post": {
+        "description": "Forget what a radio is; it is identified again while plugged in, up to minutes, `is_busy` meanwhile. 409 while it\nis busy.",
+        "operationId": "forget_radio_api_hardware_radios__key__forget_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Forget Radio",
+        "tags": [
+          "radios"
+        ]
+      }
+    },
+    "/api/hardware/radios/{key}/probe": {
+      "post": {
+        "description": "Identify a plugged-in device that isn't a known radio; opening its port may reset it. Up to minutes, `is_busy`\nmeanwhile. 409 while it is busy.",
+        "operationId": "probe_radio_api_hardware_radios__key__probe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Probe Radio",
+        "tags": [
+          "radios"
+        ]
+      }
+    },
     "/api/house": {
       "get": {
         "operationId": "get_house_api_house_get",
@@ -2984,6 +3527,7 @@
     },
     "/api/hub/reset": {
       "post": {
+        "description": "Forget everything but the system config; the Hub starts afresh once it answered, ready to be set up again.",
         "operationId": "reset_api_hub_reset_post",
         "responses": {
           "200": {
@@ -3042,7 +3586,7 @@
     },
     "/api/hub/set_wifi": {
       "post": {
-        "description": "Save the Wi-Fi network integrations set devices up onto (e.g. ESPHome over Improv BLE) among the Hub's\nknown networks. The Hub reconnects only with `connect=true`, so it can stay on Ethernet or another Wi-Fi.",
+        "description": "Connect the Hub to a Wi-Fi network, with `connect=true`. The network integrations set devices up onto (e.g.\nESPHome over Improv BLE) is chosen in the Hub settings (`PATCH /settings/hub`): without `connect` it's a 400.",
         "operationId": "set_wifi_api_hub_set_wifi_post",
         "parameters": [
           {
@@ -3089,6 +3633,159 @@
         "summary": "Set Wifi",
         "tags": [
           "hub"
+        ]
+      }
+    },
+    "/api/integrations": {
+      "get": {
+        "operationId": "get_integrations_api_integrations_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IntegrationOut"
+                  },
+                  "title": "Response Get Integrations Api Integrations Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Integrations",
+        "tags": [
+          "radios"
+        ]
+      }
+    },
+    "/api/integrations/{key}/disable": {
+      "post": {
+        "description": "Stop it until enabled again, across restarts.",
+        "operationId": "disable_integration_api_integrations__key__disable_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Disable Integration",
+        "tags": [
+          "radios"
+        ]
+      }
+    },
+    "/api/integrations/{key}/enable": {
+      "post": {
+        "operationId": "enable_integration_api_integrations__key__enable_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enable Integration",
+        "tags": [
+          "radios"
+        ]
+      }
+    },
+    "/api/integrations/{key}/restart": {
+      "post": {
+        "description": "Start it anew, one that failed or stopped by itself too.",
+        "operationId": "restart_integration_api_integrations__key__restart_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restart Integration",
+        "tags": [
+          "radios"
         ]
       }
     },
@@ -3731,6 +4428,102 @@
         ]
       }
     },
+    "/api/settings/{scope}": {
+      "get": {
+        "description": "Settings of a peripheral by its key (an integration, a service, a radio), or of the Hub-wide facts (\"hub\").",
+        "operationId": "get_settings_api_settings__scope__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scope",
+            "required": true,
+            "schema": {
+              "title": "Scope",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Settings",
+        "tags": [
+          "radios"
+        ]
+      },
+      "patch": {
+        "description": "Change some settings; what uses them takes them in place or restarts with them.",
+        "operationId": "update_settings_api_settings__scope__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scope",
+            "required": true,
+            "schema": {
+              "title": "Scope",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Values",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Settings",
+        "tags": [
+          "radios"
+        ]
+      }
+    },
     "/ws/user": {
       "head": {
         "operationId": "websocket_endpoint_ws_user_head",
@@ -3855,12 +4648,36 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "$ref": "#/components/schemas/IntegrationErrorResolvedMessage"
+                }
+              }
+            },
+            "description": "IntegrationErrorResolvedMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_8",
+            "x-ws-endpoint": true
+          },
+          "2009": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationStatusMessage"
+                }
+              }
+            },
+            "description": "IntegrationStatusMessage",
+            "name": "Response_websocket_endpoint_ws_user_head_9",
+            "x-ws-endpoint": true
+          },
+          "2010": {
+            "content": {
+              "application/json": {
+                "schema": {
                   "$ref": "#/components/schemas/NotificationMessage"
                 }
               }
             },
             "description": "NotificationMessage",
-            "name": "Response_websocket_endpoint_ws_user_head_8",
+            "name": "Response_websocket_endpoint_ws_user_head_10",
             "x-ws-endpoint": true
           },
           "422": {
@@ -4198,7 +5015,7 @@
     },
     "/ws/user::IntegrationErrorMessage": {
       "get": {
-        "description": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); `still_running=False` means the integration failed and\nis now inactive. Device-scoped problems travel on the device's `last_error` instead.",
+        "description": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); whether the integration still runs, its status says\n(IntegrationStatusMessage). Device-scoped problems travel on the device's `last_error` instead.\n\n`id` is stable per condition: a later message with the same `integration` and `id` replaces\nthis one, and it stays until an IntegrationErrorResolvedMessage with them.",
         "operationId": "get_/ws/user_IntegrationErrorMessage",
         "requestBody": {},
         "responses": {
@@ -4206,8 +5023,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); `still_running=False` means the integration failed and\nis now inactive. Device-scoped problems travel on the device's `last_error` instead.",
+                  "description": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); whether the integration still runs, its status says\n(IntegrationStatusMessage). Device-scoped problems travel on the device's `last_error` instead.\n\n`id` is stable per condition: a later message with the same `integration` and `id` replaces\nthis one, and it stays until an IntegrationErrorResolvedMessage with them.",
                   "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
                     "integration": {
                       "title": "Integration",
                       "type": "string"
@@ -4215,10 +5036,6 @@
                     "message": {
                       "title": "Message",
                       "type": "string"
-                    },
-                    "still_running": {
-                      "title": "Still Running",
-                      "type": "boolean"
                     },
                     "type": {
                       "const": "majordom_did_encounter_error",
@@ -4229,8 +5046,8 @@
                   },
                   "required": [
                     "integration",
-                    "message",
-                    "still_running"
+                    "id",
+                    "message"
                   ],
                   "title": "IntegrationErrorMessage",
                   "type": "object"
@@ -4239,7 +5056,107 @@
             }
           }
         },
-        "summary": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); `still_running=False` means the integration failed and\nis now inactive. Device-scoped problems travel on the device's `last_error` instead.",
+        "summary": "A user-facing integration problem. `message` is plain language for display (with any\ncall-to-action folded into the text); whether the integration still runs, its status says\n(IntegrationStatusMessage). Device-scoped problems travel on the device's `last_error` instead.\n\n`id` is stable per condition: a later message with the same `integration` and `id` replaces\nthis one, and it stays until an IntegrationErrorResolvedMessage with them.",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    },
+    "/ws/user::IntegrationErrorResolvedMessage": {
+      "get": {
+        "description": "The integration's error with this `id` is gone: it cleared, or the integration stopped or restarted.",
+        "operationId": "get_/ws/user_IntegrationErrorResolvedMessage",
+        "requestBody": {},
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "The integration's error with this `id` is gone: it cleared, or the integration stopped or restarted.",
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "integration": {
+                      "title": "Integration",
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "majordom_did_resolve_error",
+                      "default": "majordom_did_resolve_error",
+                      "title": "Type",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "integration",
+                    "id"
+                  ],
+                  "title": "IntegrationErrorResolvedMessage",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "The integration's error with this `id` is gone: it cleared, or the integration stopped or restarted.",
+        "tags": [
+          "Web Socket"
+        ],
+        "x-ws-message": true
+      }
+    },
+    "/ws/user::IntegrationStatusMessage": {
+      "get": {
+        "description": "An integration's state changed: `kind` says why it waits or failed, for the app to act on. A user-facing error\ncomes with the states the user can act on (IntegrationErrorMessage).",
+        "operationId": "get_/ws/user_IntegrationStatusMessage",
+        "requestBody": {},
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "An integration's state changed: `kind` says why it waits or failed, for the app to act on. A user-facing error\ncomes with the states the user can act on (IntegrationErrorMessage).",
+                  "properties": {
+                    "integration": {
+                      "title": "Integration",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/StatusKind"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "state": {
+                      "$ref": "#/components/schemas/PeripheralState"
+                    },
+                    "type": {
+                      "const": "majordom_did_change_status",
+                      "default": "majordom_did_change_status",
+                      "title": "Type",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "integration",
+                    "state",
+                    "kind"
+                  ],
+                  "title": "IntegrationStatusMessage",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "An integration's state changed: `kind` says why it waits or failed, for the app to act on. A user-facing error\ncomes with the states the user can act on (IntegrationErrorMessage).",
         "tags": [
           "Web Socket"
         ],
