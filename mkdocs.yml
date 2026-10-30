@@ -15,6 +15,8 @@ nav:
   - Device Integration:
       - Overview: "device-integration/index.md"
       - Implementing a Controller: "device-integration/controller.md"
+      - Connecting to Radios and Services: "device-integration/radios.md"
+      - Settings: "device-integration/settings.md"
       - Storing Data: "device-integration/storing_data.md"
       - Data Models: "device-integration/data_models.md"
       - Parameter UX: "device-integration/parameter-ux.md"
@@ -22,12 +24,21 @@ nav:
           - Overview: "device-integration/discovery/index.md"
           - Zeroconf / mDNS: "device-integration/discovery/zeroconf.md"
           - SSDP / UPnP: "device-integration/discovery/ssdp.md"
-          - BLE: "device-integration/discovery/ble.md"
+          - Bluetooth: "device-integration/discovery/ble.md"
       - Standalone Mode: "device-integration/standalone.md"
       - Example Integration: "device-integration/example-integration.md"
       - Quality Checklist: "device-integration/quality.md"
   - Hub:
       - API Reference: "hub/api.md"
+      - The SDK Runtime: "hub/radios.md"
+      - Multi-PAN Radio Images: "hub/radio-images.md"
+      - Radios Without Docker (CM4): "hub/native-radios.md"
+  - Integrations:
+      - Zigbee: "integrations/zigbee.md"
+      - Matter: "integrations/matter.md"
+      - Z-Wave: "integrations/zwave.md"
+      - ESPHome: "integrations/esphome.md"
+      - HomeKit: "integrations/homekit.md"
 #      - Module Map: "hub/diagram.md"
   - legacy:
       - Architecture Overview: "architecture.md"
@@ -148,10 +159,18 @@ plugins:
         Device Integration:
           - device-integration/index.md
           - device-integration/controller.md
+          - device-integration/radios.md
+          - device-integration/settings.md
           - device-integration/storing_data.md
           - device-integration/data_models.md
           - device-integration/example-integration.md
           - device-integration/discovery/*.md
+        Integrations:
+          - integrations/*.md
+        Hub:
+          - hub/radios.md
+          - hub/radio-images.md
+          - hub/native-radios.md
         API:
           - api/hub.md
           - api/bridge.md

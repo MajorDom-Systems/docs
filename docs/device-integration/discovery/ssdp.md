@@ -1,8 +1,8 @@
 # SSDP / UPnP Discovery
 
-## `SSDPDiscoveryService`
+## `SSDP`
 
-Available as `self.dependencies.ssdp_discovery_service`.
+The `upnp/ssdp` peripheral. Declare `Need("upnp", ["ssdp"])`, and the runtime's listener (`SSDPDiscoveryService`) arrives as `self.peripherals.instance("upnp")`. Its contract is `majordom_integration_sdk.capabilities.SSDP`.
 
 ### `register`
 
@@ -40,9 +40,9 @@ Returns a cancel closure — call it in `stop()` to deregister.
 
 ```python
 class SSDPDiscoveryListener(Protocol):
-    async def ssdp_did_discover_service(self, ssdp: SSDPDiscoveryService, info: SSDPDiscoveryInfo): ...
-    async def ssdp_did_update_service(self, ssdp: SSDPDiscoveryService, info: SSDPDiscoveryInfo): ...
-    async def ssdp_did_remove_service(self, ssdp: SSDPDiscoveryService, info: SSDPDiscoveryInfo): ...
+    async def ssdp_did_discover_service(self, ssdp: SSDP, info: SSDPDiscoveryInfo): ...
+    async def ssdp_did_update_service(self, ssdp: SSDP, info: SSDPDiscoveryInfo): ...
+    async def ssdp_did_remove_service(self, ssdp: SSDP, info: SSDPDiscoveryInfo): ...
 ```
 
 `ssdp_did_remove_service` fires when a device sends a `ssdp:byebye` NOTIFY, or when a device fails to respond to several consecutive M-SEARCH bursts (controlled by `_missed_scans_evict`, default 3 missed scans).
@@ -73,7 +73,7 @@ class SSDPDiscoveryInfo:
 ...
 async def start(self):
     self._cancels: set[Callable[[], None]] = set()
-    cancel = self.dependencies.ssdp_discovery_service.register(
+    cancel = self.peripherals.instance("upnp").register(
         self,  # self implements SSDPDiscoveryListener
         "urn:schemas-upnp-org:device:MediaServer:1",
     )
@@ -85,20 +85,20 @@ async def stop(self):
 
 # SSDPDiscoveryListener Implementation
 
-async def ssdp_did_discover_service(self, ssdp: SSDPDiscoveryService, info: SSDPDiscoveryInfo):
+async def ssdp_did_discover_service(self, ssdp: SSDP, info: SSDPDiscoveryInfo):
     if discovery := self._mapper.map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
-        await self.dependencies.output.controller_did_receive_discovery(self, discovery)
+        await self.platform.output.controller_did_receive_discovery(self, discovery)
 
-async def ssdp_did_update_service(self, ssdp: SSDPDiscoveryService, info: SSDPDiscoveryInfo):
+async def ssdp_did_update_service(self, ssdp: SSDP, info: SSDPDiscoveryInfo):
     if discovery := self._mapper.map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
-        await self.dependencies.output.controller_did_update_discovery(self, discovery)
+        await self.platform.output.controller_did_update_discovery(self, discovery)
 
-async def ssdp_did_remove_service(self, ssdp: SSDPDiscoveryService, info: SSDPDiscoveryInfo):
+async def ssdp_did_remove_service(self, ssdp: SSDP, info: SSDPDiscoveryInfo):
     discovery_id = self.device_uuid(info.service_name or info.addr)
     if discovery_id in self._discoveries:
         self._discoveries.pop(discovery_id)
-        await self.dependencies.output.controller_did_lose_discovery(self, discovery_id)
+        await self.platform.output.controller_did_lose_discovery(self, discovery_id)
 ...
 ```

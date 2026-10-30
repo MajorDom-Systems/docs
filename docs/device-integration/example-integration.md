@@ -39,7 +39,7 @@ class MyController(AbstractController[MyDevice, MyParameter]):
     @property
     def discoveries(self) -> dict[UUID, Discovery]: ...   # cached snapshot of unpaired devices
     #   when a device appears, call:
-    #     await self.dependencies.output.controller_did_receive_discovery(self, discovery)
+    #     await self.platform.output.controller_did_receive_discovery(self, discovery)
 
     # ── Pairing ──────────────────────────────────────────────────────────────
     async def start_pairing_window(self, duration_sec: int, credentials=None) -> None: ...  # optional (e.g. Zigbee)
@@ -53,7 +53,7 @@ class MyController(AbstractController[MyDevice, MyParameter]):
 
     # ── Events  (Device → Hub) ───────────────────────────────────────────────
     #   on an incoming device update, call:
-    #     await self.dependencies.output.controller_did_receive_events(self, [DeviceParameterChange(...)])
+    #     await self.platform.output.controller_did_receive_events(self, [DeviceParameterChange(...)])
 ```
 
 ## Module Layout
@@ -109,7 +109,7 @@ overrides `device_type`/`parameter_type` — see [Storing Data](storing_data.md#
 ## `mapper.py` — pure conversions
 
 Keep protocol↔domain conversions here: pure functions that turn "whatever your device library
-gives you" into MajorDom's `Parameter`/`Device` types. No I/O, no `self.dependencies`, nothing that
+gives you" into MajorDom's `Parameter`/`Device` types. No I/O, no `self.platform`, nothing that
 touches the network or database — so you (or a test) can call them directly without a real device.
 A property's `kind` maps to a `ParameterDataType`; whether it's `writable` maps to
 `ParameterRole.control` vs `ParameterRole.sensor`:
@@ -142,11 +142,13 @@ The controller is the only file the Hub instantiates. It declares its identity a
 attribute** and subclasses the generic `AbstractController`:
 
 ```python
+from majordom_integration_sdk import Need
 from majordom_integration_sdk.controller import AbstractController
 from .models import AcmeDevice, AcmeParameter
 
 class AcmeController(AbstractController[AcmeDevice, AcmeParameter]):
     name = "Acme"                 # class-level identity — the Hub reads it before constructing you
+    needs = [Need("mdns", ["zeroconf"])]  # Acme devices announce themselves over mDNS
     _mapper = AcmeMapper()        # stateless, so one shared instance is fine
 ```
 
@@ -163,12 +165,12 @@ becomes reachable, including here at boot, to flip `device.available` back to `T
 async def start(self):
     self._discoveries = {}
     self._client = AcmeClient()  # pseudo
-    self._cancel_discovery = self.dependencies.zeroconf_discovery_service.register(self, {"_acme._tcp.local."})
+    self._cancel_discovery = self.peripherals.instance("mdns").register(self, {"_acme._tcp.local."})
 
-    async with self.dependencies.make_device_repository() as repo:
+    async with self.platform.make_device_repository() as repo:
         for device in await repo.get_all(as_=AcmeDevice):  # the repository the Hub injects is already scoped to this integration
             self._subscribe(device)
-            await self.dependencies.output.controller_did_connect_device(self, device.id)
+            await self.platform.output.controller_did_connect_device(self, device.id)
 
 async def stop(self):
     self._cancel_discovery()
@@ -177,7 +179,7 @@ async def stop(self):
 
 ### Discovery callbacks: identify by hostname, never by IP
 
-The Zeroconf service calls three listener methods (`zeroconf_did_discover_service`,
+DNS-SD (`self.peripherals.instance("mdns")`) calls three listener methods (`zeroconf_did_discover_service`,
 `..._update_service`, `..._remove_service`) because you passed `self` to `register()`. Derive the
 **stable** discovery id from `info.name` (the mDNS instance name), which stays constant across
 discover/update/remove for the same physical device — **not** from its IP address:
@@ -249,13 +251,13 @@ def _subscribe(self, device: AcmeDevice):
             parameter_id=self.parameter_uuid(device.id, acme_property_name),
             value=value,
         )
-        asyncio.create_task(self.dependencies.output.controller_did_receive_events(self, [event]))
+        asyncio.create_task(self.platform.output.controller_did_receive_events(self, [event]))
 
     def on_availability_changed(is_available: bool):
         # Optional mid-session availability: report only if your protocol can detect a *paired*
         # device dropping/returning while the Hub runs. If it can't, omit this entirely.
-        cb = (self.dependencies.output.controller_did_connect_device if is_available
-              else self.dependencies.output.controller_did_lose_device)
+        cb = (self.platform.output.controller_did_connect_device if is_available
+              else self.platform.output.controller_did_lose_device)
         asyncio.create_task(cb(self, device.id))
 
     self._client.subscribe(device.integration_data.device_hostname,
@@ -278,12 +280,12 @@ shape of the interface itself:
   high-level SDK (`pair`, `get_properties`, `set_property`, ...). Real protocols don't always have
   one; if yours doesn't, you may implement the transport, connection management, and serialization
   directly inside your integration. That's expected. The framework (`AbstractController`, the
-  discovery services, the `Device`/`Parameter` models) is deliberately independent of any protocol's
-  implementation details — and, discovery services and data models in particular being plain public
+  discovery peripherals, the `Device`/`Parameter` models) is deliberately independent of any protocol's
+  implementation details — and, the discovery providers and data models in particular being plain public
   SDK, can be reused standalone (e.g. to build a protocol library outside MajorDom entirely).
 
 ## Testing
 
 Test your controller against simulated devices with the SDK's `majordom_integration_sdk.testing`
-doubles — `build_test_dependencies()` plus `RecordingControllerOutput` — rather than real hardware.
+doubles — `build_test_platform()` plus `RecordingControllerOutput`, and `FakeZeroconf` for the `mdns` need — rather than real hardware.
 See [Testing](index.md#testing) and the template's own `tests/` for the pattern.

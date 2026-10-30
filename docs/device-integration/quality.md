@@ -16,17 +16,22 @@ Items are ordered from **vital** (never ship without them) to **nice-to-have**.
 An integration must never take the Hub down, and never spam the logs. The Hub isolates a crashing integration where it can, but a quality integration doesn't rely on that.
 
 - [ ] **Recovers automatically.** Connection loss, an offline device, or a restarted backend/radio must recover on their own — no manual restart. Reconnection is retried with backoff, not a tight loop.
-- [ ] **No exception escapes the controller.** Every background task, subscription loop, and callback catches its own errors. An unhandled exception in a background task dies silently; one raised inside a `self.dependencies.output.*` call propagates back into the Hub. Neither is acceptable.
+- [ ] **No exception escapes the controller.** Every background task, subscription loop, and callback catches its own errors. An unhandled exception in a background task dies silently; one raised inside a `self.platform.output.*` call propagates back into the Hub. Neither is acceptable.
 - [ ] **Failures are surfaced, not raised.** An expected/transient failure (device offline, bad reading, timeout) is logged **once** (no repeated spam) and reflected on the device — `device.available = False` and a human-readable `last_error` — then cleared on recovery. It does not bubble up as an exception.
 - [ ] **Re-authenticates automatically** when credentials expire or are rejected (if the protocol uses credentials).
 - [ ] **Fully asynchronous.** No blocking I/O on the event loop; blocking or CPU-heavy work runs off-loop (a thread/executor) so it can't stall the Hub.
 - [ ] **Availability is live.** Offline/online is detected while the Hub is running, not only on reboot (this also appears on the implementation checklist — it's a reliability requirement, so it's repeated here).
 - [ ] **Stable identity.** Device and parameter UUIDs are derived through the SDK helpers, so they stay identical across restarts and re-pairs — state and automations survive.
+- [ ] **No environment variables and no device paths.** Radios, servers, discovery and options arrive from the Hub. Nothing is read from the environment or hardcoded, so the integration works with whatever stick the user plugs in.
+- [ ] **Everything external declared as a [`Need`](radios.md#needs)** — radios, `ble/router`, `mdns/zeroconf`, `upnp/ssdp`, and the companion servers it brings as [`Service`](radios.md#bringing-your-own-service)s. Never raw Bluetooth (`ble/bluez`): the router holds every adapter. Optional where the integration still works without it.
+- [ ] **Resolved needs read from `self.peripherals`**, and the Hub-provided app services (output, repository, settings, context) from `self.platform`.
+- [ ] **Integration-level problems reported with a stable error id** (`IntegrationError`) and resolved when they clear (`controller_did_resolve_error`), e.g. once the server is back.
 
 ## Tested — vital
 
 - [ ] **End-to-end automated tests** drive the controller through pair → command → fetch → events → `unpair` against a **virtual/simulated device** (the SDK's `majordom_integration_sdk.testing` doubles), with no physical hardware required.
 - [ ] **Failure paths are tested** — offline device, transport error, rejected credentials — asserting the integration degrades gracefully (sets `available`/`last_error`, does not raise).
+- [ ] **Behaviour without a required radio is tested.** Losing the radio or service while running reports an `IntegrationError` with `is_still_running=False`, so the Hub restarts the integration, instead of hanging; an unbound optional need doesn't stop it from starting.
 - [ ] **Broad device coverage** where the protocol has many device/parameter types — exercise the full mapping surface, not one happy-path device. (A protocol-provided virtual-device catalogue, run in CI, is the ideal.)
 
 ## Maintainable — important
@@ -40,6 +45,7 @@ An integration must never take the Hub down, and never spam the logs. The Hub is
 
 ## User experience — important
 
+- [ ] **Settings have plain-language titles.** Every [settings](settings.md) field has a `title` (and a `description` where it helps) written for the user, and a default.
 - [ ] **Rich parameter metadata.** Every parameter has the correct **visibility** (`user` / `setting` / `system`) and the device's **main parameter** is set — so the app can present a clean control-center action, a sensible on-tap parameter list, a settings page, and hidden system internals. Getting this right is what makes a device feel native rather than a raw dump of protocol attributes; a poorly-mapped device is a poor device, however reliable it is.
 
 ## Extras — nice-to-have
@@ -55,7 +61,7 @@ An integration must never take the Hub down, and never spam the logs. The Hub is
 The reliability rules above hinge on one habit: **catch errors at the edges and turn them into state, not exceptions.**
 
 - Inside a background task or subscription loop, wrap the body in a `try/except`. On a per-device failure, set that device's `available`/`last_error` and keep the loop alive.
-- Never let an exception cross into a `self.dependencies.output.*` call — the Hub treats those callbacks as trusted and an exception there can disrupt Hub-side handling.
+- Never let an exception cross into a `self.platform.output.*` call — the Hub treats those callbacks as trusted and an exception there can disrupt Hub-side handling.
 - Log an expected failure once at the appropriate level; don't re-log the same condition every poll.
 
-For controller-level problems that aren't tied to a single device (e.g. the backend/radio went away entirely), call `controller_did_encounter_error` — it surfaces a plain-language message to the user, and `still_running=False` marks the whole integration as failed. See [Reporting errors to the user](controller.md#controller_did_encounter_error).
+For controller-level problems that aren't tied to a single device (e.g. the backend/radio went away entirely), call `controller_did_encounter_error` with an `IntegrationError` — it surfaces a plain-language message to the user until you resolve its id with `controller_did_resolve_error`, and `is_still_running=False` marks the whole integration as failed. See [Reporting errors to the user](controller.md#controller_did_encounter_error).
