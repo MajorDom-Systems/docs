@@ -38,23 +38,23 @@ The Hub will deserialize objects into these types before passing them to your im
 
 ### Repository
 
-Use `self.platform.make_device_repository` to read or persist devices:
+Use `self.platform.device_repository(self)`, scoped to your integration's key, to read or persist devices:
 
 ```python
-async with self.platform.make_device_repository() as repo:
+async with self.platform.device_repository(self) as repo:
     device = await repo.get(device_id, as_=MyDevice) # `as_=MyDevice` is optional but provides hassle-free deserialization
 
-async with self.platform.make_device_repository() as repo:
+async with self.platform.device_repository(self) as repo:
     device.integration_data.some_field = new_value # assuming `MyDevice.integration_data` uses custom class with `some_field` present
     await repo.save(device)
 ```
 
 ## File Storage (`documents_folder`)
 
-For files that cannot be stored in the database (e.g. a protocol's own SQLite DB, certificates, binary blobs), use `self.documents_folder`:
+For files that cannot be stored in the database (e.g. a protocol's own SQLite DB, certificates, binary blobs), use `self.platform.documents_folder(self)`:
 
 ```python
-path = self.documents_folder / "zigbee.db"
+path = self.platform.documents_folder(self) / "zigbee.db"
 ```
 
-Resolves to a dedicated directory for this integration under the Hub's data root, created automatically on first write.
+Resolves to a directory for this integration's key under the Hub's data root, created on use. For JSON files, `majordom_integration_sdk.files.read_json` / `write_json` write whole or not at all, readable by the owner only (0600): use them for anything holding secrets.

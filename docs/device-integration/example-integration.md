@@ -39,7 +39,7 @@ class MyController(AbstractController[MyDevice, MyParameter]):
     @property
     def discoveries(self) -> dict[UUID, Discovery]: ...   # cached snapshot of unpaired devices
     #   when a device appears, call:
-    #     await self.platform.output.controller_did_receive_discovery(self, discovery)
+    #     await self.output.controller_did_receive_discovery(self, discovery)
 
     # ── Pairing ──────────────────────────────────────────────────────────────
     async def start_pairing_window(self, duration_sec: int, credentials=None) -> None: ...  # optional (e.g. Zigbee)
@@ -53,7 +53,7 @@ class MyController(AbstractController[MyDevice, MyParameter]):
 
     # ── Events  (Device → Hub) ───────────────────────────────────────────────
     #   on an incoming device update, call:
-    #     await self.platform.output.controller_did_receive_events(self, [DeviceParameterChange(...)])
+    #     await self.output.controller_did_receive_events(self, [DeviceParameterChange(...)])
 ```
 
 ## Module Layout
@@ -62,7 +62,7 @@ Your integration is a standalone package (`majordom_<protocol>/`), scaffolded fr
 
 ```
 majordom_acme/
-├── __init__.py        # exports AcmeController
+├── __init__.py        # exports peripherals(platform): [AcmeController(platform)]
 ├── controller.py      # AbstractController subclass — the only file the Hub actually calls into
 ├── models.py          # typed integration_data schemas — what MajorDom persists to disk for you
 └── mapper.py          # protocol <-> MajorDom conversions — pure functions, no I/O
@@ -138,23 +138,23 @@ resulting ids into the mapper, since the mapper has no access to `self`.
 
 ## `controller.py` — the walkthrough
 
-The controller is the only file the Hub instantiates. It declares its identity as a **class
+The package's `peripherals(platform)` builds the controller. It declares its identity as a **class
 attribute** and subclasses the generic `AbstractController`:
 
 ```python
-from majordom_integration_sdk import Need
+from majordom_integration_sdk.capabilities import ZEROCONF
 from majordom_integration_sdk.controller import AbstractController
 from .models import AcmeDevice, AcmeParameter
 
 class AcmeController(AbstractController[AcmeDevice, AcmeParameter]):
-    name = "Acme"                 # class-level identity — the Hub reads it before constructing you
-    needs = [Need("mdns", ["zeroconf"])]  # Acme devices announce themselves over mDNS
+    name = "Acme"                 # shown to the user; its slug "acme" is the key
+    needs = [ZEROCONF]  # Acme devices announce themselves over mDNS
     _mapper = AcmeMapper()        # stateless, so one shared instance is fine
 ```
 
 ### Lifecycle: `start` / `stop`
 
-`start()` runs once when the Hub boots (or when the integration is enabled); `stop()` on shutdown.
+`start()` runs once its needs are bound (at boot, when enabled, after a restart); `stop()` on shutdown or before a restart.
 Two things happen in `start()`: register for discovery (keep the returned **cancel closure** for
 `stop`), and — crucially — **reconnect to already-paired devices**. On every Hub restart, `start()`
 is your only chance to do that; skip it and paired devices look "stuck" until re-paired.
@@ -165,12 +165,12 @@ becomes reachable, including here at boot, to flip `device.available` back to `T
 async def start(self):
     self._discoveries = {}
     self._client = AcmeClient()  # pseudo
-    self._cancel_discovery = self.peripherals.instance("mdns").register(self, {"_acme._tcp.local."})
+    self._cancel_discovery = self.peripherals.instance(ZEROCONF).register(self, {"_acme._tcp.local."})
 
-    async with self.platform.make_device_repository() as repo:
-        for device in await repo.get_all(as_=AcmeDevice):  # the repository the Hub injects is already scoped to this integration
+    async with self.platform.device_repository(self) as repo:
+        for device in await repo.get_all(as_=AcmeDevice):  # scoped to this integration's key
             self._subscribe(device)
-            await self.platform.output.controller_did_connect_device(self, device.id)
+            await self.output.controller_did_connect_device(self, device.id)
 
 async def stop(self):
     self._cancel_discovery()
@@ -179,7 +179,7 @@ async def stop(self):
 
 ### Discovery callbacks: identify by hostname, never by IP
 
-DNS-SD (`self.peripherals.instance("mdns")`) calls three listener methods (`zeroconf_did_discover_service`,
+Zeroconf (`self.peripherals.instance(ZEROCONF)`) calls three listener methods (`zeroconf_did_discover_service`,
 `..._update_service`, `..._remove_service`) because you passed `self` to `register()`. Derive the
 **stable** discovery id from `info.name` (the mDNS instance name), which stays constant across
 discover/update/remove for the same physical device — **not** from its IP address:
@@ -251,13 +251,13 @@ def _subscribe(self, device: AcmeDevice):
             parameter_id=self.parameter_uuid(device.id, acme_property_name),
             value=value,
         )
-        asyncio.create_task(self.platform.output.controller_did_receive_events(self, [event]))
+        asyncio.create_task(self.output.controller_did_receive_events(self, [event]))
 
     def on_availability_changed(is_available: bool):
         # Optional mid-session availability: report only if your protocol can detect a *paired*
         # device dropping/returning while the Hub runs. If it can't, omit this entirely.
-        cb = (self.platform.output.controller_did_connect_device if is_available
-              else self.platform.output.controller_did_lose_device)
+        cb = (self.output.controller_did_connect_device if is_available
+              else self.output.controller_did_lose_device)
         asyncio.create_task(cb(self, device.id))
 
     self._client.subscribe(device.integration_data.device_hostname,
@@ -287,5 +287,5 @@ shape of the interface itself:
 ## Testing
 
 Test your controller against simulated devices with the SDK's `majordom_integration_sdk.testing`
-doubles — `build_test_platform()` plus `RecordingControllerOutput`, and `FakeZeroconf` for the `mdns` need — rather than real hardware.
+doubles — `build_test_platform()` plus `RecordingControllerOutput`, and `FakeZeroconf` for the `ZEROCONF` need — rather than real hardware.
 See [Testing](index.md#testing) and the template's own `tests/` for the pattern.

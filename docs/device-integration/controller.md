@@ -9,7 +9,7 @@
 
 ## AbstractController Overview
 
-Your integration's controller subclasses [`AbstractController`](https://github.com/MajorDom-Systems/integration-sdk/tree/master/majordom_integration_sdk/controller/abstract_controller.py) from the SDK. It is generic over your `Device` and `Parameter` subclasses:
+Your integration's controller subclasses [`AbstractController`](https://github.com/MajorDom-Systems/integration-sdk/tree/develop/majordom_integration_sdk/controller/abstract_controller.py) from the SDK. It is generic over your `Device` and `Parameter` subclasses:
 
 ```python
 from majordom_integration_sdk.controller import AbstractController
@@ -20,20 +20,29 @@ class MyController(AbstractController[Device, Parameter]):
     ...
 ```
 
-### The `name` and `slug()` identity
+### The `name` and `key` identity
 
-Declare `name` as a **class attribute** (not a property):
+`name` is a **class attribute**, shown to the user. It defaults to the class name without `Controller` (`HueController` → `"Hue"`):
 
 ```python
 class MyController(AbstractController[Device, Parameter]):
     name = "Hue"
 ```
 
-The Hub reads `name` — and the derived `slug()` (a `@final` classmethod returning the URL-safe slug, e.g. `"hue"`) — off the *class*, before it ever constructs the controller, to wire that integration's documents folder and scoped repository. Because of that, `name` must be a class attribute; the SDK raises a `TypeError` pointing here if it's missing. Read `name_slug`/`slug()` anywhere you need the stable identifier.
+Its slug is the controller's `key` (`"hue"`). The Hub knows the integration by its key: its devices (`Device.integration`), settings, documents folder, `DISABLE_SERVICES` and `/integrations/{key}/…`. Never rename `name` once released.
+
+### The entry point
+
+The integration package exports `peripherals(platform)`: the controller and the services it brings along. The Hub calls it with its `Platform`.
+
+```python
+def peripherals(platform: Platform) -> list[Peripheral]:
+    return [matterjs_server(), MatterController(platform)]
+```
 
 ### Hub → Device
 
-Implement all abstract methods defined in [`AbstractController`](https://github.com/MajorDom-Systems/integration-sdk/tree/master/majordom_integration_sdk/controller/abstract_controller.py) — `start`, `stop`, `pair_device`, `unpair`, `identify`, `fetch`, `send_command`, and the `discoveries` property. The Hub calls these to drive your integration.
+Implement all abstract methods defined in [`AbstractController`](https://github.com/MajorDom-Systems/integration-sdk/tree/develop/majordom_integration_sdk/controller/abstract_controller.py) — `start`, `stop`, `pair_device`, `unpair`, `identify`, `fetch`, `send_command`, and the `discoveries` property. The Hub calls these to drive your integration.
 
 ### Device → Hub
 
@@ -41,28 +50,28 @@ Use `self.platform.output` (a `ControllerOutput`), injected by the Hub:
 
 ```python
 # New unpaired device found during discovery
-await self.platform.output.controller_did_receive_discovery(self, discovery)
+await self.output.controller_did_receive_discovery(self, discovery)
 
 # An already-discovered (unpaired) device changed its advertisement
-await self.platform.output.controller_did_update_discovery(self, discovery)
+await self.output.controller_did_update_discovery(self, discovery)
 
 # A previously-discovered device is no longer visible
-await self.platform.output.controller_did_lose_discovery(self, discovery_id)
+await self.output.controller_did_lose_discovery(self, discovery_id)
 
-# Device successfully paired and connected (also call on reconnect after reboot)
-await self.platform.output.controller_did_connect_device(self, device_id)
+# Device paired and connected; on start, report every paired device that answers
+await self.output.controller_did_connect_device(self, device_id)
 
 # Device reported new parameter values or events
-await self.platform.output.controller_did_receive_events(self, events)
+await self.output.controller_did_receive_events(self, events)
 
 # A user-facing problem with the whole integration — a CTA, or (is_still_running=False) a failure
 # that leaves it inactive. Plain language for the user; technical detail goes to the logs.
-await self.platform.output.controller_did_encounter_error(
+await self.output.controller_did_encounter_error(
     self, IntegrationError("server-unreachable", "The Acme server is unreachable — check that it is running")
 )
 
 # The problem is gone
-await self.platform.output.controller_did_resolve_error(self, "server-unreachable")
+await self.output.controller_did_resolve_error(self, "server-unreachable")
 ```
 
 ### `last_error`
@@ -78,11 +87,11 @@ Both `Discovery` and `Device` carry a `last_error: str | None` field. **The inte
 ```python
 # On failure — surface the error to the user
 discovery.last_error = "Connection timed out"
-await self.platform.output.controller_did_update_discovery(self, discovery)
+await self.output.controller_did_update_discovery(self, discovery)
 
 # On recovery — clear it explicitly
 discovery.last_error = None
-await self.platform.output.controller_did_update_discovery(self, discovery)
+await self.output.controller_did_update_discovery(self, discovery)
 ```
 
 `Device.last_error` is persisted in the database, so stale errors survive restarts. Make sure to clear it whenever your integration successfully recovers, otherwise the error remains visible until explicitly resolved.
@@ -136,15 +145,15 @@ Two habits:
 
 ```python
 # Recoverable, but the user must act; reported on every failed attempt, it stays one error:
-await self.platform.output.controller_did_encounter_error(
+await self.output.controller_did_encounter_error(
     self, IntegrationError("server-unreachable", "Matter server unreachable — check that it is running")
 )
 
 # ... and once connected again:
-await self.platform.output.controller_did_resolve_error(self, "server-unreachable")
+await self.output.controller_did_resolve_error(self, "server-unreachable")
 
 # Fatal — the integration can't continue (the Hub restarts it, which clears the error):
-await self.platform.output.controller_did_encounter_error(
+await self.output.controller_did_encounter_error(
     self,
     IntegrationError("radio-lost", "The Zigbee coordinator is not responding and the integration has stopped.", False),
 )
@@ -172,176 +181,87 @@ Optional. Override only if your protocol requires an explicit short-lived scan m
 
 `credentials` carries anything the user supplied when opening the window, before any device is discovered — e.g. a Z-Wave SmartStart QR code / DSK. It is `None` when the user gave none. The Hub relays it from `POST start_pairing_window` (target integration in the `integration` query parameter, credentials in the request body).
 
-## What the Hub Injects
+## What the Hub Gives
 
-The Hub constructs the controller as `Controller(platform, peripherals)` before calling `start()`. Don't change that signature.
+A controller is a [`Peripheral`](radios.md). It is constructed as `Controller(platform, settings=None)`; keep these parameters when you override `__init__`. The runtime sets the rest before `start()`.
 
-`self.platform` is a [`Platform`](https://github.com/MajorDom-Systems/integration-sdk/tree/master/majordom_integration_sdk/controller/platform.py): the app's services.
-
-| Field | Type | Description |
+| Attribute | Type | Description |
 |---|---|---|
-| `output` | `ControllerOutput` | Callback object for pushing events to the Hub |
-| `make_device_repository` | `Callable[[], AsyncContextManager[DeviceRepository]]` | Factory for the device repository |
-| `documents_folder` | `Path` | This integration's folder for files that don't belong in the device database |
-| `settings` | `BaseModel \| None` | The validated instance of your `settings` model; `None` when you declare none |
-| `context` | `Context` | Hub-wide facts: `region` (radio region), `wifi` (the network to put Wi-Fi devices on), `thread_dataset` (the hub's Thread network, hex) |
-| `services` | `ServiceControl` | Restarts one of your own `services`, see [below](#restarting-your-service-and-healing) |
-| `offers` | `Offers` | Endpoints you lend others while you run, see [Offering endpoints](radios.md#offering-endpoints) |
-
-`self.peripherals` is a `Peripherals` mapping: what your `needs` are bound to, by family. An optional need that isn't bound is missing.
+| `self.platform` | `Platform` | The host, frozen and shared by every peripheral: `region`, `wifi`, `thread_dataset`, `documents_folder(self)`, `device_repository(self)` |
+| `self.output` | `ControllerOutput` | What it reports to the Hub; logs every call in library mode |
+| `self.settings` | your `Settings` | The validated [settings](settings.md); `NoSettings` when you declare none |
+| `self.peripherals` | `Peripherals` | What your `needs` are bound to, by family |
 
 | Call | Returns |
 |---|---|
 | `self.peripherals.endpoint("zigbee")` | the `Endpoint` bound to that need; `KeyError` while it is unbound |
 | `self.peripherals.endpoints("ble")` | every endpoint bound to an `is_many` need, as a list; empty while unbound |
-| `self.peripherals.instance("ble")` | the in-process peripheral bound to that need: the Bluetooth router, DNS-SD, SSDP; `None` while unbound |
+| `self.peripherals.instance(BLE_ROUTER)` | the in-process peripheral bound to a typed need (`BLE_ROUTER`, `ZEROCONF`, `UPNP_SSDP`), typed by it; `None` while unbound |
 
-Device paths, server URLs, discovery and options all arrive here. Don't read them from environment variables or config files, and don't start your own mDNS, SSDP or Bluetooth stack.
+Device paths, server URLs, discovery and options all arrive here. Don't read them from environment variables or config files, and don't start your own mDNS, SSDP or Bluetooth stack. Read `self.platform` when you need a fact: a platform you kept holds the old ones.
 
-### Class attributes
+### Needs and settings
 
-Declare what the controller connects to and what the user can set as class attributes. The Hub reads them off the class before it constructs the controller.
-
-| Attribute | Type | Default | Meaning |
-|---|---|---|---|
-| `needs` | `Sequence[Need]` | `()` | Everything external the controller uses, e.g. `[Need("matter", ["matter-server"]), Need("ble", ["router"])]`. Bound ones arrive in `self.peripherals` |
-| `services` | `Sequence[Service]` | `()` | Containers the integration brings along, e.g. Matter's `matterjs-server`. The Hub runs one only while something uses it |
-| `settings` | `type[BaseModel] \| None` | `None` | Options the user can set, as a pydantic model. The validated instance arrives in `platform.settings` |
+`needs` is a class attribute: everything external the controller uses. Settings are a nested `Settings` model, named as the last type parameter.
 
 ```python
 from majordom_integration_sdk import Need
 
-class ZigBeeController(AbstractController):
+class ZigBeeController(AbstractController[Device, Parameter, "ZigBeeController.Settings"]):
     needs = [Need("zigbee", ZIGPY_DIALECTS)]  # ezsp, znp, deconz, xbee, zigate, ziggurat, blz, cc
-    settings = ZigBeeSettings
+
+    class Settings(BaseModel):
+        channel: int = Field(15, ge=11, le=26, title="Channel")
 
     async def start(self):
         link = self.peripherals.endpoint("zigbee")
-        settings = cast(ZigBeeSettings, self.platform.settings or ZigBeeSettings())
+        channel = self.settings.channel
         ...
 ```
 
-HomeKit, which only uses the network, needs just DNS-SD: `[Need("mdns", ["zeroconf"])]`. See [Connecting to Radios and Services](radios.md) and [Settings](settings.md).
+HomeKit, which only uses the network, needs just `ZEROCONF`. Make a typed need optional with `dataclasses.replace(BLE_ROUTER, is_required=False)`. See [Peripherals and Services](radios.md) and [Settings](settings.md).
 
-### `probe(path)`
+### Hooks
 
-```python
-@classmethod
-async def probe(cls, path: str) -> Endpoint | None: ...
-```
+Each hook is optional and called while the controller runs. Return `True` when you handled the change in place; `False` has the runtime restart the controller. Several can fire at once: the controller restarts unless all return `True`. A hook that raises counts as `False`.
 
-Optional. When the Hub finds a USB stick that none of its drivers recognise, it asks each integration whether the stick speaks one of its protocols. Return what the stick offers then, e.g. `Endpoint("zigbee", "znp", path)`, or `None`. The Hub remembers the answer, so it asks once per stick. An exception counts as `None`.
+| Hook | Called when | Default |
+|---|---|---|
+| `needed_peripheral_did_change(change)` | a bound need appeared, moved, or an optional one was lost; `self.peripherals` holds the new binding | `False` |
+| `settings_did_change(before)` | the user changed its settings; `self.settings` holds the new ones | `False` |
+| `platform_facts_did_change(before)` | region, Wi-Fi or Thread network changed; `self.platform` holds the new ones | `True` |
 
-### `peripheral_did_change(change)`
-
-```python
-async def peripheral_did_change(self, change: PeripheralChange) -> bool: ...
-```
-
-Optional. Called while the controller runs, when one of its bound needs appeared, moved, or an optional one was lost. `self.peripherals` already holds the new ones. `change.family` names the need; `change.before` is `None` when it appeared, `change.after` is `None` when it was lost (a list for an `is_many` need).
-
-- Return `True` when you handled it in place. The controller keeps running.
-- Return `False` (the default) to let the Hub restart the controller with the new peripherals.
-
-Peripherals, settings and context can change at once. The Hub then calls every hook that applies, and restarts the controller unless all of them return `True`. A hook that raises counts as `False`. When a **required** need is lost, the Hub doesn't call this hook: it stops the controller, tells the user, and starts it again once the need is bound.
+When a **required** need is lost, no hook is called: the runtime stops the controller and starts it again once the need is bound.
 
 ```python
-async def peripheral_did_change(self, change: PeripheralChange) -> bool:
-    if change.family == "thread":  # an optional need: Wi-Fi devices keep working without it
+async def needed_peripheral_did_change(self, change: PeripheralChange) -> bool:
+    if change.family == "thread":  # optional: Wi-Fi devices keep working without it
         self._border_router = change.after.url if change.after else None
         return True
     return False
-```
-
-### `settings_did_change(before)`
-
-```python
-async def settings_did_change(self, before: BaseModel | None) -> bool: ...
-```
-
-Optional. Called while the controller runs, when the user changed its [settings](settings.md). `platform.settings` already holds the new ones, `before` the old ones.
-
-Return `True` when applied in place; the default (`False`) has the Hub restart the integration.
-
-Apply what's cheap to apply, and restart for the rest:
-
-```python
-class AcmeSettings(BaseModel):
-    poll_interval: int = Field(30, ge=5, title="Refresh every, seconds")
-    channel: int = Field(15, ge=11, le=26, title="Channel")
 
 
-async def settings_did_change(self, before: BaseModel | None) -> bool:
-    before = cast(AcmeSettings, before or AcmeSettings())
-    settings = cast(AcmeSettings, self.platform.settings or AcmeSettings())
-    if settings.channel != before.channel:
+async def settings_did_change(self, before: Settings) -> bool:
+    if self.settings.channel != before.channel:
         return False  # start() forms the network on the channel: restart
-    self._poll_interval = settings.poll_interval  # the poll loop reads it on its next round
     return True
+
+
+async def platform_facts_did_change(self, before: Platform) -> bool:
+    return self.platform.region == before.region  # start() sets the radio's region
 ```
 
-### `context_did_change(before)`
+### Staying connected
+
+A [service](radios.md#bringing-your-own-service) is recreated when its settings or bindings render it differently, and it may crash and come back. Nobody tells the controller. So don't let one connection live as long as the controller: keep a task that waits for the connection to drop and reconnects with backoff, as the [template](https://github.com/MajorDom-Systems/integration-template/tree/develop/integration_template/controller.py) does.
 
 ```python
-async def context_did_change(self, before: Context) -> bool: ...
-```
-
-Optional. Called while the controller runs, when [hub-wide facts](settings.md#hub-settings) changed: the radio region, the Wi-Fi network for new devices, the Thread network. `platform.context` already holds the new ones, `before` the old ones. Return `True` when applied in place; the default (`False`) has the Hub restart the integration.
-
-```python
-async def context_did_change(self, before: Context) -> bool:
-    if self.platform.context.region != before.region:
-        return False  # start() sets the radio's region: restart
-    return True  # Wi-Fi and Thread are read from platform.context when pairing
-```
-
-### Restarting your service and healing
-
-```python
-class ServiceControl(Protocol):
-    async def restart(self, service: str) -> None: ...
-```
-
-`platform.services.restart(name)` restarts one of the [services](radios.md#bringing-your-own-service) your integration brings, by its name, e.g. when the server reads a setting only at start. You can't restart another integration's service, or one the user runs. Without the Hub, in [standalone mode](standalone.md), it raises `NotImplementedError`: restart the server yourself.
-
-```python
-async def settings_did_change(self, before: BaseModel | None) -> bool:
-    before = cast(AcmeSettings, before or AcmeSettings())
-    settings = cast(AcmeSettings, self.platform.settings or AcmeSettings())
-    if settings.log_level != before.log_level:
-        await self._client.set_log_level(settings.log_level)  # the server applies it at start
-        await self.platform.services.restart("acme-server")
-    return True  # the connection drops, and _stay_connected() heals it
-```
-
-The integration keeps running while its service restarts, and nobody tells it the service is back: the Hub restarts the container, not the integration. The same happens when the server crashes and comes back. So don't let one connection live as long as the controller. Keep a task that waits for the connection to drop and reconnects with backoff, as the Matter integration does with matter-server ([`controller.py`](https://github.com/MajorDom-Systems/integration-matter/tree/master/majordom_matter/controller.py)):
-
-```python
-_RECONNECT_DELAY, _RECONNECT_DELAY_MAX = 1, 30  # seconds
-
-
-async def start(self):
-    self._client = await self._connect()  # raising here has the Hub retry start()
-    self._keeper = asyncio.create_task(self._stay_connected())
-
-
-async def stop(self):
-    self._keeper.cancel()
-    await self._client.close()
-
-
-async def _connect(self) -> AcmeClient:
-    client = AcmeClient(self.peripherals.endpoint("acme").url)
-    await client.connect()
-    return client
-
-
 async def _stay_connected(self):
     """Reconnects whenever the server goes away, until stop() cancels it."""
     while True:
         await self._client.wait_closed()
         message = "Lost the connection to the Acme server, reconnecting."
-        await self.platform.output.controller_did_encounter_error(self, IntegrationError("server-unreachable", message))
+        await self.output.controller_did_encounter_error(self, IntegrationError("server-unreachable", message))
         delay = self._RECONNECT_DELAY
         while True:
             await asyncio.sleep(delay)  # 1, 2, 4, … 30, 30 seconds
@@ -351,10 +271,10 @@ async def _stay_connected(self):
             except OSError as error:
                 logger.info(f"The Acme server is not back yet: {error!r}")
                 delay = min(delay * 2, self._RECONNECT_DELAY_MAX)
-        await self.platform.output.controller_did_resolve_error(self, "server-unreachable")
+        await self.output.controller_did_resolve_error(self, "server-unreachable")
 ```
 
-`is_still_running=True` (the default) tells the user the integration is degraded, not failed, until the error is resolved. While the connection is down, report the devices you reach through it as lost, and as connected again once it's back.
+`is_still_running=True` (the default) tells the user the integration is degraded, not failed, until the error is resolved. Resolve it only once a connection held for `STABLE_RUN` seconds, so a server that answers and drops every time is still reported. While the connection is down, report the devices you reach through it as lost, and as connected again once it's back.
 
 ## Helper Methods
 
@@ -362,34 +282,17 @@ async def _stay_connected(self):
 
 ```python
 @property
-def name_slug(self) -> str: ...
-# URL-safe slug of self.name; stable integration identifier
+def key(self) -> str: ...
+# slug of name; the stable integration identifier
 
 def integration_uuid(self) -> UUID: ...
-# Stable UUID for this integration, derived from name_slug
+# Stable UUID for this integration, derived from key
 
 def device_uuid(self, device_id: str) -> UUID: ...
 # Stable UUID for a device given any unique string (MAC, serial, etc.)
 
 def parameter_uuid(self, device_uuid: UUID, parameter_id: str) -> UUID: ...
 # Stable UUID for a parameter scoped to its device
-
-@property
-def documents_folder(self) -> Path: ...
-# Path to this integration's dedicated file storage directory
-```
-
-For example
-
-```python
-path = self.documents_folder / "zigbee.db"
-```
-
-Use the built-in uuid generators to make deterministic UUIDs — no DB lookup needed, IDs stay consistent across restarts and re-pairings. Discovery `id` isn't required to match Device `id`, but this is recommended.
-
-```python
-device_id = self.device_uuid(device_mac)
-param_id = self.parameter_uuid(device_id, f"{accessory_id}.{characteristic_id}")
 ```
 
 ## See Also

@@ -24,8 +24,9 @@ Most official integrations are source-available for noncommercial use. For a com
 |---|---|
 | **Hub** | The MajorDom Hub core software |
 | **Integration** | A protocol/vendor-specific plugin |
-| **Need** | Something external the integration requires: a radio, a server, or a discovery peripheral (DNS-SD, SSDP, the Bluetooth router). The Hub binds it and hands it over in `self.peripherals`. See [Connecting to Radios and Services](radios.md) |
-| **Discovery Service** | A peripheral the Hub runs in-process (DNS-SD over mDNS, SSDP, or the Bluetooth router) that fires raw discovery events. Needed like any other, see [Discovery Services](discovery/index.md) |
+| **Peripheral** | Anything that needs or provides capabilities: a radio, a service, an in-process provider, the integration's controller itself. See [Peripherals and Services](radios.md) |
+| **Need** | Something external a peripheral requires: a radio, a server, or a discovery provider (`ZEROCONF`, `UPNP_SSDP`, `BLE_ROUTER`). The runtime binds it and hands it over in `self.peripherals` |
+| **Discovery Service** | A provider the runtime runs in-process (Zeroconf, SSDP, or the Bluetooth router) that fires raw discovery events. Needed like any other, see [Discovery Services](discovery/index.md) |
 | **Controller** (capitalized) | The class your integration must implement (`AbstractController` subclass) |
 | **a controller** (lowercase) | Any third-party device that can control IoT devices (smartphone, Alexa, etc.) |
 | **Discovery** | A detected, unpaired device that is available to be paired |
@@ -47,7 +48,7 @@ Your integration is its own package, `majordom_<protocol>/` (the template starts
 
 ```
 majordom_myintegration/
-├── __init__.py          # exports your controller class
+├── __init__.py          # exports peripherals(platform): the controller and the services it brings
 ├── controller.py        # AbstractController subclass — the only required implementation; discovery callbacks and cancel closures are typically stored here too
 ├── models.py            # Typed integration_data schemas for Device and Parameter subclasses, see Storing Data
 ├── mapper.py            # Protocol ↔ MajorDom domain model conversions, isolated from the controller for readability
@@ -64,19 +65,19 @@ Track it in your repo: the [integration template](https://github.com/MajorDom-Sy
 README ships this and the [Quality Checklist](quality.md) as a fillable copy — tick items there as
 you implement them. The list below is the reference.
 
-- [ ] Discovery registered with the peripherals it needs — `self.peripherals.instance("mdns")` (DNS-SD), `"upnp"` (SSDP) and/or `"ble"` (the Bluetooth router) as appropriate; cancel closures saved and called in `stop`
-- [ ] Discovery listeners fire when devices are found, and the controller calls `self.platform.output.controller_did_receive_discovery`
-- [ ] Discovery of devices already paired to the Hub on reconnect, e.g. after a reboot (`self.platform.output.controller_did_connect_device` is called)
+- [ ] Discovery registered with the providers it needs — `self.peripherals.instance(ZEROCONF)`, `UPNP_SSDP` and/or `BLE_ROUTER` as appropriate; cancel closures saved and called in `stop`
+- [ ] Discovery listeners fire when devices are found, and the controller calls `self.output.controller_did_receive_discovery`
+- [ ] Every reachable paired device reported on start (`self.output.controller_did_connect_device`): the Hub marked them all unavailable when the integration stopped
 - [ ] `start_pairing_window` is implemented if the protocol requires an explicit scan mode
 - [ ] Device pairing (`pair_device` is implemented, and validates the incoming `ProvidedCredentials.type` against `discovery.expected_credentials_options` before using it)
 - [ ] Device schema is properly mapped: device info, parameter list, and each parameter's metadata are translated to MajorDom's domain model
 - [ ] Hub → Device control (`send_command` is implemented)
-- [ ] Device → Hub event subscription (`self.platform.output.controller_did_receive_events` is called on incoming events)
+- [ ] Device → Hub event subscription (`self.output.controller_did_receive_events` is called on incoming events)
 - [ ] `identify`, `unpair`, and `fetch` are implemented
 - [ ] Paired devices going offline/coming back online *while the Hub is running* (not just on reboot) — set `device.available` accordingly, and clear/set `last_error` to match
 - [ ] Graceful shutdown in `stop`
-- [ ] Everything external declared as a `Need` — radios, `ble/router`, `mdns/zeroconf`, `upnp/ssdp`, the services it brings; never raw Bluetooth
-- [ ] Resolved needs read from `self.peripherals`, Hub-provided app services from `self.platform`
+- [ ] Everything external declared as a `Need` — radios, `BLE_ROUTER`, `ZEROCONF`, `UPNP_SSDP`, the services it brings; never raw Bluetooth
+- [ ] Bound needs read from `self.peripherals`, host facts and storage from `self.platform`, reports sent through `self.output`
 - [ ] Integration-level problems reported with a stable error id (`IntegrationError`) and resolved when they clear
 - [ ] **Quality:** once it's functional, the integration meets the [Quality Checklist](quality.md) — reliability, tests, and maintainability — before release
 
@@ -84,14 +85,14 @@ See [Implementing a Controller](controller.md) for details, or [Example Integrat
 
 ## Running standalone
 
-You don't need a running Hub to develop an integration. The SDK ships a dev runner that binds your controller's needs through the SDK runtime, as the Hub does (the Bluetooth router, DNS-SD, SSDP, radios and services), gives it a local repository, starts it, and logs everything it discovers:
+You don't need a running Hub to develop an integration. The SDK ships a dev runner that binds your controller's needs through the SDK runtime, as the Hub does (the Bluetooth router, Zeroconf, SSDP, radios and services), gives it a local repository, starts it, and logs everything it discovers:
 
 ```python
 import asyncio
 from majordom_integration_sdk.dev import run_controller
-from majordom_myintegration import MyController
+import majordom_myintegration
 
-asyncio.run(run_controller(MyController))
+asyncio.run(run_controller(majordom_myintegration.peripherals))
 ```
 
 It needs the runtime extras: `pip install "majordom-integration-sdk[runtime,ble,discovery]"`. Pass `db_path=...` to persist devices across restarts (a file-backed SQLite repository) instead of the default in-memory one. See [Standalone Mode](standalone.md) for the interactive CLI, `build_platform` for your own scripts, and running without Docker or radios.
