@@ -2,7 +2,7 @@
 
 ## `SSDP`
 
-The `upnp/ssdp` peripheral. Declare `Need("upnp", ["ssdp"])`, and the runtime's listener (`SSDPDiscoveryService`) arrives as `self.peripherals.instance("upnp")`. Its contract is `majordom_integration_sdk.capabilities.SSDP`.
+The `upnp/ssdp` peripheral. Declare `UPNP_SSDP`, and the runtime's listener (`SSDPDiscoveryService`) arrives as `self.peripherals.instance(UPNP_SSDP)`. Its contract is `majordom_integration_sdk.capabilities.SSDP`.
 
 ### `register`
 
@@ -73,7 +73,7 @@ class SSDPDiscoveryInfo:
 ...
 async def start(self):
     self._cancels: set[Callable[[], None]] = set()
-    cancel = self.peripherals.instance("upnp").register(
+    cancel = self.peripherals.instance(UPNP_SSDP).register(
         self,  # self implements SSDPDiscoveryListener
         "urn:schemas-upnp-org:device:MediaServer:1",
     )
@@ -88,17 +88,17 @@ async def stop(self):
 async def ssdp_did_discover_service(self, ssdp: SSDP, info: SSDPDiscoveryInfo):
     if discovery := self._mapper.map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
-        await self.platform.output.controller_did_receive_discovery(self, discovery)
+        await self.output.controller_did_receive_discovery(self, discovery)
 
 async def ssdp_did_update_service(self, ssdp: SSDP, info: SSDPDiscoveryInfo):
     if discovery := self._mapper.map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
-        await self.platform.output.controller_did_update_discovery(self, discovery)
+        await self.output.controller_did_update_discovery(self, discovery)
 
 async def ssdp_did_remove_service(self, ssdp: SSDP, info: SSDPDiscoveryInfo):
     discovery_id = self.device_uuid(info.service_name or info.addr)
     if discovery_id in self._discoveries:
         self._discoveries.pop(discovery_id)
-        await self.platform.output.controller_did_lose_discovery(self, discovery_id)
+        await self.output.controller_did_lose_discovery(self, discovery_id)
 ...
 ```

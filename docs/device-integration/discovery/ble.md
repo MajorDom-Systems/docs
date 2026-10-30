@@ -2,7 +2,7 @@
 
 ## `BLERouter`
 
-The `ble/router` peripheral. Declare `Need("ble", ["router"])` (`is_required=False` when the integration works without Bluetooth), and the router arrives as `self.peripherals.instance("ble")`. Its contract is `majordom_integration_sdk.capabilities.BLERouter`; the runtime's implementation is `BLEService` (provider `ble-router`, the SDK's `ble` extra).
+The `ble/router` peripheral. Declare `BLE_ROUTER` (`dataclasses.replace(BLE_ROUTER, is_required=False)` when the integration works without Bluetooth), and the router arrives as `self.peripherals.instance(BLE_ROUTER)`. Its contract is `majordom_integration_sdk.capabilities.BLERouter`; the runtime's implementation is `BLEService` (provider `ble-router`, the SDK's `ble` extra).
 
 One router hears every Bluetooth radio the hub has and reaches every device through them. Its sources are the raw Bluetooth endpoints the runtime binds to it:
 
@@ -10,9 +10,9 @@ One router hears every Bluetooth radio the hub has and reaches every device thro
 |---|---|
 | `ble/bluez` | each host adapter (`hci0`, a USB dongle as `hci1`, …), offered one by one, through bleak (BlueZ on Linux) |
 | `ble/silabs-cpc-hci` | the Bluetooth of a Silicon Labs multi-PAN radio, when its firmware has it (see [Multi-PAN radio images](../../hub/radio-images.md#bluetooth-over-cpc)) |
-| `ble/esphome-proxy` | each ESPHome node with [`bluetooth_proxy`](https://esphome.io/components/bluetooth_proxy/), [offered](../radios.md#offering-endpoints) by the ESPHome integration while it is connected |
+| `ble/esphome-proxy` | each ESPHome node with [`bluetooth_proxy`](https://esphome.io/components/bluetooth_proxy/), a [`BLEProxy`](../radios.md#bringing-peripherals-along) the ESPHome integration brings along while it is connected (`esphome/<bt-mac>`) |
 
-The router needs `Need("ble", ["bluez", "silabs-cpc-hci", "esphome-proxy"], is_many=True, is_required=False)`, and the runtime binds its providers before any integration, so it takes every raw adapter. The router is the only supported way for an integration to use Bluetooth. Don't need `ble/bluez`, open adapters or scan with `bleak` directly: such a need stays unbound, with the reason and the fix (`every provider taken by ble-router — use Need("ble", ["router"])`), and a direct scan competes with the hub's own radios and bypasses the proxies. The one exception is an adapter the user [reserves](../radios.md#reservations) for one consumer, as Matter's [direct mode](../../integrations/matter.md#bluetooth) does. (`ble/majordom` is kept for a future MajorDom Bluetooth chip.)
+The router needs `Need("ble", ["bluez", "silabs-cpc-hci", "esphome-proxy"], is_many=True, is_required=False)`, and the runtime binds its providers before any integration, so it takes every raw adapter. The router is the only supported way for an integration to use Bluetooth. Don't need `ble/bluez`, open adapters or scan with `bleak` directly: such a need stays unbound, with the reason and the fix (`every provider taken by ble-router — use Need("ble", ["router"])`), and a direct scan competes with the hub's own radios and bypasses the proxies. The one exception is Matter's [direct mode](../../integrations/matter.md#bluetooth), with the router disabled. (`ble/majordom` is kept for a future MajorDom Bluetooth chip.)
 
 Your integration registers what it wants to hear about and connects by address. It never knows which radio heard the device or carries the connection. You make no scanning calls: sources listen continuously, and a source that hears nothing for a minute is restarted (its radio went away, e.g. `bluetoothd` restarted).
 
@@ -184,7 +184,7 @@ A source is anything that hears advertisements and can connect: `BLESource` with
 | `PausableBLESource` | `pause_scanning()`, `resume_scanning()` | a lease, without letting go of the radio |
 | `ScanModeBLESource` | `set_scan_mode(is_active)` | passive or active scanning |
 
-To lend the router a source of your own (as ESPHome does with its proxies), offer it as an endpoint with the source as its `instance`, see [Offering endpoints](../radios.md#offering-endpoints). The runtime binds it to the router and withdraws it with you.
+To lend the router a source of your own (as ESPHome does with its proxies), bring a `BLEProxy(source)` along, see [Bringing peripherals along](../radios.md#bringing-peripherals-along). The runtime binds it to the router and drops it when you stop.
 
 In library mode, `BLEService(sources=[...])` hears through the sources you give it, besides the ones bound to it; `await ble.add_source(source)` and `await ble.remove_source(name)` change them while it runs. In tests, use the doubles from `majordom_integration_sdk.testing` (the `ble` extra):
 
@@ -192,11 +192,12 @@ In library mode, `BLEService(sources=[...])` hears through the sources you give 
 radio = FakeBLESource("hci0", connection=my_fake_connection, is_pairable=True, free_slots=3)
 router = FakeBLERouter(sources=[radio])  # no background tasks
 await router.start()
-controller = MyController(build_test_platform(), {"ble": router.endpoint})
+controller = MyController(build_test_platform())
+controller.peripherals = Peripherals({"ble": router.endpoint})
 radio.advertise("AA:BB:CC:DD:EE:FF", service_data={"0000fff6-0000-1000-8000-00805f9b34fb": payload})
 ```
 
-`FakeOffers(router)` records what an integration offers and lends its `ble` endpoints to the router, as the runtime would: `platform.copy(offers=FakeOffers(router))`.
+To check a `BLEProxy` you bring along, read your controller's `provides` and hand the proxy's source to the router with `router.add_source(proxy.source)`.
 
 ---
 
@@ -206,10 +207,10 @@ radio.advertise("AA:BB:CC:DD:EE:FF", service_data={"0000fff6-0000-1000-8000-0080
 _SWITCHBOT = [BLEMatcher(service_uuid=UUID("cba20d00-224d-11e6-9fb8-0002a5d5c51b"))]
 
 # in Controller
-needs = [Need("ble", ["router"])]
+needs = [BLE_ROUTER]
 ...
 async def start(self):
-    self._ble_cancel = self.peripherals.instance("ble").register(self, _SWITCHBOT)
+    self._ble_cancel = self.peripherals.instance(BLE_ROUTER).register(self, _SWITCHBOT)
 
 async def stop(self):
     self._ble_cancel()
@@ -219,20 +220,20 @@ async def stop(self):
 async def ble_did_discover_device(self, ble: BLERouter, info: BLEDiscoveryInfo):
     if discovery := self._mapper.map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
-        await self.platform.output.controller_did_receive_discovery(self, discovery)
+        await self.output.controller_did_receive_discovery(self, discovery)
 
 async def ble_did_update_device(self, ble: BLERouter, info: BLEDiscoveryInfo):
     if discovery := self._mapper.map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
-        await self.platform.output.controller_did_update_discovery(self, discovery)
+        await self.output.controller_did_update_discovery(self, discovery)
 
 async def ble_did_remove_device(self, ble: BLERouter, info: BLEDiscoveryInfo):
     if discovery := self._mapper.map_to_discovery(info):
         if self._discoveries.pop(discovery.id, None):
-            await self.platform.output.controller_did_lose_discovery(self, discovery.id)
+            await self.output.controller_did_lose_discovery(self, discovery.id)
 
 async def _read_battery(self, address: str) -> int:
-    connection = await self.peripherals.instance("ble").connect(address)
+    connection = await self.peripherals.instance(BLE_ROUTER).connect(address)
     try:
         services = await connection.services()
         battery = next(c for s in services for c in s.characteristics if c.uuid.startswith("00002a19"))

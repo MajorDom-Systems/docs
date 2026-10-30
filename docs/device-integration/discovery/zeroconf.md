@@ -2,7 +2,7 @@
 
 ## `Zeroconf`
 
-The `mdns/zeroconf` peripheral. Declare `Need("mdns", ["zeroconf"])`, and the runtime's browser (`ZeroconfDiscoveryService`, the SDK's `discovery` extra) arrives as `self.peripherals.instance("mdns")`. Its contract is `majordom_integration_sdk.capabilities.Zeroconf`.
+The `mdns/zeroconf` peripheral. Declare `ZEROCONF`, and the runtime's browser (`ZeroconfDiscoveryService`, the SDK's `discovery` extra) arrives as `self.peripherals.instance(ZEROCONF)`. Its contract is `majordom_integration_sdk.capabilities.Zeroconf`.
 
 ### `register`
 
@@ -104,7 +104,7 @@ Key fields:
 ...
 async def start(self):
     self._cancels: set[Callable[[], None]] = set()
-    cancel = self.peripherals.instance("mdns").register(
+    cancel = self.peripherals.instance(ZEROCONF).register(
         self,  # self implements ZeroconfDiscoveryListener
         {"_hap._tcp.local."},
     )
@@ -119,16 +119,16 @@ async def stop(self):
 async def zeroconf_did_discover_service(self, zeroconf: Zeroconf, info: ZeroconfDiscoveryInfo):
     if discovery := self._mapper._map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
-        await self.platform.output.controller_did_receive_discovery(self, discovery)
+        await self.output.controller_did_receive_discovery(self, discovery)
 
 async def zeroconf_did_update_service(self, zeroconf: Zeroconf, info: ZeroconfDiscoveryInfo):
     if discovery := self._mapper._map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
-        await self.platform.output.controller_did_update_discovery(self, discovery)
+        await self.output.controller_did_update_discovery(self, discovery)
 
 async def zeroconf_did_remove_service(self, zeroconf: Zeroconf, type_: str, name: str):
     if discovery_id := self._mapper._name_to_id(name) and discovery_id in self._discoveries:
       self._discoveries.pop(discovery_id, None)
-      await self.platform.output.controller_did_lose_discovery(self, discovery_id)
+      await self.output.controller_did_lose_discovery(self, discovery_id)
 ...
 ```
