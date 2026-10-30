@@ -113,7 +113,7 @@ A need is **required** by default. The runtime starts the peripheral only once e
 
 An **optional** need (`is_required=False`, or `dataclasses.replace(BLE_ROUTER, is_required=False)`) doesn't hold it back. The runtime binds it when it can. Until then it is missing from `self.peripherals`.
 
-An unbound need carries the reason, for the user and for you: `need zigbee/ezsp|znp|…: nothing offers it`, or, when what took the endpoint provides the same family itself, what to need instead: `need ble/bluez: every provider taken by ble-router — use Need("ble", ["router"])`. The Hub shows it on the integration (`unbound` in [`GET /v1/api/integrations`](../hub/radios.md#rest-api)); standalone, the runner logs it.
+An unbound need carries the reason, for the user and for you: `need zigbee/ezsp|znp|…: nothing offers it`, or, when what took the endpoint provides the same family itself, what to need instead: `need ble/bluez: every provider taken by ble-router — use Need("ble", ["router"])`. An integration whose required need is unbound waits: in [`GET /v1/api/integrations`](../hub/radios.md#rest-api) it has `kind: needs-unbound`, the need `provider: null`, and the error `hub-needs-unbound` ("Matter waits for ble. It starts once that is there.": the families, not the reason). The reason itself is the runtime's (`Runtime.unbound`, the waiting status's `detail`); standalone, the runner logs it.
 
 ## Endpoints
 

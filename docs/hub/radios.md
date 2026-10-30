@@ -132,7 +132,7 @@ Each need in `GET /integrations`:
 | `provider` | the key of what serves it: a radio, a service, a provider, an integration, `host` or `pinned`; a list for an `is_many` need; `null` while unbound |
 | `endpoint` | what it is bound to: `family`, `dialect`, `url`, `is_shared`, `params` (never the in-process instance) |
 
-Why a need is unbound is in the integration's `hub-needs-unbound` error.
+An integration waiting for a required need has `kind: needs-unbound` and the error `hub-needs-unbound`, which names the missing families ("{name} waits for {families}. It starts once that is there."). Why each is unbound is the runtime's reason, in the Hub's log.
 
 The API Reference is generated from the Hub's OpenAPI schema, which the OpenAPI sync bot regenerates; don't edit it by hand.
 
@@ -155,5 +155,5 @@ An ESPHome node's Bluetooth proxy serves one hub at a time. Turn the ESPHome int
 - **See what runs:** `docker compose -p majordom ps`, then `docker compose -p majordom logs <service>` (`silabs-multiprotocol`, `otbr`, `matterjs-server`, `zwave-js-server`).
 - **A stick is recognised as the wrong thing, or not at all**, e.g. after it was flashed on another computer, or while `universal-silabs-flasher` was missing: forget it (`POST /hardware/radios/{key}/forget`) and it is identified again.
 - **A USB stick disappears right after you plug it in:** it is usually not fully seated. `dmesg` shows `error -32` or `error -71` from the kernel's USB driver. Push it in all the way.
-- **Bluetooth hears nothing:** `busctl get-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Discovering` should say `b true` while the hub runs. After `bluetoothd` restarts it says `b false` for up to a minute, until the router restarts the silent source. `GET /integrations` shows a need left unbound, and its `hub-needs-unbound` error why. matter-server's log shows `BLE proxy handshake complete` once the Matter integration is connected to it.
+- **Bluetooth hears nothing:** `busctl get-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Discovering` should say `b true` while the hub runs. After `bluetoothd` restarts it says `b false` for up to a minute, until the router restarts the silent source. `GET /integrations` shows a need left unbound, with `kind: needs-unbound` and the `hub-needs-unbound` error naming it. matter-server's log shows `BLE proxy handshake complete` once the Matter integration is connected to it.
 - **The hub's name changes**, e.g. to `majordom-hub-2.local`: a router on the LAN answers mDNS from its cache, so avahi sees the name as taken and renames the hub. Restart avahi (`sudo systemctl restart avahi-daemon`), then fix the router's mDNS reflector or cache.

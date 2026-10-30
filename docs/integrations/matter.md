@@ -27,7 +27,7 @@ matterjs-server runs with `BLE_PROXY=true`. The integration's Bluetooth delegate
 
 ### On its own adapter
 
-matterjs-server drives an adapter of its own when the router leaves one free: disable the router (`DISABLE_SERVICES=ble-router`). The runtime then binds an adapter to matterjs-server's optional `ble/bluez` need. Its compose then gets:
+matterjs-server drives an adapter of its own only when no Bluetooth router holds the adapters: the runtime binds the router (`ble-router`) before the integrations, and it takes every adapter (`is_many`). So disable the router (`DISABLE_SERVICES=ble-router`), or it has failed. The runtime then binds an adapter to matterjs-server's optional `ble/bluez` need. Its compose then gets:
 
 - `BLUETOOTH_ADAPTER`: the adapter's `index` (`0` for `hci0`), matterjs-server's `--bluetooth-adapter`.
 - `BLE_PROXY` off: `{peripherals.ble.url:!true}` renders empty once an adapter is bound. matterjs-server would prefer the proxy over the adapter, with a warning, if both were set.
