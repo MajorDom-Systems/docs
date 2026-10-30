@@ -1,0 +1,27 @@
+{
+  "integration-sdk": {
+    "repo": "https://github.com/MajorDom-Systems/integration-sdk",
+    "branch": "master",
+    "commit": "f19cc3e35a938652c43f26618a1d268dbe3d3163"
+  },
+  "integration-template": {
+    "repo": "https://github.com/MajorDom-Systems/integration-template",
+    "branch": "master",
+    "commit": "504e5c7dc79fcea4cbf3aa167e7e2152f1209e00"
+  },
+  "integration-matter": {
+    "repo": "https://github.com/MajorDom-Systems/integration-matter",
+    "branch": "master",
+    "commit": "fd334d6e6329f119a0ed7141e380f80b969b928d"
+  },
+  "integration-zigbee": {
+    "repo": "https://github.com/MajorDom-Systems/integration-zigbee",
+    "branch": "master",
+    "commit": "19f4f0193e1e79cf93daa4d0ca2c5914f68c3a1e"
+  },
+  "integration-homekit": {
+    "repo": "https://github.com/MajorDom-Systems/integration-homekit",
+    "branch": "master",
+    "commit": "8cf0f5cb13bb7689aa07968f2f80c4b86d50e63a"
+  }
+}
