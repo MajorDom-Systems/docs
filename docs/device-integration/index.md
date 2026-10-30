@@ -100,3 +100,13 @@ Integrations run their tests against a virtual/simulated device where possible, 
 
 - **Handle IP changes.** DHCP can reassign addresses. Identify devices by a stable ID (MAC, serial, mDNS hostname, domain-provided id) rather than IP. Monitor ip address regularly and keep it up to date.
 - **Use the Hub's provided discovery.** Register your mDNS service types via `self.dependencies.zeroconf_discovery_service.register(...)`, and similar for SSDP and BLE. See [Discovery Services](discovery/index.md) for details. Do not spin up your own discovery stack unless absolutely needed.
+
+### For all code
+
+- **No hand-typed keys: if a typo breaks it, type it.** Static keys and formatted strings come from typed names, never from a bare string literal repeated where they're used:
+    - the SDK's typed needs, `BLE_ROUTER`, `ZEROCONF` and `UPNP_SSDP`, read back with `self.peripherals.instance(BLE_ROUTER)`;
+    - `SettingsExtraField` for settings fields: `Field(11, json_schema_extra={Extra.read_only: True})`;
+    - `ComposeService` for a service's compose definition;
+    - your own enum or constant for anything else.
+- **Ids come from one helper each.** Derive device and parameter ids through the SDK helpers or one function of your own, never a format string repeated across the code. It's the same rule as above: a typo makes a second id, and state and automations stop matching.
+- Error messages and other text meant for people stay plain strings.
