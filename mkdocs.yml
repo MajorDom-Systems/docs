@@ -15,7 +15,7 @@ nav:
   - Device Integration:
       - Overview: "device-integration/index.md"
       - Implementing a Controller: "device-integration/controller.md"
-      - Connecting to Radios and Services: "device-integration/radios.md"
+      - Peripherals and Services: "device-integration/radios.md"
       - Settings: "device-integration/settings.md"
       - Storing Data: "device-integration/storing_data.md"
       - Data Models: "device-integration/data_models.md"
@@ -130,7 +130,11 @@ markdown_extensions:
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.caret
   - pymdownx.mark
   - pymdownx.tilde
