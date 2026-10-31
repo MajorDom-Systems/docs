@@ -103,12 +103,13 @@ async def controller_did_encounter_error(
 
 #### Which one do I use?
 
-There are three places an error can go. Pick by asking who it's for and how long it should stay:
+There are four places an error can go. Pick by asking who it's for and how long it should stay:
 
 | Surface | Use it for | How long it lives |
 |---|---|---|
 | `Device.last_error` / `Discovery.last_error` | a problem with one device | stays until *you* clear it |
 | `controller_did_encounter_error` | the whole integration has a problem; `still_running=False` = it failed and stopped | one-off notification |
+| `MissingCredentialsError` raised from `pair_device` | the Hub lacks credentials (e.g. Wi-Fi) for one pairing; see [Missing Hub credentials](data_models.md#missing-hub-credentials) | returned to the app with this pairing attempt |
 | logs (`logger.*`) | technical detail, for you the developer | log retention |
 
 **What about a parameter failing?** Parameters don't have an error field, on purpose. If one
