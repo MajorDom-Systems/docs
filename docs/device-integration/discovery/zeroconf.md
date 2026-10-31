@@ -1,8 +1,8 @@
 # Zeroconf (mDNS / DNS-SD / Bonjour) Discovery
 
-## `ZeroconfDiscoveryService`
+## `Zeroconf`
 
-Available as `self.dependencies.zeroconf_discovery_service`.
+The `mdns/zeroconf` peripheral. Declare `ZEROCONF`, and the runtime's browser (`ZeroconfDiscoveryService`, the SDK's `discovery` extra) arrives as `self.peripherals.instance(ZEROCONF)`. Its contract is `majordom_integration_sdk.capabilities.Zeroconf`.
 
 ### `register`
 
@@ -26,7 +26,7 @@ Returns a cancel closure — call it in `stop()` to deregister.
 async_zeroconf: AsyncZeroconf | None
 ```
 
-The underlying `AsyncZeroconf` instance, available after the service starts. Use only when you need low-level zeroconf access.
+The underlying `AsyncZeroconf` instance; `None` until it starts. Use only when you need low-level zeroconf access, or a library takes one (aiohomekit).
 
 ---
 
@@ -36,19 +36,19 @@ The underlying `AsyncZeroconf` instance, available after the service starts. Use
 class ZeroconfDiscoveryListener(Protocol):
     async def zeroconf_did_discover_service(
         self,
-        zeroconf: ZeroconfDiscoveryService,
+        zeroconf: Zeroconf,
         info: ZeroconfDiscoveryInfo,
     ): ...
 
     async def zeroconf_did_update_service(
         self,
-        zeroconf: ZeroconfDiscoveryService,
+        zeroconf: Zeroconf,
         info: ZeroconfDiscoveryInfo,
     ): ...
 
     async def zeroconf_did_remove_service(
         self,
-        zeroconf: ZeroconfDiscoveryService,
+        zeroconf: Zeroconf,
         type_: str,
         name: str,
     ): ...
@@ -104,7 +104,7 @@ Key fields:
 ...
 async def start(self):
     self._cancels: set[Callable[[], None]] = set()
-    cancel = self.dependencies.zeroconf_discovery_service.register(
+    cancel = self.peripherals.instance(ZEROCONF).register(
         self,  # self implements ZeroconfDiscoveryListener
         {"_hap._tcp.local."},
     )
@@ -116,19 +116,19 @@ async def stop(self):
 
 # ZeroconfDiscoveryListener Implementation
 
-async def zeroconf_did_discover_service(self, zeroconf: ZeroconfDiscoveryService, info: ZeroconfDiscoveryInfo):
+async def zeroconf_did_discover_service(self, zeroconf: Zeroconf, info: ZeroconfDiscoveryInfo):
     if discovery := self._mapper._map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
-        await self.dependencies.output.controller_did_receive_discovery(self, discovery)
+        await self.output.controller_did_receive_discovery(self, discovery)
 
-async def zeroconf_did_update_service(self, zeroconf: ZeroconfDiscoveryService, info: ZeroconfDiscoveryInfo):
+async def zeroconf_did_update_service(self, zeroconf: Zeroconf, info: ZeroconfDiscoveryInfo):
     if discovery := self._mapper._map_to_discovery(info):
         self._discoveries[discovery.id] = discovery
-        await self.dependencies.output.controller_did_update_discovery(self, discovery)
+        await self.output.controller_did_update_discovery(self, discovery)
 
-async def zeroconf_did_remove_service(self, zeroconf: ZeroconfDiscoveryService, type_: str, name: str):
+async def zeroconf_did_remove_service(self, zeroconf: Zeroconf, type_: str, name: str):
     if discovery_id := self._mapper._name_to_id(name) and discovery_id in self._discoveries:
       self._discoveries.pop(discovery_id, None)
-      await self.dependencies.output.controller_did_lose_discovery(self, discovery_id)
+      await self.output.controller_did_lose_discovery(self, discovery_id)
 ...
 ```

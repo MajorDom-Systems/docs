@@ -12,7 +12,9 @@ Don't start from a blank folder. Every integration is scaffolded from the **[`in
 
 ### Licensing
 
-The SDK and the official integrations are released under [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/) — free for noncommercial use. For commercial licensing or partnership, see <https://parker-industries.org/partnership>.
+The SDK and the integration template are released under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0): use them freely, for MajorDom integrations or in your own projects, including library mode. We do ask you to keep what you build on them open source.
+
+Most official integrations are source-available for noncommercial use. For a commercial license, contact us — we're open to partnership: <https://parker-industries.org/partnership>.
 
 ---
 
@@ -22,7 +24,9 @@ The SDK and the official integrations are released under [PolyForm Noncommercial
 |---|---|
 | **Hub** | The MajorDom Hub core software |
 | **Integration** | A protocol/vendor-specific plugin |
-| **Discovery Service** | A Hub-provided transport-level service (Zeroconf/mDNS, SSDP, or BLE) that fires raw discovery events. Injected via `self.dependencies`. |
+| **Peripheral** | Anything that needs or provides capabilities: a radio, a service, an in-process provider, the integration's controller itself. See [Peripherals and Services](radios.md) |
+| **Need** | Something external a peripheral requires: a radio, a server, or a discovery provider (`ZEROCONF`, `UPNP_SSDP`, `BLE_ROUTER`). The runtime binds it and hands it over in `self.peripherals` |
+| **Discovery Service** | A provider the runtime runs in-process (Zeroconf, SSDP, or the Bluetooth router) that fires raw discovery events. Needed like any other, see [Discovery Services](discovery/index.md) |
 | **Controller** (capitalized) | The class your integration must implement (`AbstractController` subclass) |
 | **a controller** (lowercase) | Any third-party device that can control IoT devices (smartphone, Alexa, etc.) |
 | **Discovery** | A detected, unpaired device that is available to be paired |
@@ -44,7 +48,7 @@ Your integration is its own package, `majordom_<protocol>/` (the template starts
 
 ```
 majordom_myintegration/
-├── __init__.py          # exports your controller class
+├── __init__.py          # exports peripherals(platform): the controller and the services it brings
 ├── controller.py        # AbstractController subclass — the only required implementation; discovery callbacks and cancel closures are typically stored here too
 ├── models.py            # Typed integration_data schemas for Device and Parameter subclasses, see Storing Data
 ├── mapper.py            # Protocol ↔ MajorDom domain model conversions, isolated from the controller for readability
@@ -61,45 +65,48 @@ Track it in your repo: the [integration template](https://github.com/MajorDom-Sy
 README ships this and the [Quality Checklist](quality.md) as a fillable copy — tick items there as
 you implement them. The list below is the reference.
 
-- [ ] Discovery service listeners fire when devices are found, and the controller calls `self.dependencies.output.controller_did_receive_discovery`
-- [ ] Discovery services registered via `self.dependencies.zeroconf_discovery_service`, `ssdp_discovery_service`, and/or `ble_discovery_service` as appropriate; cancel closures saved and called in `stop`
-- [ ] Discovery of devices already paired to the Hub on reconnect, e.g. after a reboot (`self.dependencies.output.controller_did_connect_device` is called)
+- [ ] Discovery registered with the providers it needs — `self.peripherals.instance(ZEROCONF)`, `UPNP_SSDP` and/or `BLE_ROUTER` as appropriate; cancel closures saved and called in `stop`
+- [ ] Discovery listeners fire when devices are found, and the controller calls `self.output.controller_did_receive_discovery`
+- [ ] Every reachable paired device reported on start (`self.output.controller_did_connect_device`): the Hub marked them all unavailable when the integration stopped
 - [ ] `start_pairing_window` is implemented if the protocol requires an explicit scan mode
 - [ ] Device pairing (`pair_device` is implemented, and validates the incoming `ProvidedCredentials.type` against `discovery.expected_credentials_options` before using it)
 - [ ] Device schema is properly mapped: device info, parameter list, and each parameter's metadata are translated to MajorDom's domain model
 - [ ] Hub → Device control (`send_command` is implemented)
-- [ ] Device → Hub event subscription (`self.dependencies.output.controller_did_receive_events` is called on incoming events)
+- [ ] Device → Hub event subscription (`self.output.controller_did_receive_events` is called on incoming events)
 - [ ] `identify`, `unpair`, and `fetch` are implemented
 - [ ] Paired devices going offline/coming back online *while the Hub is running* (not just on reboot) — set `device.available` accordingly, and clear/set `last_error` to match
 - [ ] Graceful shutdown in `stop`
+- [ ] Everything external declared as a `Need` — radios, `BLE_ROUTER`, `ZEROCONF`, `UPNP_SSDP`, the services it brings; never raw Bluetooth
+- [ ] Bound needs read from `self.peripherals`, host facts and storage from `self.platform`, reports sent through `self.output`
+- [ ] Integration-level problems reported with a stable error id (`IntegrationError`) and resolved when they clear
 - [ ] **Quality:** once it's functional, the integration meets the [Quality Checklist](quality.md) — reliability, tests, and maintainability — before release
 
 See [Implementing a Controller](controller.md) for details, or [Example Integration](example-integration.md) for a narrative walkthrough of the template's controller. The template README mirrors this checklist as its **Progress** list, so you can track your integration against it directly in your repo.
 
 ## Running standalone
 
-You don't need a running Hub to develop an integration. The SDK ships a dev runner that wires your controller to real discovery services and a local repository, starts it, and logs everything it discovers:
+You don't need a running Hub to develop an integration. The SDK ships a dev runner that binds your controller's needs through the SDK runtime, as the Hub does (the Bluetooth router, Zeroconf, SSDP, radios and services), gives it a local repository, starts it, and logs everything it discovers:
 
 ```python
 import asyncio
 from majordom_integration_sdk.dev import run_controller
-from majordom_myintegration import MyController
+import majordom_myintegration
 
-asyncio.run(run_controller(MyController))
+asyncio.run(run_controller(majordom_myintegration.peripherals))
 ```
 
-Pass `db_path=...` to persist devices across restarts (a file-backed SQLite repository) instead of the default in-memory one. See `majordom_integration_sdk.dev` for `build_dependencies`, which returns the same dependency set for your own scripts.
+It needs the runtime extras: `pip install "majordom-integration-sdk[runtime,ble,discovery]"`. Pass `db_path=...` to persist devices across restarts (a file-backed SQLite repository) instead of the default in-memory one. See [Standalone Mode](standalone.md) for the interactive CLI, `build_platform` for your own scripts, and running without Docker or radios.
 
 ## Testing
 
-Integrations run their tests against a virtual/simulated device where possible, so CI doesn't need physical hardware. The SDK's `majordom_integration_sdk.testing` module provides the doubles: `build_test_dependencies()` wires a `RecordingControllerOutput`, an in-memory repository, and fake discovery services, so a test can drive your controller and assert on what it reported. The template's `tests/` show the pattern. (Real-hardware validation lives in the Hub, not in the integration package.)
+Integrations run their tests against a virtual/simulated device where possible, so CI doesn't need physical hardware. The SDK's `majordom_integration_sdk.testing` module provides the doubles: `build_test_platform()` wires a `RecordingControllerOutput`, an in-memory repository and temp-dir storage, and `FakeZeroconf`, `FakeSSDP`, `FakeBLERouter` (with `FakeBLESource`s) and `FakeOffers` stand in for the peripherals, so a test can drive your controller and assert on what it reported. The template's `tests/` show the pattern. (Real-hardware validation lives in the Hub, not in the integration package.)
 
 ## Notes
 
 ### For IP Devices
 
 - **Handle IP changes.** DHCP can reassign addresses. Identify devices by a stable ID (MAC, serial, mDNS hostname, domain-provided id) rather than IP. Monitor ip address regularly and keep it up to date.
-- **Use the Hub's provided discovery.** Register your mDNS service types via `self.dependencies.zeroconf_discovery_service.register(...)`, and similar for SSDP and BLE. See [Discovery Services](discovery/index.md) for details. Do not spin up your own discovery stack unless absolutely needed.
+- **Use the Hub's provided discovery.** Need `ZEROCONF`, `UPNP_SSDP` or `BLE_ROUTER` and register through `self.peripherals.instance(ZEROCONF).register(...)`. See [Discovery Services](discovery/index.md). Do not run your own discovery stack.
 
 ### For all code
 

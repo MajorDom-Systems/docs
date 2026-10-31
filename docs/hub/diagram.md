@@ -13,7 +13,7 @@ entities, or click a domain's `⤢` label to isolate it.
         loading="lazy"
         style="width:100%;height:85vh;border:1px solid var(--md-default-fg-color--lightest);border-radius:.35rem"></iframe>
 
-[Open full-screen ↗](../module-map.html){target=_blank}
+[Open full-screen ↗](module-map.html){target=_blank}
 
 <script>
 // Bridge Material's light/dark toggle into the same-origin iframe (which themes off [data-theme]).
