@@ -7,6 +7,8 @@ inputs and outputs light up, and the panel lists what it implements / consumes /
 by, the methods callers invoke, its output delegates and its injected dependencies. Search
 entities, or click a domain's `⤢` label to isolate it.
 
+The peripherals domain shows where the SDK runtime sits; every peripheral it runs is on the [Peripherals Map](peripherals-map.md).
+
 <iframe id="modmap"
         src="../module-map.html"
         title="MajorDom Hub — interactive module map"
