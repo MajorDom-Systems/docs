@@ -4,99 +4,79 @@ Give the user options by declaring a pydantic model. The Hub turns it into a for
 
 ## Declaring settings
 
-Declare the model as a nested `Settings` class, named as the controller's last type parameter ([`controller.py`](https://github.com/MajorDom-Systems/integration-zigbee/tree/develop/majordom_zigbee/controller.py)):
+Declare the model as a nested `Settings` class, named as the controller's last type parameter:
 
 ```python
-from majordom_integration_sdk import SettingsExtraField as Extra
 from pydantic import BaseModel, Field
 
-class ZigBeeController(AbstractController[ZBDevice, ZBParameter, "ZigBeeController.Settings"]):
+from majordom_integration_sdk import AbstractController, Device, Parameter
+from majordom_integration_sdk import SettingsExtraField as Extra
+
+
+class AcmeController(AbstractController[Device, Parameter, "AcmeController.Settings"]):
     class Settings(BaseModel):
-        # filled in once the network forms: the user sees them, never sets them
-        channel: int | None = Field(None, title="Channel", json_schema_extra={Extra.read_only: True})
-        pan_id: str | None = Field(None, title="PAN ID", json_schema_extra={Extra.read_only: True})
-        tx_power: int | None = Field(None, ge=-10, le=20, title="Transmit power, dBm", description="Empty uses the radio default.")
+        poll_interval: int = Field(30, ge=5, le=3600, title="Poll interval, seconds")
+        api_token: str = Field("", title="Cloud API token", json_schema_extra={Extra.write_only: True})
+        firmware: str | None = Field(None, title="Bridge firmware", json_schema_extra={Extra.read_only: True})
 ```
 
-The app builds the form from the model's JSON schema (`model_json_schema()`). So:
+The app builds the form from the model's JSON schema. So:
 
-- Give every field a `title` and, where it helps, a `description`, in plain language for the user: what it is, and what an empty value does. Not the field name, not protocol jargon.
+- Give every field a `title` and, where it helps, a `description`, in plain language for the user: what it is, and what an empty value does.
 - Use pydantic constraints (`ge`, `le`, `Literal[...]`). The Hub validates every change against them.
-- Give every field a default. The Hub creates the settings before the user has opened the form.
+- Give every field a default: the Hub creates the settings before the user opens the form.
 
 Mark fields with `SettingsExtraField`, never a spelled-out keyword:
 
-- `read_only`: the peripheral fills it in itself (`self.settings.channel = 25`). The user sees it; an update to another value is refused. It is never stored.
-- `write_only`: the user sets it, and the Hub never reads it back (a secret). An update that leaves it out keeps it.
+- `write_only`: the user sets it, and the Hub never shows it again (a secret). An update that leaves it out keeps it.
+- `read_only`: your controller fills it in itself (`self.settings.firmware = "2.1"`). The user sees it but can't change it. It isn't stored.
 
 ## Reading settings
 
-The validated instance is `self.settings`, typed by your model. In library mode, pass them to the constructor: `ZigBeeController(platform, settings=ZigBeeController.Settings(tx_power=10))`; without, the defaults apply.
+The validated instance is `self.settings`, typed by your model. Without a `Settings` class, it is `NoSettings`.
 
 ## Defaults are kept
 
-The Hub stores the values the first time it reads the settings, defaults included. A `default_factory` runs once and its result stays. That's how Z-Wave generates its network keys once per hub ([`config.py`](https://github.com/MajorDom-Systems/integration-zwave/tree/develop/majordom_zwave/config.py)):
+The Hub stores the values the first time it reads the settings, defaults included. A `default_factory` runs once, and its result stays: that's how to generate a secret once per Hub, e.g. network keys.
 
 ```python
-def _key() -> str:
-    return secrets.token_hex(16).upper()
-
-
-class ZwaveNetwork(BaseModel):
-    """Security keys of the Z-Wave network, generated once. Back them up: without them, securely
-    included devices have to be re-included on a new controller."""
-
-    # write-only: the Hub never shows them, and an update without them keeps them
-    s0_legacy: str = Field(default_factory=_key, title="S0 Legacy key", json_schema_extra={Extra.write_only: True})
-    s2_unauthenticated: str = Field(default_factory=_key, title="S2 Unauthenticated key", json_schema_extra={Extra.write_only: True})
-    ...
+api_secret: str = Field(default_factory=lambda: secrets.token_hex(16), title="Secret", json_schema_extra={Extra.write_only: True})
 ```
 
-It also means a default you change in a later release applies to new hubs only.
+It also means a default you change in a later release applies to new Hubs only.
 
 ## Settings of a service
 
-A [`Service`](radios.md#bringing-your-own-service) can have settings too. Reach them in its `compose` through `{settings.<field>}`:
+A [`Service`](peripherals.md#tldr-bringing-a-docker-service) can have settings too. Pass the model as `settings=`, and use its fields in `compose` as `{settings.<field>}`:
 
 ```python
+class ServerOptions(BaseModel):
+    log_level: Literal["info", "debug"] = Field("info", title="Server log level")
+
+
 Service(
-    "zwave-js-server",
-    needs=[Need("zwave", ["serial-api"])],
-    provides=[Endpoint("zwave", "zwave-js-ws", "ws://127.0.0.1:{ports.api}")],
-    ports={"api": 3000},
-    settings=ZwaveNetwork,
-    compose={
-        ...
-        "environment": {
-            "S0_LEGACY_KEY": "{settings.s0_legacy}",
-            ...
-            "RF_REGION": "{platform.region}",
-        },
-    },
+    "acme-server",
+    compose={"image": "…", "environment": {"LOG_LEVEL": "{settings.log_level}"}},
+    settings=ServerOptions,
 )
 ```
 
-The user sees a service's settings on the screen of every integration that uses it, next to the integration's own. The Z-Wave screen shows the network keys; on a multi-PAN stick, the Zigbee screen also shows the Thread network settings of the `silabs-multiprotocol` service.
+The user sees a service's settings next to the settings of every integration that uses it.
 
 ## Changing settings
 
-The user changes settings in the app. The Hub validates the new values against the model, stores them, and applies them: a service's settings by recreating its container, the integration's own through [`settings_did_change()`](controller.md#hooks). Return `True` from it when applied in place; the default (`False`) restarts the integration.
+The user changes settings in the app; the Hub validates and stores them, then applies them. A service is recreated. Your controller gets [`settings_did_change(before)`](controller.md#hooks): return `True` when you applied them in place, or leave the default (`False`) to be restarted.
 
-In library mode, change them through the runtime:
-
-```python
-await runtime.update_settings(runtime.peripheral("zigbee"), {"tx_power": -20})
-```
+In [standalone mode](standalone.md), pass them to the constructor, `AcmeController(platform, settings=AcmeController.Settings(poll_interval=10))`, or change them through the runtime: `await runtime.update_settings(runtime.peripheral("acme"), {"poll_interval": 10})`.
 
 ## Hub settings
 
-Some settings belong to the whole hub (scope `hub`). The Hub turns them into platform facts: integrations read `self.platform.<fact>`, services `{platform.<fact>}`.
+Some settings belong to the whole Hub. They reach you as facts on `self.platform` (and `{platform.<fact>}` in a service's `compose`):
 
-| Setting | Meaning | Reaches you as |
-|---|---|---|
-| `region` | Where the hub is used, for sub-GHz radios. Named as Z-Wave JS names them: `Europe`, `USA`, `Australia/New Zealand`, `Hong Kong`, `India`, `Israel`, `Russia`, `China`, `Japan`, `Korea`, `USA (Long Range)`, `Europe (Long Range)` | `platform.region` |
-| `wifi` | Saved Wi-Fi networks to set devices up on | — |
-| `wifi_ssid` | Which saved network new devices go on; empty uses the hub's own network | `platform.wifi` |
-| `firmware` | Radio firmware the user may switch sticks to: `stable` (the default) offers verified builds only, `dev` every known build | — |
+| Fact | Meaning |
+|---|---|
+| `platform.region` | where the Hub is used, for sub-GHz radios, named as Z-Wave JS names them: `Europe`, `USA`, … |
+| `platform.wifi` | the Wi-Fi network to set new devices up on (`ssid`, `password`), or `None` |
+| `platform.thread_dataset` | the active dataset of the Hub's Thread network, hex; learned from the border router, not set by the user |
 
-`platform.thread_dataset` isn't a setting: the Hub learns it from the border router in use. A change of facts calls [`platform_facts_did_change()`](controller.md#hooks).
+When they change, your controller gets [`platform_facts_did_change(before)`](controller.md#hooks). Read `self.platform` each time you need a fact: a platform object you kept holds the old values.

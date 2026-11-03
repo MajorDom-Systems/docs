@@ -1,6 +1,6 @@
 # Discovery Services
 
-Discovery services are peripherals the runtime runs in the Hub's process. Your controller needs them like any radio or server, by the SDK's typed needs (`majordom_integration_sdk.capabilities`), and the bound one arrives typed as `self.peripherals.instance(ZEROCONF)`. They abstract transport-level device advertisement into a unified listener pattern, so your integration never needs to manage its own mDNS, SSDP, or BLE scanner.
+Discovery services tell your controller when devices appear, change or go away, over mDNS, SSDP or Bluetooth. Need them by the SDK's typed needs (`majordom_integration_sdk.capabilities`) and read the bound one with `self.peripherals.instance(ZEROCONF)`. They share one listener pattern, and your integration never runs its own mDNS, SSDP or BLE scanner.
 
 Three are available:
 
@@ -8,9 +8,9 @@ Three are available:
 |---|---|---|---|
 | `mdns/zeroconf` | `ZEROCONF` | [`Zeroconf`](zeroconf.md) | mDNS / DNS-SD |
 | `upnp/ssdp` | `UPNP_SSDP` | [`SSDP`](ssdp.md) | UPnP SSDP |
-| `ble/router` | `BLE_ROUTER` | [`BLERouter`](ble.md) | Bluetooth Low Energy, through every radio the hub has |
+| `ble/router` | `BLE_ROUTER` | [`BLERouter`](ble.md) | Bluetooth Low Energy, through every radio the hub has; for everything else over BLE see [Bluetooth LE](../capabilities/ble.md) |
 
-The contracts (interfaces and info types only) live in [`majordom_integration_sdk.capabilities`](https://github.com/MajorDom-Systems/integration-sdk/tree/develop/majordom_integration_sdk/capabilities); the implementations in the SDK runtime, see [The SDK Runtime](../../hub/radios.md#in-process-providers).
+The contracts (interfaces and info types only) live in [`majordom_integration_sdk.capabilities`](https://github.com/MajorDom-Systems/integration-sdk/tree/develop/majordom_integration_sdk/capabilities). See [Peripherals](../peripherals.md) for needs in general.
 
 ## Common Pattern
 

@@ -24,7 +24,7 @@ Most official integrations are source-available for noncommercial use. For a com
 |---|---|
 | **Hub** | The MajorDom Hub core software |
 | **Integration** | A protocol/vendor-specific plugin |
-| **Peripheral** | Anything that needs or provides capabilities: a radio, a service, an in-process provider, the integration's controller itself. See [Peripherals and Services](radios.md) |
+| **Peripheral** | Anything that needs or provides capabilities: a radio, a service, an in-process provider, the integration's controller itself. See [Peripherals](peripherals.md) |
 | **Need** | Something external a peripheral requires: a radio, a server, or a discovery provider (`ZEROCONF`, `UPNP_SSDP`, `BLE_ROUTER`). The runtime binds it and hands it over in `self.peripherals` |
 | **Discovery Service** | A provider the runtime runs in-process (Zeroconf, SSDP, or the Bluetooth router) that fires raw discovery events. Needed like any other, see [Discovery Services](discovery/index.md) |
 | **Controller** (capitalized) | The class your integration must implement (`AbstractController` subclass) |

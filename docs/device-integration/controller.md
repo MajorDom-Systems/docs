@@ -46,7 +46,7 @@ Implement all abstract methods defined in [`AbstractController`](https://github.
 
 ### Device → Hub
 
-Use `self.platform.output` (a `ControllerOutput`), injected by the Hub:
+Use `self.output` (a `ControllerOutput`), injected by the Hub:
 
 ```python
 # New unpaired device found during discovery
@@ -183,7 +183,7 @@ Optional. Override only if your protocol requires an explicit short-lived scan m
 
 ## What the Hub Gives
 
-A controller is a [`Peripheral`](radios.md). It is constructed as `Controller(platform, settings=None)`; keep these parameters when you override `__init__`. The runtime sets the rest before `start()`.
+A controller is a [`Peripheral`](peripherals.md). It is constructed as `Controller(platform, settings=None)`; keep these parameters when you override `__init__`. The runtime sets the rest before `start()`.
 
 | Attribute | Type | Description |
 |---|---|---|
@@ -219,7 +219,7 @@ class ZigBeeController(AbstractController[Device, Parameter, "ZigBeeController.S
         ...
 ```
 
-HomeKit, which only uses the network, needs just `ZEROCONF`. Make a typed need optional with `dataclasses.replace(BLE_ROUTER, is_required=False)`. See [Peripherals and Services](radios.md) and [Settings](settings.md).
+HomeKit, which only uses the network, needs just `ZEROCONF`. Make a typed need optional with `dataclasses.replace(BLE_ROUTER, is_required=False)`. See [Peripherals](peripherals.md) and [Settings](settings.md).
 
 ### Hooks
 
@@ -253,7 +253,7 @@ async def platform_facts_did_change(self, before: Platform) -> bool:
 
 ### Staying connected
 
-A [service](radios.md#bringing-your-own-service) is recreated when its settings or bindings render it differently, and it may crash and come back. Nobody tells the controller. So don't let one connection live as long as the controller: keep a task that waits for the connection to drop and reconnects with backoff, as the [template](https://github.com/MajorDom-Systems/integration-template/tree/develop/integration_template/controller.py) does.
+A [service](peripherals.md#tldr-bringing-a-docker-service) is recreated when its settings or bindings render it differently, and it may crash and come back. Nobody tells the controller. So don't let one connection live as long as the controller: keep a task that waits for the connection to drop and reconnects with backoff, as the [template](https://github.com/MajorDom-Systems/integration-template/tree/develop/integration_template/controller.py) does.
 
 ```python
 async def _stay_connected(self):

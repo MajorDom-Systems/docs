@@ -145,7 +145,7 @@ await runner.stop()
 
 ## Connecting to radios and services
 
-An integration with [`needs`](radios.md) gets its peripherals from the runtime, standalone as
+An integration with [`needs`](peripherals.md) gets its peripherals from the runtime, standalone as
 under the Hub. How much of it runs is up to you:
 
 | Level | You run | The runtime runs | Pass |
