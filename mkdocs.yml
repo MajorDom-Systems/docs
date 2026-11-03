@@ -13,23 +13,23 @@ copyright: Copyright &copy; 2024 Parker Industries Inc. All rights reserved.
 nav:
   - MajorDom Docs: "index.md"
   - Device Integration:
-      - Overview: "device-integration/index.md"
-      - Implementing a Controller: "device-integration/controller.md"
-      - Peripherals: "device-integration/peripherals.md"
-      - Settings: "device-integration/settings.md"
-      - Storing Data: "device-integration/storing_data.md"
-      - Data Models: "device-integration/data_models.md"
-      - Parameter UX: "device-integration/parameter-ux.md"
+      - Overview: "integrations/index.md"
+      - Implementing a Controller: "integrations/controller.md"
+      - Peripherals: "integrations/peripherals.md"
+      - Settings: "integrations/settings.md"
+      - Storing Data: "integrations/storing_data.md"
+      - Data Models: "integrations/data_models.md"
+      - Parameter UX: "integrations/parameter-ux.md"
       - Discovery Services:
-          - Overview: "device-integration/discovery/index.md"
-          - Zeroconf / mDNS: "device-integration/discovery/zeroconf.md"
-          - SSDP / UPnP: "device-integration/discovery/ssdp.md"
-          - Bluetooth: "device-integration/discovery/ble.md"
+          - Overview: "integrations/discovery/index.md"
+          - Zeroconf / mDNS: "integrations/discovery/zeroconf.md"
+          - SSDP / UPnP: "integrations/discovery/ssdp.md"
+          - Bluetooth: "integrations/discovery/ble.md"
       - Capabilities:
-          - Bluetooth LE: "device-integration/capabilities/ble.md"
-      - Standalone Mode: "device-integration/standalone.md"
-      - Example Integration: "device-integration/example-integration.md"
-      - Quality Checklist: "device-integration/quality.md"
+          - Bluetooth LE: "integrations/capabilities/ble.md"
+      - Standalone Mode: "integrations/standalone.md"
+      - Example Integration: "integrations/example-integration.md"
+      - Quality Checklist: "integrations/quality.md"
   - Hub:
       - API Reference: "hub/api.md"
       - Peripherals Map: "hub/peripherals-map.md"
@@ -151,15 +151,15 @@ plugins:
       full_output: llms-full.txt
       sections:
         Device Integration:
-          - device-integration/index.md
-          - device-integration/controller.md
-          - device-integration/peripherals.md
-          - device-integration/settings.md
-          - device-integration/storing_data.md
-          - device-integration/data_models.md
-          - device-integration/example-integration.md
-          - device-integration/discovery/*.md
-          - device-integration/capabilities/*.md
+          - integrations/index.md
+          - integrations/controller.md
+          - integrations/peripherals.md
+          - integrations/settings.md
+          - integrations/storing_data.md
+          - integrations/data_models.md
+          - integrations/example-integration.md
+          - integrations/discovery/*.md
+          - integrations/capabilities/*.md
         API:
           - api/hub.md
           - api/bridge.md

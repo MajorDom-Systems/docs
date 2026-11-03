@@ -1,6 +1,6 @@
 # Peripherals Map
 
-Every peripheral the SDK runtime runs, and what serves whose needs: radios and the host, the USB drivers that recognise sticks, the Docker services, the in-process capabilities, and a few integrations as examples of consumers. An arrow points from a provider to the peripheral whose need it serves. Click any peripheral to see what it needs, what it provides, and what runs it. How to use them: [Peripherals](../device-integration/peripherals.md).
+Every peripheral the SDK runtime runs, and what serves whose needs: radios and the host, the USB drivers that recognise sticks, the Docker services, the in-process capabilities, and a few integrations as examples of consumers. An arrow points from a provider to the peripheral whose need it serves. Click any peripheral to see what it needs, what it provides, and what runs it. How to use them: [Peripherals](../integrations/peripherals.md).
 
 <iframe id="permap"
         src="../peripherals-map.html"
