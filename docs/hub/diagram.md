@@ -7,13 +7,15 @@ inputs and outputs light up, and the panel lists what it implements / consumes /
 by, the methods callers invoke, its output delegates and its injected dependencies. Search
 entities, or click a domain's `⤢` label to isolate it.
 
+The peripherals domain shows where the SDK runtime sits; every peripheral it runs is on the [Peripherals Map](peripherals-map.md).
+
 <iframe id="modmap"
         src="../module-map.html"
         title="MajorDom Hub — interactive module map"
         loading="lazy"
         style="width:100%;height:85vh;border:1px solid var(--md-default-fg-color--lightest);border-radius:.35rem"></iframe>
 
-[Open full-screen ↗](../module-map.html){target=_blank}
+[Open full-screen ↗](module-map.html){target=_blank}
 
 <script>
 // Bridge Material's light/dark toggle into the same-origin iframe (which themes off [data-theme]).
