@@ -36,9 +36,17 @@ def parameter_type(self) -> type[MyParameter]:
 
 The Hub will deserialize objects into these types before passing them to your implemented methods.
 
+The draft that `pair_device` fills is a `DeviceState`. To give it your own `integration_data` schema, subclass `DeviceState` and override `device_state_type` the same way. The Hub validates the draft into it:
+
+```python
+@property
+def device_state_type(self) -> type[MyDeviceState]:
+    return MyDeviceState
+```
+
 ### Repository
 
-Use `self.platform.device_repository(self)`, scoped to your integration's key, to read or persist devices:
+Use `self.platform.device_repository(self)`, scoped to your integration's key, to read or persist devices. Not in `pair_device`: it fills the draft and returns it, and the Hub saves it (see [Pairing](controller.md#pairing)). Use the repository everywhere else, for example to update a paired device later:
 
 ```python
 async with self.platform.device_repository(self) as repo:
