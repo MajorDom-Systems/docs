@@ -44,6 +44,7 @@ pip install "majordom-integration-sdk[cli,runtime,ble,discovery]"
 ```python
 # cli.py
 import asyncio
+from uuid import uuid4
 from majordom_integration_sdk.dev import run_cli
 import integration_template  # your integration
 
@@ -96,6 +97,7 @@ file-backed device store, and a console logger, then runs your controller until 
 
 ```python
 import asyncio
+from uuid import uuid4
 from majordom_integration_sdk.dev import run_controller
 import integration_template  # your integration
 
@@ -112,6 +114,7 @@ yourself and call the controller's methods directly (library mode):
 
 ```python
 import asyncio
+from uuid import uuid4
 from majordom_integration_sdk import Endpoint, Peripherals
 from majordom_integration_sdk.dev import build_platform
 from integration_template.controller import ExampleController
@@ -121,7 +124,7 @@ async def main():
     controller.peripherals = Peripherals({"example": Endpoint("example", "echo", "tcp://127.0.0.1:7000")})
     controller.output = MyDelegate()  # see below; logs by default
     await controller.start()
-    # ... await controller.pair_device(discovery, ProvidedCredentials(...)), send_command, fetch ...
+    # ... await controller.pair_device(discovery, draft, ProvidedCredentials(...)), save it, fetch, send_command ...
     await controller.stop()
 
 asyncio.run(main())
@@ -173,6 +176,7 @@ it serves:
 
 ```python
 import asyncio
+from uuid import uuid4
 import majordom_zwave
 from majordom_integration_sdk import Endpoint
 from majordom_integration_sdk.dev import run_controller
@@ -272,8 +276,10 @@ simplest path is to subclass the SDK's `LoggingControllerOutput` and override on
 
 ```python
 import asyncio
+from uuid import uuid4
 from majordom_integration_sdk.dev import LoggingControllerOutput, build_platform
 from majordom_integration_sdk.schemas.credentials import CredentialsType, ProvidedCredentials
+from majordom_integration_sdk.schemas.device import DeviceState
 from integration_template.controller import ExampleController
 
 class MyDelegate(LoggingControllerOutput):
@@ -298,11 +304,17 @@ async def main():
     while not delegate.discoveries:
         await asyncio.sleep(0.2)
     discovery = next(iter(delegate.discoveries.values()))
-    device_id = await controller.pair_device(
-        discovery, ProvidedCredentials(type=CredentialsType.code, value="123-45-678")
+    # no Hub here: build the draft it would build, pair, then save and fetch as it does
+    draft = DeviceState(id=discovery.id, name=discovery.device_name, room_id=uuid4(), transport=discovery.transport,
+                        integration=controller.key, manufacturer=discovery.device_manufacturer, parameters=[])
+    device = await controller.pair_device(
+        discovery, draft, ProvidedCredentials(type=CredentialsType.code, value="123-45-678")
     )
+    async with controller.platform.device_repository(controller) as repo:
+        await repo.save(device)
+    await controller.fetch(device)
 
-    # ... controller.send_command(...), controller.fetch(device), controller.identify(device) ...
+    # ... controller.send_command(...), controller.identify(device) ...
 
     await controller.stop()
 
