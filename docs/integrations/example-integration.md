@@ -44,7 +44,7 @@ class MyController(AbstractController[MyDevice, MyParameter]):
     # ── Pairing ──────────────────────────────────────────────────────────────
     async def start_pairing_window(self, duration_sec: int, credentials=None) -> None: ...  # optional (e.g. Zigbee)
     async def pair_device(self, discovery, draft, credentials) -> DeviceState: ...  # fill the draft: commission + map schema
-    async def unpair(self, device: MyDevice) -> None: ...                  # also the rollback of a failed pairing
+    async def unpair(self, device: MyDevice) -> None: ...                  # the user's unpair only
 
     # ── Control & read  (Hub → Device) ───────────────────────────────────────
     async def send_command(self, command, device, parameter) -> None: ...  # set a value / run command
@@ -216,9 +216,11 @@ async def pair_device(
 
 The device now has a permanent id, distinct from its (temporary) discovery id. Build it from the serial number, a string unique to that device. A name or an address two devices share would give them the same id. `check_device_id` raises `DeviceIdTakenError` when another record already holds the id, so the user gets a clear refusal and the device is left untouched.
 
-Now the irreversible step. Write what it changes to the draft **first**, then run it. If it fails, the Hub calls `unpair(draft)`, which reads the draft to know what to undo:
+Now the irreversible step. The Hub undoes nothing when a pairing fails or is never saved, so leave the device re-pairable: keep what a retry needs **before** the step (here the session key, which the device requires from then on), and reuse it on the next attempt:
 
 ```python
+    key = self._kept_key(draft.id) or new_session_key()  # pseudo: the key an earlier attempt set, if any
+    self._keep_key(draft.id, key)  # pseudo: platform.documents_folder(self) / "keys.json"
     draft.integration_data = AcmeDeviceIntegrationData(device_hostname=hostname, session_key=key)
     await self._client.pair(discovery.id, code=credentials.value, session_key=key)  # pseudo, irreversible
 
@@ -229,17 +231,16 @@ Now the irreversible step. Write what it changes to the draft **first**, then ru
 
 Don't call `_subscribe` or `controller_did_connect_device` here. The Hub saves the draft, reports the device connected, and then calls `fetch`, which subscribes.
 
-### `unpair`: also the rollback
+### `unpair`
 
-`unpair` tells the device to forget the pairing (the Hub removes its own record). It is also what the Hub calls when `pair_device` fails, with the draft as you left it, so it must cope with a draft at any stage: no `integration_data`, a device that is gone. Undo in reverse order, never wait for the user, and go as far as you can:
+`unpair` tells the device to forget the pairing (the Hub removes its own record). The user triggers it for a saved device; it is never a rollback of a failed pairing. The device may be gone, so go as far as you can:
 
 ```python
 async def unpair(self, device: AcmeDevice):
     data = device.integration_data
-    if data is None:  # pair_device failed before the irreversible step: nothing to undo
-        return
     self._unsubscribe(device)
-    with contextlib.suppress(AcmeError):  # pseudo: the device may be gone, keep undoing
+    self._forget_key(device.id)  # pseudo: no retry needs it anymore
+    with contextlib.suppress(AcmeError):  # pseudo: the device may be gone
         await self._client.forget(data.device_hostname, session_key=data.session_key)  # pseudo
 ```
 
