@@ -62,10 +62,10 @@ example > pair <discovery_id> [credentials_type] [credentials_value]
 example > pair_window 60 # open a join window (Zigbee); no-op where discovery is continuous
 example > devices        # paired devices (id, name, available)
 example > device <id>    # its parameters (id, name, role, visibility, value)
-example > control <device_id> <parameter_id> <value>   # value parsed as JSON if possible
-example > identify <device_id>   # blink/beep
-example > fetch <device_id>      # refresh state from the device
-example > unpair <device_id>
+example > control <physical_id> <parameter_id> <value>   # value parsed as JSON if possible
+example > identify <physical_id>   # blink/beep
+example > fetch <physical_id>      # refresh state from the device
+example > unpair <physical_id>
 example > needs          # each need: what it is bound to and by whom, or why it isn't bound
 example > pin <family> <url> [dialect]   # provide an endpoint yourself, e.g. pin zigbee socket://192.168.1.5:6638 ezsp
 example > unpin <family>  # drop it: the runtime binds the need again
