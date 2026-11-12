@@ -56,14 +56,15 @@ async def pair_device(
 ) -> DeviceState: ...
 ```
 
-The Hub builds `draft` from what the user entered in the app: name, room, icon, category, note. Its `id` is the discovery's id, and `integration` is your key. When the user picks an existing record to pair onto, the draft carries that record's data instead, its `id` and `integration_data` included. The integration decides what in it is stale.
+The Hub builds `draft` from what the user entered in the app: name, room, icon, category, note. Its `id` is the Hub's own and read-only: never change it. Its `physical_id` holds the discovery's id as a placeholder, and `integration` is your key. When the user picks an existing record to pair onto, the draft carries that record's data instead, its `id`, `physical_id` and `integration_data` included. The integration decides what in it is stale.
 
-You fill in what the device is: `parameters`, `integration_data`, the final `id`, `available`, and the rest. Then you return the draft. The Hub saves it, reports the device connected if it is `available`, and calls `fetch`. So, during `pair_device`:
+You fill in what the device is: `parameters`, `integration_data`, its `physical_id`, `available`, and the rest. Then you return the draft. The Hub saves it, reports the device connected if it is `available`, and calls `fetch`. So, during `pair_device`:
 
 - **Don't use the device repository.** Nothing is saved while pairing.
 - **Report nothing about this device.** No `controller_did_connect_device`, no events. The Hub reports after it saved the draft.
-- **Check the final id early.** As soon as you know it, call `check_device_id` (below), before anything irreversible.
-- **Fill the draft in place before each irreversible step.** A key you are about to set, a node you are about to include: write it to the draft first. If pairing fails, the Hub calls `unpair(draft)` to roll back, and `unpair` can only undo what the draft says ran.
+- **Check the physical id early.** As soon as you know it, call `check_device_id` (below), before anything irreversible.
+- **Fill `integration_data` before each irreversible step.** A key you are about to set, a node you are about to include: write it to the draft first. It is saved with the device, so you need no storage of your own. If pairing fails, the Hub calls `unpair(draft)` to roll back, and `unpair` can only undo what the draft says ran.
+- **Be idempotent, like `fetch`.** The user may retry after a failed or rolled-back attempt, with a fresh draft. Bring the device to a known-good paired state from whatever the last attempt left: check each step and redo only what is missing or stale. A device found already paired is confirmed and returned, not refused.
 - **Raise when you can't pair.** Raise `MissingCredentialsError` before touching the device when the Hub lacks credentials.
 
 ```python
@@ -71,8 +72,8 @@ async def pair_device(self, discovery, draft, credentials):
     if not discovery.accepts(credentials):
         raise ValueError("Unsupported or missing credentials for this discovery")
     serial = await self._client.read_serial(discovery.id)                   # pseudo, read-only
-    draft.id = self.device_uuid(serial)
-    await self.check_device_id(draft.id, draft)                             # before anything irreversible
+    draft.physical_id = self.device_uuid(serial)
+    await self.check_device_id(draft.physical_id, draft)                    # before anything irreversible
     draft.integration_data = AcmeDeviceIntegrationData(device_key=new_key)  # before the step it describes
     await self._client.pair(discovery.id, key=new_key)                      # pseudo, irreversible
     draft.parameters = self._mapper.parameters(await self._client.get_properties(serial))
@@ -84,16 +85,17 @@ async def pair_device(self, discovery, draft, credentials):
 
 ```python
 @final
-async def check_device_id(self, device_id: UUID, draft: TDeviceState): ...
+async def check_device_id(self, physical_id: UUID, draft: TDeviceState): ...
 ```
 
-Optional, but call it. It raises `DeviceIdTakenError` when another record holds `device_id`, the final id of the device you are pairing. The record the user picked to pair onto (`draft.id` on explicit intent) is not another. The Hub refuses the pairing with that error and does not roll it back, because nothing ran.
+Optional, but call it. It raises `DeviceIdTakenError` when another record holds `physical_id`, the one you are giving the device. The record the user picked to pair onto (`draft.id`) is not another. The Hub refuses the pairing with that error and does not roll it back, because nothing ran.
 
 ```python
 from majordom_integration_sdk.errors import DeviceIdTakenError
 
 error: DeviceIdTakenError
-error.device_id   # the id in question
+error.physical_id # the id in question
+error.device_id   # the Hub id of the record that holds it
 error.name        # the name of the record that holds it
 error.is_paired   # False: a record kept after its device was removed
 ```
@@ -102,7 +104,10 @@ The app uses the record's name and `is_paired` to offer pairing onto that record
 
 #### Device ids
 
-Build the final id with `device_uuid(s)`, where `s` is a string unique to that device: a MAC address or a serial number. A name or an address two devices share gives them the same id, and the second one can't be paired. Never change the id of a device that is already paired.
+A device has two ids:
+
+- `id` is the Hub's. The Hub assigns it, and you never change it.
+- `physical_id` is yours: what you look the device up by, in the repository (`repo.get(physical_id=...)`), in events and in `controller_did_connect_device(self, physical_id=...)`. Build it with `device_uuid(s)`, where `s` is a string unique to that device: a MAC address or a serial number. A name or an address two devices share gives them the same id, and the second one can't be paired. Never change the `physical_id` of a device that is already paired.
 
 #### `unpair` is also the rollback
 
@@ -110,14 +115,29 @@ Build the final id with `device_uuid(s)`, where `s` is a string unique to that d
 async def unpair(self, device: TDevice): ...
 ```
 
-The user triggers it to remove a device. The Hub also calls it when `pair_device` fails, with the draft as `pair_device` left it, at any stage. So:
+The user triggers it to remove a device. The Hub also calls it to roll back, with the draft as `pair_device` left it, at any stage: when `pair_device` raises anything but `DeviceIdTakenError`, and when the Hub fails to save what it returned. So:
 
-- Undo in the reverse order of pairing.
-- Tolerate any partial state: an id that is not final yet, no `integration_data`, a device that is gone.
-- Never wait for the user.
-- Go as far as you can. It is best effort, and the Hub cuts it off after about 30 seconds.
+- Undo, in the reverse order of pairing, only what would block a clean re-pair once the draft is lost: a key set on the device, a pairing the accessory holds.
+- Leave harmless leftovers alone. A node left on a fabric or network, offered again as a discovery, needs no undo.
+- Tolerate any partial state: a placeholder `physical_id`, no `integration_data`, a device already reset.
+- Never wait for the user. Go as far as you can: it is best effort, and the Hub cuts it off after 30 seconds.
+- Make it safe to call again. On a device already unpaired, or never fully paired, it does nothing more.
 
-The user sees the original pairing error, not an error from the rollback. `DeviceIdTakenError` and an id refusal by the Hub don't trigger it.
+When the device can't be reached to undo its pairing, forget your own state of it, then raise `DeviceUnreachableError`.
+
+The user sees the original pairing error, not an error from the rollback. When the rollback can't reach the device, the Hub answers `pairing_failed`: "Pairing failed. The device may need a manual factory reset to pair again."
+
+#### Removing a device
+
+The app removes a device with `DELETE /device/{id}?mode=...`:
+
+| `mode` | What happens |
+|---|---|
+| `unpair` | calls `unpair`, keeps the record |
+| `delete` (default) | calls `unpair`, then removes the record |
+| `forget` | removes the record without calling `unpair` |
+
+When `unpair` raises `DeviceUnreachableError`, the Hub answers 409 `device_unreachable`: "Device unreachable. Forget it instead? It might need a manual factory reset to pair again."
 
 #### `fetch` brings a device to a known-good state
 
@@ -146,8 +166,12 @@ await self.output.controller_did_update_discovery(self, discovery)
 await self.output.controller_did_lose_discovery(self, discovery_id)
 
 # Device connected; on start, report every paired device that answers.
-# Never during pair_device: the Hub reports a new device itself once it saved it
-await self.output.controller_did_connect_device(self, device_id)
+# Never during pair_device: the Hub reports a new device itself once it saved it.
+# Ids are keyword-only: pass physical_id= (device_id= is for relays passing on the Hub's id)
+await self.output.controller_did_connect_device(self, physical_id=physical_id)
+
+# A paired device became unreachable while the Hub is running
+await self.output.controller_did_lose_device(self, physical_id=physical_id)
 
 # Device reported new parameter values or events
 await self.output.controller_did_receive_events(self, events)
@@ -219,6 +243,7 @@ There are five places an error can go. Pick by asking who it's for and how long 
 | `Device.last_error` / `Discovery.last_error` | a problem with one device | stays until *you* clear it |
 | `controller_did_encounter_error` | the whole integration has a problem; `is_still_running=False` = it failed and stopped | until resolved, or the integration restarts |
 | `DeviceIdTakenError` raised by `check_device_id` | another record already holds the id this pairing would give; see [Device ids](#device-ids) | returned to the app with this pairing attempt |
+| `DeviceUnreachableError` raised by `unpair` | the device can't be reached to undo its pairing; see [`unpair`](#unpair-is-also-the-rollback) | returned to the app, which offers to forget the device |
 | `MissingCredentialsError` raised from `pair_device` | the Hub lacks credentials (e.g. Wi-Fi) for one pairing; see [Missing Hub credentials](data_models.md#missing-hub-credentials) | returned to the app with this pairing attempt |
 | logs (`logger.*`) | technical detail, for you the developer | log retention |
 
@@ -378,14 +403,14 @@ def key(self) -> str: ...
 def integration_uuid(self) -> UUID: ...
 # Stable UUID for this integration, derived from key
 
-def device_uuid(self, device_id: str) -> UUID: ...
-# Stable UUID for a device given a string unique to it (MAC, serial); devices sharing the string share the id
+def device_uuid(self, raw: str | bytes) -> UUID: ...
+# The physical_id of a device from a string unique to it (MAC, serial); devices sharing the string share the id
 
-async def check_device_id(self, device_id: UUID, draft: TDeviceState): ...
-# Raises DeviceIdTakenError when another record holds the id; call it from pair_device
+async def check_device_id(self, physical_id: UUID, draft: TDeviceState): ...
+# Raises DeviceIdTakenError when another record holds the physical id; call it from pair_device
 
-def parameter_uuid(self, device_uuid: UUID, parameter_id: str) -> UUID: ...
-# Stable UUID for a parameter scoped to its device
+def parameter_uuid(self, physical_id: UUID, raw: str | bytes) -> UUID: ...
+# Stable UUID for a parameter, scoped to its device's physical_id
 ```
 
 ## See Also

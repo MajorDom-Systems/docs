@@ -328,8 +328,8 @@ The full delegate surface — every method the controller may call:
 | `controller_did_receive_discovery(controller, discovery)` | a new device is discovered |
 | `controller_did_update_discovery(controller, discovery)` | a known discovery's details change |
 | `controller_did_lose_discovery(controller, discovery_id)` | a discovery is gone |
-| `controller_did_connect_device(controller, device_id)` | a paired device comes online (incl. after pairing) |
-| `controller_did_lose_device(controller, device_id)` | a paired device goes offline |
+| `controller_did_connect_device(controller, *, physical_id)` | a paired device comes online (incl. after pairing) |
+| `controller_did_lose_device(controller, *, physical_id)` | a paired device goes offline |
 | `controller_did_receive_events(controller, events)` | the device reports parameter changes (`DeviceParameterChange`) |
 | `controller_did_encounter_error(controller, error)` / `controller_did_resolve_error(controller, error_id)` | an `IntegrationError` is active / gone |
 | `controller_did_emit_notification(controller, notification)` | a user-facing notification |

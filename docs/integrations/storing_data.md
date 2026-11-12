@@ -50,7 +50,7 @@ Use `self.platform.device_repository(self)`, scoped to your integration's key, t
 
 ```python
 async with self.platform.device_repository(self) as repo:
-    device = await repo.get(device_id, as_=MyDevice) # `as_=MyDevice` is optional but provides hassle-free deserialization
+    device = await repo.get(physical_id=physical_id, as_=MyDevice) # `as_=MyDevice` is optional but provides hassle-free deserialization
 
 async with self.platform.device_repository(self) as repo:
     device.integration_data.some_field = new_value # assuming `MyDevice.integration_data` uses custom class with `some_field` present

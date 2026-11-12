@@ -30,7 +30,7 @@ An integration must never take the Hub down, and never spam the logs. The Hub is
 ## Tested — vital
 
 - [ ] **End-to-end automated tests** drive the controller through pair → command → fetch → events → `unpair` against a **virtual/simulated device** (the SDK's `majordom_integration_sdk.testing` doubles), with no physical hardware required.
-- [ ] **Failure paths are tested** — offline device, transport error, rejected credentials — asserting the integration degrades gracefully (sets `available`/`last_error`, does not raise).
+- [ ] **Failure paths are tested** — offline device, transport error, rejected credentials, a failed pairing rolled back by `unpair(draft)` and then retried, `unpair` of an unreachable device raising `DeviceUnreachableError` — asserting the integration degrades gracefully (sets `available`/`last_error`, does not raise).
 - [ ] **Behaviour without a required radio is tested.** Losing the radio or service while running reports an `IntegrationError` with `is_still_running=False`, so the Hub restarts the integration, instead of hanging; an unbound optional need doesn't stop it from starting.
 - [ ] **Broad device coverage** where the protocol has many device/parameter types — exercise the full mapping surface, not one happy-path device. (A protocol-provided virtual-device catalogue, run in CI, is the ideal.)
 

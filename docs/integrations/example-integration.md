@@ -142,6 +142,7 @@ The package's `peripherals(platform)` builds the controller. It declares its ide
 attribute** and subclasses the generic `AbstractController`:
 
 ```python
+from majordom_integration_sdk import DeviceUnreachableError
 from majordom_integration_sdk.capabilities import ZEROCONF
 from majordom_integration_sdk.controller import AbstractController
 from .models import AcmeDevice, AcmeParameter
@@ -164,14 +165,14 @@ becomes reachable, including here at boot, to flip `device.available` back to `T
 ```python
 async def start(self):
     self._discoveries = {}
-    self._subscriptions = {}  # device id -> cancel closure
+    self._subscriptions = {}  # physical id -> cancel closure
     self._client = AcmeClient()  # pseudo
     self._cancel_discovery = self.peripherals.instance(ZEROCONF).register(self, {"_acme._tcp.local."})
 
     async with self.platform.device_repository(self) as repo:
         for device in await repo.get_all(as_=AcmeDevice):  # scoped to this integration's key
             self._subscribe(device)
-            await self.output.controller_did_connect_device(self, device.id)
+            await self.output.controller_did_connect_device(self, physical_id=device.physical_id)
 
 async def stop(self):
     self._cancel_discovery()
@@ -209,20 +210,22 @@ async def pair_device(
         raise ValueError("Unsupported or missing credentials for this discovery")
 
     serial = await self._client.read_serial(discovery.id)  # pseudo, read-only
-    draft.id = self.device_uuid(serial)  # permanent, hardware-level id
-    await self.check_device_id(draft.id, draft)  # raises DeviceIdTakenError: nothing irreversible ran yet
+    draft.physical_id = self.device_uuid(serial)  # your lookup id; draft.id is the Hub's, never change it
+    await self.check_device_id(draft.physical_id, draft)  # raises DeviceIdTakenError: nothing irreversible ran yet
     ...
 ```
 
-The device now has a permanent id, distinct from its (temporary) discovery id. Build it from the serial number, a string unique to that device. A name or an address two devices share would give them the same id. `check_device_id` raises `DeviceIdTakenError` when another record already holds the id, so the user gets a clear refusal and the device is left untouched.
+The device now has its `physical_id`, distinct from its (temporary) discovery id. Build it from the serial number, a string unique to that device. A name or an address two devices share would give them the same id. `check_device_id` raises `DeviceIdTakenError` when another record already holds the id, so the user gets a clear refusal and the device is left untouched.
 
-Now the irreversible step. Write what it changes to the draft **first**, then run it. If it fails, the Hub calls `unpair(draft)`, which reads the draft to know what to undo:
+Now the irreversible step. Write what it changes to `integration_data` **first**, then run it. If anything fails, the Hub calls `unpair(draft)`, which reads the draft to know what to undo. Pairing must also be idempotent: a retry may find the device as an earlier attempt left it, so reuse a key the draft already carries instead of refusing:
 
 ```python
+    known = draft.integration_data.session_key if draft.integration_data else None  # pseudo: pairing onto a record
+    key = known or new_session_key()  # pseudo
     draft.integration_data = AcmeDeviceIntegrationData(device_hostname=hostname, session_key=key)
-    await self._client.pair(discovery.id, code=credentials.value, session_key=key)  # pseudo, irreversible
+    await self._client.pair(discovery.id, code=credentials.value, session_key=key)  # pseudo, irreversible; a no-op when already paired with this key
 
-    draft.parameters = self._mapper.parameters(self, draft.id, await self._client.get_properties(hostname))  # pseudo
+    draft.parameters = self._mapper.parameters(self, draft.physical_id, await self._client.get_properties(hostname))  # pseudo
     draft.available = True
     return draft
 ```
@@ -231,16 +234,18 @@ Don't call `_subscribe` or `controller_did_connect_device` here. The Hub saves t
 
 ### `unpair`: also the rollback
 
-`unpair` tells the device to forget the pairing (the Hub removes its own record). It is also what the Hub calls when `pair_device` fails, with the draft as you left it, so it must cope with a draft at any stage: no `integration_data`, a device that is gone. Undo in reverse order, never wait for the user, and go as far as you can:
+`unpair` tells the device to forget the pairing (the Hub removes its own record). It is also what the Hub calls to roll back a failed pairing, or one it failed to save, with the draft as you left it. So it must cope with a draft at any stage (no `integration_data`, a device already reset), undo in reverse order only what would block a clean re-pair, never wait for the user, and be safe to call again. When the device can't be reached, forget your own state of it and raise `DeviceUnreachableError`: the app then offers to forget the device instead.
 
 ```python
 async def unpair(self, device: AcmeDevice):
     data = device.integration_data
     if data is None:  # pair_device failed before the irreversible step: nothing to undo
         return
-    self._unsubscribe(device)
-    with contextlib.suppress(AcmeError):  # pseudo: the device may be gone, keep undoing
-        await self._client.forget(data.device_hostname, session_key=data.session_key)  # pseudo
+    self._unsubscribe(device)  # your own state first
+    try:
+        await self._client.forget(data.device_hostname, session_key=data.session_key)  # pseudo; a no-op when already forgotten
+    except AcmeError as error:  # pseudo: the device is gone
+        raise DeviceUnreachableError(f"{device.physical_id} is unreachable") from error
 ```
 
 ### `identify` / `fetch`
@@ -252,8 +257,8 @@ Thin wrappers over your client: `identify` makes the device blink/beep so the us
 ```python
 async def fetch(self, device: AcmeDevice):
     properties = await asyncio.wait_for(self._client.get_properties(device.integration_data.device_hostname), 10)  # pseudo
-    await self.output.controller_did_receive_events(self, self._mapper.changes(self, device.id, properties))  # pseudo
-    if device.id not in self._subscriptions:
+    await self.output.controller_did_receive_events(self, self._mapper.changes(self, device.physical_id, properties))  # pseudo
+    if device.physical_id not in self._subscriptions:
         self._subscribe(device)
 ```
 
@@ -283,8 +288,8 @@ from majordom_integration_sdk.schemas.event import DeviceParameterChange
 def _subscribe(self, device: AcmeDevice):
     def on_property_changed(acme_property_name: str, value):
         event = DeviceParameterChange(
-            device_id=device.id,
-            parameter_id=self.parameter_uuid(device.id, acme_property_name),
+            physical_id=device.physical_id,
+            parameter_id=self.parameter_uuid(device.physical_id, acme_property_name),
             value=value,
         )
         asyncio.create_task(self.output.controller_did_receive_events(self, [event]))
@@ -294,9 +299,9 @@ def _subscribe(self, device: AcmeDevice):
         # device dropping/returning while the Hub runs. If it can't, omit this entirely.
         cb = (self.output.controller_did_connect_device if is_available
               else self.output.controller_did_lose_device)
-        asyncio.create_task(cb(self, device.id))
+        asyncio.create_task(cb(self, physical_id=device.physical_id))
 
-    self._subscriptions[device.id] = self._client.subscribe(
+    self._subscriptions[device.physical_id] = self._client.subscribe(
         device.integration_data.device_hostname,
         on_property_changed=on_property_changed,
         on_availability_changed=on_availability_changed,

@@ -67,13 +67,13 @@ you implement them. The list below is the reference.
 
 - [ ] Discovery registered with the providers it needs — `self.peripherals.instance(ZEROCONF)`, `UPNP_SSDP` and/or `BLE_ROUTER` as appropriate; cancel closures saved and called in `stop`
 - [ ] Discovery listeners fire when devices are found, and the controller calls `self.output.controller_did_receive_discovery`
-- [ ] Every reachable paired device reported on start (`self.output.controller_did_connect_device`): the Hub marked them all unavailable when the integration stopped
+- [ ] Every reachable paired device reported on start (`self.output.controller_did_connect_device(self, physical_id=...)`): the Hub marked them all unavailable when the integration stopped
 - [ ] `start_pairing_window` is implemented if the protocol requires an explicit scan mode
-- [ ] Device pairing (`pair_device` is implemented, and validates the incoming `ProvidedCredentials.type` against `discovery.expected_credentials_options` before using it; fills the draft it is given and returns it, without using the repository or reporting the device; calls `check_device_id` once the final id is known)
+- [ ] Device pairing (`pair_device` is implemented, and validates the incoming `ProvidedCredentials.type` against `discovery.expected_credentials_options` before using it; fills the draft it is given and returns it, without using the repository or reporting the device; sets `physical_id` and calls `check_device_id` once it is known, never changes the Hub's `id`)
 - [ ] Device schema is properly mapped: device info, parameter list, and each parameter's metadata are translated to MajorDom's domain model
 - [ ] Hub → Device control (`send_command` is implemented)
 - [ ] Device → Hub event subscription (`self.output.controller_did_receive_events` is called on incoming events)
-- [ ] `identify`, `unpair`, and `fetch` are implemented: `unpair` also undoes a half-done pairing (any partial state, reverse order, no waiting for the user), and `fetch` is idempotent (check the device, re-subscribe only if the subscription is gone, bounded time)
+- [ ] `identify`, `unpair`, and `fetch` are implemented: `unpair` also rolls back a failed or unsaved pairing (any partial state, reverse order, only what blocks a re-pair, no waiting for the user, safe to call again) and raises `DeviceUnreachableError` when the device can't be reached; `pair_device` and `fetch` are idempotent (check the device, re-subscribe only if the subscription is gone, bounded time)
 - [ ] Paired devices going offline/coming back online *while the Hub is running* (not just on reboot) — set `device.available` accordingly, and clear/set `last_error` to match
 - [ ] Graceful shutdown in `stop`
 - [ ] Everything external declared as a `Need` — radios, `BLE_ROUTER`, `ZEROCONF`, `UPNP_SSDP`, the services it brings; never raw Bluetooth

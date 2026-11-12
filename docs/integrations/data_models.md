@@ -120,6 +120,7 @@ class DeviceInfo(DevicePatch):
     main_parameter: UUID | None = None  # for the tap action on the room view, toggle in most cases
 
 class Device(DeviceInfo):
+    physical_id: UUID  # the integration's lookup id (device_uuid of a serial or MAC); `id` is the Hub's
     integration_data: SerializeAsAny[dict | Base] = Field(default_factory=Base)
 
 class DeviceState(DeviceInfo):
