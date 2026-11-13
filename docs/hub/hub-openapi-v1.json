@@ -274,6 +274,15 @@
       "CredentialsValue": {
         "type": "string"
       },
+      "DeleteMode": {
+        "enum": [
+          "unpair",
+          "delete",
+          "forget"
+        ],
+        "title": "DeleteMode",
+        "type": "string"
+      },
       "Device": {
         "description": "A device with what its integration keeps about it, ``integration_data``, typed as ``TData``: a bare ``Device``\nholds any (a dict once read back), ``class HueDevice(Device[HueData])`` its own model. Unset, it is ``TData``\nvalidated from ``{}`` (the Hub creates a device before its integration pairs it), and stays unset: a save keeps\nthe stored one. For ``Device[HueData | None]`` that ``{}``, unset or stored, is None.",
         "properties": {
@@ -382,6 +391,11 @@
             "title": "Note",
             "type": "string"
           },
+          "physical_id": {
+            "format": "uuid",
+            "title": "Physical Id",
+            "type": "string"
+          },
           "room_id": {
             "format": "uuid",
             "title": "Room Id",
@@ -398,7 +412,8 @@
           "id",
           "transport",
           "integration",
-          "manufacturer"
+          "manufacturer",
+          "physical_id"
         ],
         "title": "Device",
         "type": "object"
@@ -562,7 +577,7 @@
       "DeviceEventMessage": {
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/DeviceParameterChange"
+            "$ref": "#/components/schemas/DeviceParameterChangedEvent"
           },
           "type": {
             "const": "majordom_did_receive_event",
@@ -575,6 +590,48 @@
           "data"
         ],
         "title": "DeviceEventMessage",
+        "type": "object"
+      },
+      "DeviceIdTakenError": {
+        "description": "another record holds the physical id the device would get: pair onto it with `POST /device/{device_id}` (if it\n`is_paired`, delete it with `mode=unpair` first), or delete it; nothing was saved",
+        "properties": {
+          "device_id": {
+            "format": "uuid",
+            "title": "Device Id",
+            "type": "string"
+          },
+          "is_paired": {
+            "title": "Is Paired",
+            "type": "boolean"
+          },
+          "msg": {
+            "title": "Msg",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "physical_id": {
+            "format": "uuid",
+            "title": "Physical Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "device_id_taken",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "msg",
+          "type",
+          "device_id",
+          "physical_id",
+          "name",
+          "is_paired"
+        ],
+        "title": "DeviceIdTakenError",
         "type": "object"
       },
       "DeviceInfo": {
@@ -733,8 +790,8 @@
         "title": "DevicePair",
         "type": "object"
       },
-      "DeviceParameterChange": {
-        "description": "A device reported that one of its parameters changed to a new value.\n\nMirrors :class:`DeviceCommand`'s shape (``device_id``, ``parameter_id``, ``value``) but\nflows the other direction \u2014 device \u2192 Hub.",
+      "DeviceParameterChangedEvent": {
+        "description": "A parameter change an integration reported (its ``DeviceParameterChange``), named by the Hub's device id.",
         "properties": {
           "device_id": {
             "format": "uuid",
@@ -755,7 +812,7 @@
           "parameter_id",
           "value"
         ],
-        "title": "DeviceParameterChange",
+        "title": "DeviceParameterChangedEvent",
         "type": "object"
       },
       "DevicePatch": {
@@ -931,6 +988,11 @@
             "title": "Parameters",
             "type": "array"
           },
+          "physical_id": {
+            "format": "uuid",
+            "title": "Physical Id",
+            "type": "string"
+          },
           "room_id": {
             "format": "uuid",
             "title": "Room Id",
@@ -948,9 +1010,30 @@
           "transport",
           "integration",
           "manufacturer",
+          "physical_id",
           "parameters"
         ],
         "title": "DeviceState",
+        "type": "object"
+      },
+      "DeviceUnreachableError": {
+        "description": "the integration can't reach the device to unpair it; the record is unchanged: forget it instead\n(`mode=forget`), after which the device needs a manual factory reset to pair again",
+        "properties": {
+          "msg": {
+            "title": "Msg",
+            "type": "string"
+          },
+          "type": {
+            "const": "device_unreachable",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "msg",
+          "type"
+        ],
+        "title": "DeviceUnreachableError",
         "type": "object"
       },
       "Discovery": {
@@ -1154,6 +1237,54 @@
           "message"
         ],
         "title": "ErrorOut",
+        "type": "object"
+      },
+      "ErrorResponse_DeviceIdTakenError_": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/DeviceIdTakenError"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse[DeviceIdTakenError]",
+        "type": "object"
+      },
+      "ErrorResponse_DeviceUnreachableError_": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/DeviceUnreachableError"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse[DeviceUnreachableError]",
+        "type": "object"
+      },
+      "ErrorResponse_MissingCredentialsError_": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/MissingCredentialsError"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse[MissingCredentialsError]",
+        "type": "object"
+      },
+      "ErrorResponse_PairingFailedError_": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/PairingFailedError"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse[PairingFailedError]",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1528,6 +1659,43 @@
         "title": "IntegrationStatusMessage",
         "type": "object"
       },
+      "MissingCredentialsError": {
+        "description": "the Hub lacks credentials of `credentials_type` to pair the device; nothing was saved",
+        "properties": {
+          "credentials_type": {
+            "title": "Credentials Type",
+            "type": "string"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "msg": {
+            "title": "Msg",
+            "type": "string"
+          },
+          "type": {
+            "const": "missing_credentials",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "msg",
+          "type",
+          "credentials_type"
+        ],
+        "title": "MissingCredentialsError",
+        "type": "object"
+      },
       "NeedOut": {
         "properties": {
           "endpoint": {
@@ -1665,6 +1833,38 @@
         ],
         "title": "NotificationType",
         "type": "string"
+      },
+      "PairingFailedError": {
+        "description": "the integration failed to pair; nothing was saved",
+        "properties": {
+          "device_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "msg": {
+            "title": "Msg",
+            "type": "string"
+          },
+          "type": {
+            "const": "pairing_failed",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "msg",
+          "type"
+        ],
+        "title": "PairingFailedError",
+        "type": "object"
       },
       "ParameterDataType": {
         "enum": [
@@ -2321,6 +2521,71 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "ValidationErrorItem": {
+        "description": "FastAPI's request validation error, as its own HTTPValidationError documents it.",
+        "properties": {
+          "ctx": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ctx"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Loc",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Msg",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationErrorItem",
+        "type": "object"
+      },
+      "ValidationErrorResponse": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationErrorItem"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ValidationErrorResponse",
+        "type": "object"
+      },
       "WifiConnection": {
         "properties": {
           "password": {
@@ -2575,6 +2840,7 @@
     },
     "/api/device": {
       "post": {
+        "description": "Pairs the device and saves it; a failed pairing saves nothing and is rolled back, so post it again to retry.\nThe returned `id` is the one to use: an integration may change it, so it can differ from `discovery_id`. When\nanother record holds the discovery's id or that id (`device_id_taken`), pair onto it with\n`POST /device/{device_id}` instead.",
         "operationId": "create_device_api_device_post",
         "requestBody": {
           "content": {
@@ -2597,15 +2863,96 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "409": {
             "content": {
               "application/json": {
+                "examples": {
+                  "device_id_taken": {
+                    "value": {
+                      "detail": {
+                        "device_id": "1baa36f8-6f25-56c4-955c-f151a35de00b",
+                        "is_paired": false,
+                        "msg": "Physical id 6c1e2f0a-3b7d-5e94-8a21-0d4f9b3c7e15 is taken by 'Lamp' (1baa36f8-6f25-56c4-955c-f151a35de00b)",
+                        "name": "Lamp",
+                        "physical_id": "6c1e2f0a-3b7d-5e94-8a21-0d4f9b3c7e15",
+                        "type": "device_id_taken"
+                      }
+                    }
+                  }
+                },
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorResponse_DeviceIdTakenError_"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`device_id_taken`: another record holds the physical id the device would get: pair onto it with `POST /device/{device_id}` (if it\n`is_paired`, delete it with `mode=unpair` first), or delete it; nothing was saved"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing_credentials": {
+                    "value": {
+                      "detail": {
+                        "credentials_type": "wifi",
+                        "msg": "Missing credentials: wifi",
+                        "type": "missing_credentials"
+                      }
+                    }
+                  },
+                  "validation_error": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {
+                            "discovery_id": "1baa36f8-6f25-56c4-955c-f151a35de00b",
+                            "name": "Lamp"
+                          },
+                          "loc": [
+                            "body",
+                            "room_id"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse_MissingCredentialsError_"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ValidationErrorResponse"
+                    }
+                  ],
+                  "title": "Response 422 Create Device Api Device Post"
+                }
+              }
+            },
+            "description": "`missing_credentials`: the Hub lacks credentials of `credentials_type` to pair the device; nothing was saved; or the request is malformed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "pairing_failed": {
+                    "value": {
+                      "detail": {
+                        "msg": "Pairing failed",
+                        "type": "pairing_failed"
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse_PairingFailedError_"
+                }
+              }
+            },
+            "description": "`pairing_failed`: the integration failed to pair; nothing was saved"
           }
         },
         "summary": "Create Device",
@@ -2881,7 +3228,7 @@
     },
     "/api/device/{id}": {
       "delete": {
-        "description": "Soft - keep device in database to skip setup after re-pairing.",
+        "description": "`unpair`: the integration unpairs the device, its record is kept to skip setup after re-pairing. `delete`: the\nintegration unpairs it, then its record is deleted. `forget`: its record is deleted without the integration, e.g.\nafter `device_unreachable`: the device then needs a manual factory reset to pair again.",
         "operationId": "delete_device_api_device__id__delete",
         "parameters": [
           {
@@ -2896,12 +3243,11 @@
           },
           {
             "in": "query",
-            "name": "soft",
+            "name": "mode",
             "required": false,
             "schema": {
-              "default": false,
-              "title": "Soft",
-              "type": "boolean"
+              "$ref": "#/components/schemas/DeleteMode",
+              "default": "delete"
             }
           }
         ],
@@ -2913,6 +3259,26 @@
               }
             },
             "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "device_unreachable": {
+                    "value": {
+                      "detail": {
+                        "msg": "Device unreachable. Forget it instead? It might need a manual factory reset to pair again.",
+                        "type": "device_unreachable"
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse_DeviceUnreachableError_"
+                }
+              }
+            },
+            "description": "`device_unreachable`: the integration can't reach the device to unpair it; the record is unchanged: forget it instead\n(`mode=forget`), after which the device needs a manual factory reset to pair again"
           },
           "422": {
             "content": {
@@ -3021,6 +3387,7 @@
         ]
       },
       "post": {
+        "description": "Pairs a live discovery onto a device deleted with `mode=unpair`, keeping its name, room and the rest: its integration\ndecides what of its data still holds. Fails like `POST /device`, leaving the record as it was. Use the returned\n`id` from then on: it can differ from the path one, and automations follow it.",
         "operationId": "pair_existing_device_api_device__id__post",
         "parameters": [
           {
@@ -3055,6 +3422,129 @@
             },
             "description": "Successful Response"
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "device_id_taken": {
+                    "value": {
+                      "detail": {
+                        "device_id": "1baa36f8-6f25-56c4-955c-f151a35de00b",
+                        "is_paired": false,
+                        "msg": "Physical id 6c1e2f0a-3b7d-5e94-8a21-0d4f9b3c7e15 is taken by 'Lamp' (1baa36f8-6f25-56c4-955c-f151a35de00b)",
+                        "name": "Lamp",
+                        "physical_id": "6c1e2f0a-3b7d-5e94-8a21-0d4f9b3c7e15",
+                        "type": "device_id_taken"
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse_DeviceIdTakenError_"
+                }
+              }
+            },
+            "description": "`device_id_taken`: another record holds the physical id the device would get: pair onto it with `POST /device/{device_id}` (if it\n`is_paired`, delete it with `mode=unpair` first), or delete it; nothing was saved"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing_credentials": {
+                    "value": {
+                      "detail": {
+                        "credentials_type": "wifi",
+                        "msg": "Missing credentials: wifi",
+                        "type": "missing_credentials"
+                      }
+                    }
+                  },
+                  "validation_error": {
+                    "value": {
+                      "detail": [
+                        {
+                          "input": {
+                            "discovery_id": "1baa36f8-6f25-56c4-955c-f151a35de00b",
+                            "name": "Lamp"
+                          },
+                          "loc": [
+                            "body",
+                            "room_id"
+                          ],
+                          "msg": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse_MissingCredentialsError_"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ValidationErrorResponse"
+                    }
+                  ],
+                  "title": "Response 422 Pair Existing Device Api Device  Id  Post"
+                }
+              }
+            },
+            "description": "`missing_credentials`: the Hub lacks credentials of `credentials_type` to pair the device; nothing was saved; or the request is malformed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "pairing_failed": {
+                    "value": {
+                      "detail": {
+                        "msg": "Pairing failed",
+                        "type": "pairing_failed"
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse_PairingFailedError_"
+                }
+              }
+            },
+            "description": "`pairing_failed`: the integration failed to pair; nothing was saved"
+          }
+        },
+        "summary": "Pair Existing Device",
+        "tags": [
+          "device"
+        ]
+      }
+    },
+    "/api/device/{id}/fetch": {
+      "post": {
+        "description": "Asks its integration to bring the device to a known-good state: whether it answers, its current values, its\nevent subscription. The results arrive as the usual device events.",
+        "operationId": "fetch_device_api_device__id__fetch_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -3066,7 +3556,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Pair Existing Device",
+        "summary": "Fetch Device",
         "tags": [
           "device"
         ]
@@ -4909,7 +5399,7 @@
                 "schema": {
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/DeviceParameterChange"
+                      "$ref": "#/components/schemas/DeviceParameterChangedEvent"
                     },
                     "type": {
                       "const": "majordom_did_receive_event",
