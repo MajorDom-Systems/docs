@@ -56,8 +56,6 @@ Facts about the Hub (radio region, Wi-Fi network, Thread network) aren't periphe
 Declare `needs`, then read what they are bound to in `start()`:
 
 ```python
-import dataclasses
-
 from majordom_integration_sdk import AbstractController, Device, Need, Parameter
 from majordom_integration_sdk.capabilities import BLE_ROUTER
 
@@ -65,7 +63,7 @@ from majordom_integration_sdk.capabilities import BLE_ROUTER
 class AcmeController(AbstractController[Device, Parameter]):
     needs = [
         Need("zigbee", ["ezsp", "znp"]),  # every dialect your library speaks
-        dataclasses.replace(BLE_ROUTER, is_required=False),  # optional: works without it
+        BLE_ROUTER(is_required=False),  # optional: works without it
     ]
 
     async def start(self):
@@ -151,7 +149,7 @@ Need(family, dialects=(), is_required=True, is_many=False)
 
 - **Dialects**: list every one your client speaks. With none, any dialect of the family is accepted: only for what the host shares, like `Need("ip")`.
 - **Required** (the default): the controller starts once the need is bound, and stops while it's lost. Meanwhile the app shows the integration as waiting for it.
-- **Optional** (`is_required=False`): the controller runs without it, and gets it once something can serve it. For a typed need: `dataclasses.replace(BLE_ROUTER, is_required=False)`.
+- **Optional** (`is_required=False`): the controller runs without it, and gets it once something can serve it. For a typed need: `BLE_ROUTER(is_required=False)`.
 - **Many** (`is_many=True`): every matching endpoint, as a list.
 
 An endpoint is exclusive by default, as a serial port opens once: the first consumer takes it. A shared one (`is_shared=True`), like a border router or `ip`, serves everyone.

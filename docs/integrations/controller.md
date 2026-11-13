@@ -245,6 +245,7 @@ There are five places an error can go. Pick by asking who it's for and how long 
 | `DeviceIdTakenError` raised by `check_device_id` | another record already holds the id this pairing would give; see [Device ids](#device-ids) | returned to the app with this pairing attempt |
 | `DeviceUnreachableError` raised by `unpair` | the device can't be reached to undo its pairing; see [`unpair`](#unpair-is-also-the-rollback) | returned to the app, which offers to forget the device |
 | `MissingCredentialsError` raised from `pair_device` | the Hub lacks credentials (e.g. Wi-Fi) for one pairing; see [Missing Hub credentials](data_models.md#missing-hub-credentials) | returned to the app with this pairing attempt |
+| any other error raised from `pair_device` | this pairing failed; the Hub rolls it back and returns `pairing_failed` to the app. Don't also set `last_error` or report it with `controller_did_encounter_error` | returned to the app with this pairing attempt |
 | logs (`logger.*`) | technical detail, for you the developer | log retention |
 
 **What about a parameter failing?** Parameters don't have an error field, on purpose. If one
@@ -310,10 +311,10 @@ A controller is a [`Peripheral`](peripherals.md). It is constructed as `Controll
 | Call | Returns |
 |---|---|
 | `self.peripherals.endpoint("zigbee")` | the `Endpoint` bound to that need; `KeyError` while it is unbound |
-| `self.peripherals.endpoints("ble")` | every endpoint bound to an `is_many` need, as a list; empty while unbound |
+| `self.peripherals.endpoints("zigbee")` | every endpoint bound to an `is_many` need (e.g. several Zigbee sticks), as a list; empty while unbound |
 | `self.peripherals.instance(BLE_ROUTER)` | the in-process peripheral bound to a typed need (`BLE_ROUTER`, `ZEROCONF`, `UPNP_SSDP`), typed by it; `None` while unbound |
 
-Device paths, server URLs, discovery and options all arrive here. Don't read them from environment variables or config files, and don't start your own mDNS, SSDP or Bluetooth stack. Read `self.platform` when you need a fact: a platform you kept holds the old ones.
+Device paths, server URLs, discovery and options all arrive here; see [using a peripheral](peripherals.md#tldr-using-a-peripheral) for a full example. Don't read them from environment variables or config files, and don't start your own mDNS, SSDP or Bluetooth stack. Read `self.platform` when you need a fact: a platform you kept holds the old ones.
 
 ### Needs and settings
 
@@ -329,12 +330,12 @@ class ZigBeeController(AbstractController[Device, Parameter, "ZigBeeController.S
         channel: int = Field(15, ge=11, le=26, title="Channel")
 
     async def start(self):
-        link = self.peripherals.endpoint("zigbee")
+        zigbee = self.peripherals.endpoint("zigbee")
         channel = self.settings.channel
         ...
 ```
 
-HomeKit, which only uses the network, needs just `ZEROCONF`. Make a typed need optional with `dataclasses.replace(BLE_ROUTER, is_required=False)`. See [Peripherals](peripherals.md) and [Settings](settings.md).
+HomeKit, which only uses the network, needs just `ZEROCONF`. Make a typed need optional with `BLE_ROUTER(is_required=False)`. See [Peripherals](peripherals.md) and [Settings](settings.md).
 
 ### Hooks
 

@@ -28,8 +28,8 @@ class AcmeController(AbstractController[Device, Parameter]):
         self._discoveries: dict[UUID, Discovery] = {}
 
     async def start(self):
-        router = self.peripherals.instance(BLE_ROUTER)
-        self._cancel_ble = router.register(self, MATCHERS)
+        ble = self.peripherals.instance(BLE_ROUTER)
+        self._cancel_ble = ble.register(self, MATCHERS)
 
     async def stop(self):
         self._cancel_ble()
@@ -81,11 +81,11 @@ class AcmeController(AbstractController[Device, Parameter]):
 If your integration also works without Bluetooth, make the need optional and check for `None`:
 
 ```python
-needs = [dataclasses.replace(BLE_ROUTER, is_required=False)]
+needs = [BLE_ROUTER(is_required=False)]
 
 async def start(self):
-    router = self.peripherals.instance(BLE_ROUTER)  # None on a hub without Bluetooth
-    self._cancel_ble = router.register(self, MATCHERS) if router else None
+    ble = self.peripherals.instance(BLE_ROUTER)  # None on a hub without Bluetooth
+    self._cancel_ble = ble.register(self, MATCHERS) if ble else None
 ```
 
 ## Matchers
@@ -111,3 +111,12 @@ A listener hears about a device when it matches any of its matchers. A plain `UU
 `info.device` is bleak's `BLEDevice` (`.address`, `.name`); `info.advertisement` is bleak's `AdvertisementData`; `info.rssi` is the signal of the radio that hears it best.
 
 To connect to a discovered device, see [Capabilities: Bluetooth LE](../capabilities/ble.md).
+
+## Active scanning in a pairing window
+
+Radios scan passively: they hear every advertisement, but many devices send their name only when asked. While the user is pairing, ask for an active scan:
+
+```python
+async def start_pairing_window(self, duration_sec: int, credentials: ProvidedCredentials | None = None):
+    await self.peripherals.instance(BLE_ROUTER).scan_actively(duration_sec)
+```
