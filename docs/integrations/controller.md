@@ -9,7 +9,7 @@
 
 ## AbstractController Overview
 
-Your integration's controller subclasses [`AbstractController`](https://github.com/MajorDom-Systems/integration-sdk/tree/develop/majordom_integration_sdk/controller/abstract_controller.py) from the SDK. It is generic over your `Device` and `Parameter` subclasses:
+Your integration's controller subclasses [`AbstractController`](https://github.com/MajorDom-Systems/integration-sdk/tree/develop/majordom_integration_sdk/controller/abstract_controller.py) from the SDK. It is generic over your `Device` and `Parameter` subclasses, your [settings](settings.md) model, and the model of the draft a pairing fills (the last two are optional):
 
 ```python
 from majordom_integration_sdk.controller import AbstractController
@@ -19,6 +19,8 @@ class MyController(AbstractController[Device, Parameter]):
     name = "My Protocol"  # optional — auto-derived from the class name ("My") otherwise
     ...
 ```
+
+The full form is `AbstractController[TDevice, TParameter, TSettings, TDeviceState]`. `TSettings` defaults to `Any` and `TDeviceState` to `DeviceState`. To type the draft, write `Any` in the settings slot if you have none, and override `device_state_type` (see [Storing Data](storing_data.md#integration_data)).
 
 ### The `name` and `key` identity
 
@@ -44,6 +46,111 @@ def peripherals(platform: Platform) -> list[Peripheral]:
 
 Implement all abstract methods defined in [`AbstractController`](https://github.com/MajorDom-Systems/integration-sdk/tree/develop/majordom_integration_sdk/controller/abstract_controller.py) — `start`, `stop`, `pair_device`, `unpair`, `identify`, `fetch`, `send_command`, and the `discoveries` property. The Hub calls these to drive your integration.
 
+### Pairing
+
+The Hub pairs a device in two steps: your `pair_device` fills a **draft**, then the Hub saves it. No device record exists while `pair_device` runs.
+
+```python
+async def pair_device(
+    self, discovery: Discovery, draft: DeviceState, credentials: ProvidedCredentials | None
+) -> DeviceState: ...
+```
+
+The Hub builds `draft` from what the user entered in the app: name, room, icon, category, note. Its `id` is the Hub's own and read-only: never change it. Its `physical_id` holds the discovery's id as a placeholder, and `integration` is your key. When the user picks an existing record to pair onto, the draft carries that record's data instead, its `id`, `physical_id` and `integration_data` included. The integration decides what in it is stale.
+
+You establish the device's identity and trust only: its `physical_id`, `integration_data` (keys, addresses), `available`. Then you return the draft. The Hub saves it, reports the device connected if it is `available`, and calls `fetch`, which gives the device its parameters. So, during `pair_device`:
+
+- **Don't use the device repository.** Nothing is saved while pairing.
+- **Report nothing about this device.** No `controller_did_connect_device`, no events. The Hub reports after it saved the draft.
+- **Check the physical id early.** As soon as you know it, call `check_device_id` (below), before anything irreversible: it confirms no other record holds this device already.
+- **Fill `integration_data` before each irreversible step.** A key you are about to set, a node you are about to include: write it to the draft first. It is saved with the device, so you need no storage of your own. If pairing fails, the Hub calls `unpair(draft)` to roll back, and `unpair` can only undo what the draft says ran.
+- **Just raise on failure.** The Hub's `unpair(draft)` undoes the partial pairing.
+- **Don't map parameters, read values or subscribe.** Leave `parameters` empty: the Hub calls `fetch` for all of that right after the save.
+- **Be idempotent.** The user may retry after a failed or rolled-back attempt, with a fresh draft. Bring the device to a known-good paired state from whatever the last attempt left: check each step and redo only what is missing or stale. A device found already paired is confirmed and returned, not refused.
+- **Raise when you can't pair.** Raise `MissingCredentialsError` before touching the device when the Hub lacks credentials.
+
+```python
+async def pair_device(self, discovery, draft, credentials):
+    if not discovery.accepts(credentials):
+        raise ValueError("Unsupported or missing credentials for this discovery")
+    serial = await self._client.read_serial(discovery.id)                   # pseudo, read-only
+    draft.physical_id = self.device_uuid(serial)
+    await self.check_device_id(draft.physical_id, draft)                    # before anything irreversible
+    draft.integration_data = AcmeDeviceIntegrationData(device_key=new_key)  # before the step it describes
+    await self._client.pair(discovery.id, key=new_key)                      # pseudo, irreversible
+    draft.available = True
+    return draft
+```
+
+#### `check_device_id`
+
+```python
+@final
+async def check_device_id(self, physical_id: UUID, draft: TDeviceState): ...
+```
+
+Optional, but call it. It raises `DeviceIdTakenError` when another record holds `physical_id`, the one you are giving the device. The record the user picked to pair onto (`draft.id`) is not another. The Hub refuses the pairing with that error and does not roll it back, because nothing ran.
+
+```python
+from majordom_integration_sdk.errors import DeviceIdTakenError
+
+error: DeviceIdTakenError
+error.physical_id # the id in question
+error.device_id   # the Hub id of the record that holds it
+error.name        # the name of the record that holds it
+error.is_paired   # False: a record kept after its device was removed
+```
+
+The app uses the record's name and `is_paired` to offer pairing onto that record instead.
+
+#### Device ids
+
+A device has two ids:
+
+- `id` is the Hub's. The Hub assigns it, and you never change it.
+- `physical_id` is yours: what you look the device up by, in the repository (`repo.get(physical_id=...)`), in events and in `controller_did_connect_device(self, physical_id=...)`. Build it with `device_uuid(s)`, where `s` is a string or bytes unique to that device: a MAC address or a serial number. Build it in one place, a single id-making method, never assembled anew at each call site. A name or an address two devices share gives them the same id, and the second one can't be paired. Never change the `physical_id` of a device that is already paired.
+
+#### `unpair` is also the rollback
+
+```python
+async def unpair(self, device: TDevice): ...
+```
+
+The user triggers it to remove a device. The Hub also calls it to roll back, with the draft as `pair_device` left it, at any stage: when `pair_device` raises anything but `DeviceIdTakenError`, and when the Hub fails to save what it returned. So:
+
+- Undo everything pairing did, in reverse order: a key set on the device, the pairing it holds, its place on the network or fabric.
+- Tolerate any partial state: a placeholder `physical_id`, no `integration_data`, a device already reset.
+- Never wait for the user. Go as far as you can: it is best effort, and the Hub cuts it off after 30 seconds.
+- Make it safe to call again. On a device already unpaired, or never fully paired, it does nothing more.
+
+Talk to the device only: the Hub alone decides whether to delete the record and its `integration_data`. When the device can't be reached, raise `DeviceUnreachableError` and change nothing else.
+
+The user sees the original pairing error, not an error from the rollback. When the rollback can't reach the device, the Hub answers `pairing_failed`: "Pairing failed. The device may need a manual factory reset to pair again."
+
+#### Removing a device
+
+The app removes a device with `DELETE /device/{id}?mode=...`:
+
+| `mode` | What happens |
+|---|---|
+| `unpair` | calls `unpair`, keeps the record |
+| `delete` (default) | calls `unpair`, then removes the record |
+| `forget` | removes the record without calling `unpair` |
+
+When `unpair` raises `DeviceUnreachableError`, the Hub answers 409 `device_unreachable`: "Device unreachable. Forget it instead? It might need a manual factory reset to pair again."
+
+#### `fetch` reads the whole device
+
+```python
+async def fetch(self, device: TDevice) -> TDeviceState | None: ...
+```
+
+The Hub calls it right after pairing, on a manual refresh, and to revive a device that is unavailable. It is idempotent:
+
+- Read the whole device and return it: `device` with its full `parameters` list (ids from `parameter_uuid`, current values) and `available`. The Hub creates the parameters on the first fetch, then compares each one with what it stored: new and gone parameters, changed values. Return it: the Hub saves the parameters and values, so don't save them yourself, and report none of it as events (those are for changes the device starts itself).
+- Check its event subscription. Subscribe again only if it is gone. Never create a second one.
+- Finish in bounded time. Return `None` when the device doesn't answer, like a sleeping battery device: it is not a failure, and the Hub keeps what it has.
+
 ### Device → Hub
 
 Use `self.output` (a `ControllerOutput`), injected by the Hub:
@@ -58,10 +165,15 @@ await self.output.controller_did_update_discovery(self, discovery)
 # A previously-discovered device is no longer visible
 await self.output.controller_did_lose_discovery(self, discovery_id)
 
-# Device paired and connected; on start, report every paired device that answers
-await self.output.controller_did_connect_device(self, device_id)
+# Device connected; on start, report every paired device that answers.
+# Never during pair_device: the Hub reports a new device itself once it saved it.
+# Ids are keyword-only: pass physical_id= (device_id= is for relays passing on the Hub's id)
+await self.output.controller_did_connect_device(self, physical_id=physical_id)
 
-# Device reported new parameter values or events
+# A paired device became unreachable while the Hub is running
+await self.output.controller_did_lose_device(self, physical_id=physical_id)
+
+# Device reported new parameter values or events: the Hub saves the values, don't save them yourself
 await self.output.controller_did_receive_events(self, events)
 
 # A user-facing problem with the whole integration — a CTA, or (is_still_running=False) a failure
@@ -124,12 +236,14 @@ Call `controller_did_resolve_error` with the id once the condition no longer hol
 
 #### Which one do I use?
 
-There are four places an error can go. Pick by asking who it's for and how long it should stay:
+There are five places an error can go. Pick by asking who it's for and how long it should stay:
 
 | Surface | Use it for | How long it lives |
 |---|---|---|
 | `Device.last_error` / `Discovery.last_error` | a problem with one device | stays until *you* clear it |
 | `controller_did_encounter_error` | the whole integration has a problem; `is_still_running=False` = it failed and stopped | until resolved, or the integration restarts |
+| `DeviceIdTakenError` raised by `check_device_id` | another record already holds the id this pairing would give; see [Device ids](#device-ids) | returned to the app with this pairing attempt |
+| `DeviceUnreachableError` raised by `unpair` | the device can't be reached to undo its pairing; see [`unpair`](#unpair-is-also-the-rollback) | returned to the app, which offers to forget the device |
 | `MissingCredentialsError` raised from `pair_device` | the Hub lacks credentials (e.g. Wi-Fi) for one pairing; see [Missing Hub credentials](data_models.md#missing-hub-credentials) | returned to the app with this pairing attempt |
 | logs (`logger.*`) | technical detail, for you the developer | log retention |
 
@@ -254,7 +368,7 @@ async def platform_facts_did_change(self, before: Platform) -> bool:
 
 ### Staying connected
 
-A [service](peripherals.md#tldr-bringing-a-docker-service) is recreated when its settings or bindings render it differently, and it may crash and come back. Nobody tells the controller. So don't let one connection live as long as the controller: keep a task that waits for the connection to drop and reconnects with backoff, as the [template](https://github.com/MajorDom-Systems/integration-template/tree/develop/integration_template/controller.py) does.
+A [service](peripherals.md#tldr-bringing-a-docker-service) is recreated when its settings or bindings render it differently, and it may crash and come back. Nobody tells the controller. So don't let one connection live as long as the controller: keep a task that waits for the connection to drop and reconnects with backoff.
 
 ```python
 async def _stay_connected(self):
@@ -289,12 +403,14 @@ def key(self) -> str: ...
 def integration_uuid(self) -> UUID: ...
 # Stable UUID for this integration, derived from key
 
-def device_uuid(self, device_id: str) -> UUID: ...
-# Stable UUID for a device given a string unique to that device (MAC, serial, etc.).
-# A name or an address two devices can share gives them the same id: the second one can't be paired.
+def device_uuid(self, raw: str | bytes) -> UUID: ...
+# The physical_id of a device from a string unique to it (MAC, serial); devices sharing the string share the id
 
-def parameter_uuid(self, device_uuid: UUID, parameter_id: str) -> UUID: ...
-# Stable UUID for a parameter scoped to its device
+async def check_device_id(self, physical_id: UUID, draft: TDeviceState): ...
+# Raises DeviceIdTakenError when another record holds the physical id; call it from pair_device
+
+def parameter_uuid(self, physical_id: UUID, raw: str | bytes) -> UUID: ...
+# Stable UUID for a parameter, scoped to its device's physical_id
 ```
 
 ## See Also
