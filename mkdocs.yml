@@ -16,6 +16,7 @@ nav:
       - Overview: "integrations/index.md"
       - Implementing a Controller: "integrations/controller.md"
       - Peripherals: "integrations/peripherals.md"
+      - "Example: a server": "integrations/server-example.md"
       - Settings: "integrations/settings.md"
       - Storing Data: "integrations/storing_data.md"
       - Data Models: "integrations/data_models.md"
@@ -154,6 +155,7 @@ plugins:
           - integrations/index.md
           - integrations/controller.md
           - integrations/peripherals.md
+          - integrations/server-example.md
           - integrations/settings.md
           - integrations/storing_data.md
           - integrations/data_models.md

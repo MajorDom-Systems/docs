@@ -141,7 +141,7 @@ A format spec renders text by the value: `{x:?text}` renders `text` when `x` isn
 
 The `params` of the endpoints a service provides are templates too: that's how it tells its consumer what it got, e.g. `params={"adapter": "{peripherals.ble.url}"}`.
 
-The service may be recreated or crash at any time. Keep the controller [reconnecting](controller.md#staying-connected).
+The service may be recreated or crash at any time. Keep the controller [reconnecting](controller.md#staying-connected). A complete, tested example: [a server and its controller](server-example.md).
 
 ## Needs
 

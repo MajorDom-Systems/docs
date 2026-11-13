@@ -369,7 +369,7 @@ async def platform_facts_did_change(self, before: Platform) -> bool:
 
 ### Staying connected
 
-A [service](peripherals.md#tldr-bringing-a-docker-service) is recreated when its settings or bindings render it differently, and it may crash and come back. Nobody tells the controller. So don't let one connection live as long as the controller: keep a task that waits for the connection to drop and reconnects with backoff, as the [template](https://github.com/MajorDom-Systems/integration-template/tree/develop/integration_template/controller.py) does.
+A [service](peripherals.md#tldr-bringing-a-docker-service) is recreated when its settings or bindings render it differently, and it may crash and come back. Nobody tells the controller. So don't let one connection live as long as the controller: keep a task that waits for the connection to drop and reconnects with backoff, as the [server example](server-example.md#staying-connected) does.
 
 ```python
 async def _stay_connected(self):
