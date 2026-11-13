@@ -71,9 +71,9 @@ async def read_battery(self, address: str) -> int:
 |---|---|
 | `on_disconnect` | called when the connection drops |
 | `busy_timeout` | seconds to reach the device, waiting for a radio leased to someone else (default 10). Then `BLEBusyError` when every radio that hears it is still leased, or `ConnectionError` (which `BLEBusyError` also is) when none reaches it |
-| `max_duration` | seconds after which the connection is closed and the block gets `TimeoutError` (default none) |
+| `max_duration` | seconds after which the connection is closed and the block gets `TimeoutError` (default 600); `None` keeps it open, only when you mean it |
 
-Every Bluetooth radio has only a few connection slots, a proxy fewer still: keep the block short. When a connection must outlive a block, like a subscription kept while the integration runs, `open_connection(…)` takes the same parameters and returns the connection: disconnect it yourself.
+Every Bluetooth radio has only a few connection slots, a proxy fewer still: keep the block short. When a connection must outlive a block, like a subscription kept while the integration runs, `open_connection(…, max_duration=None)` takes the same parameters and returns the connection: disconnect it yourself.
 
 ## Locking a radio: `exclusive`
 
