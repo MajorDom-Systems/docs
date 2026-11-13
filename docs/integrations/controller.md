@@ -147,7 +147,7 @@ async def fetch(self, device: TDevice) -> TDeviceState | None: ...
 
 The Hub calls it right after pairing, on a manual refresh, and to revive a device that is unavailable. It is idempotent:
 
-- Read the whole device and return it: `device` with its full `parameters` list (ids from `parameter_uuid`, current values) and `available`. The Hub creates the parameters on the first fetch, then compares each one with what it stored: new and gone parameters, changed values. Report none of it as events: events are for changes the device starts itself.
+- Read the whole device and return it: `device` with its full `parameters` list (ids from `parameter_uuid`, current values) and `available`. The Hub creates the parameters on the first fetch, then compares each one with what it stored: new and gone parameters, changed values. Return it only: don't save it to the repository, and report none of it as events (those are for changes the device starts itself).
 - Check its event subscription. Subscribe again only if it is gone. Never create a second one.
 - Finish in bounded time. Return `None` when the device doesn't answer, like a sleeping battery device: it is not a failure, and the Hub keeps what it has.
 
@@ -173,7 +173,7 @@ await self.output.controller_did_connect_device(self, physical_id=physical_id)
 # A paired device became unreachable while the Hub is running
 await self.output.controller_did_lose_device(self, physical_id=physical_id)
 
-# Device reported new parameter values or events
+# Device reported new parameter values or events: report only, the Hub saves them
 await self.output.controller_did_receive_events(self, events)
 
 # A user-facing problem with the whole integration — a CTA, or (is_still_running=False) a failure
