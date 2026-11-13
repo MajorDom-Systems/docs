@@ -27,7 +27,7 @@ class AcmeController(AbstractController[Device, Parameter]):
     needs = [BLE_ROUTER]
 
     async def start(self):
-        self._router = self.peripherals.instance(BLE_ROUTER)
+        self._ble = self.peripherals.instance(BLE_ROUTER)
 ```
 
 When the integration also works without Bluetooth, make the need optional. `instance()` then returns `None` on a hub without Bluetooth:
@@ -51,7 +51,7 @@ BATTERY_LEVEL = "00002a19-0000-1000-8000-00805f9b34fb"
 
 
 async def read_battery(self, address: str) -> int:
-    connection = await self._router.connect(address)
+    connection = await self._ble.connect(address)
     try:
         characteristics = [c for s in await connection.services() for c in s.characteristics]
         battery = next(c for c in characteristics if c.uuid == BATTERY_LEVEL)
@@ -62,32 +62,32 @@ async def read_battery(self, address: str) -> int:
 
 | `BLEConnection` | Does |
 |---|---|
-| `await services()` | the device's GATT services, each with its `characteristics` (`uuid`, `handle`, `properties`) |
-| `await read(handle)` | reads a characteristic, as `bytes` |
-| `await write(handle, data, is_response_needed=True)` | writes a characteristic; `False` for "write without response" |
-| `await start_notify(handle, callback)` | calls `callback(data)` on every notification or indication |
-| `await stop_notify(handle)` | stops them |
-| `await disconnect()` | closes the connection |
-| `mtu` | the negotiated MTU, to size your packets |
+| `await connection.services()` | the device's GATT services, each with its `characteristics` (`uuid`, `handle`, `properties`) |
+| `await connection.read(handle)` | reads a characteristic, as `bytes` |
+| `await connection.write(handle, data, is_response_needed=True)` | writes a characteristic; `False` for "write without response" |
+| `await connection.start_notify(handle, callback)` | calls `callback(data)` on every notification or indication |
+| `await connection.stop_notify(handle)` | stops them |
+| `await connection.disconnect()` | closes the connection |
+| `connection.mtu` | the negotiated MTU, to size your packets |
 
 `connect(address, on_disconnect)` calls `on_disconnect()` when the connection drops. It raises `ConnectionError` when no radio can reach the device, and `BLEBusyError` (a `ConnectionError`) when every radio that hears it is leased to someone else.
 
-Always disconnect when you're done: an ESPHome proxy has only a few connection slots.
+Always disconnect when you're done: every Bluetooth radio has only a few connection slots, a proxy fewer still.
 
 ## Locking a radio: `exclusive`
 
-A short exchange (read a value, send a command) just connects. A long, multi-step setup should lease the radio first, so nobody else's connection or scan gets in the middle:
+A short exchange (read a value, send a command) just connects. A long, multi-step setup should lease the radio first, so nobody else's connection or scan disrupts the operation:
 
 ```python
 from majordom_integration_sdk.capabilities import BLEBusyError
 
 try:
-    async with self._router.exclusive(address, owner=self.key, timeout=60) as lease:
+    async with self._ble.exclusive(address, owner=self.key, timeout=60) as lease:
         connection = await lease.connect()
         try:
             await self._provision(connection)  # several reads, writes and notifications
         finally:
-            await connection.disconnect()
+            await connection.disconnect()  # ending the lease frees the radio, not the connection
 except BLEBusyError:
     ...  # tell the user the Hub's Bluetooth is busy, try again later
 ```
@@ -105,7 +105,7 @@ A lease blocks other integrations from that radio, so hold it no longer than the
 | Parameter | Meaning |
 |---|---|
 | `owner` | who holds it, for the logs: your integration's `key` |
-| `timeout` | seconds to wait for a free radio before `BLEBusyError` (default 30) |
+| `timeout` | seconds to wait for a free radio before `BLEBusyError` (default 30); the lease itself has no time limit |
 | `wait` | seconds to wait for the best radio before trying the next one (default 1) |
 | `is_pairing_needed` | lease only a radio that can pair (see below); `BLEPairingError` when none hears the device |
 
@@ -117,7 +117,7 @@ Send credentials (a Wi-Fi password, a Thread network key) only over a secured li
 from majordom_integration_sdk.capabilities import BLEPairingError, LESecureConnections
 
 channel = LESecureConnections()
-async with self._router.exclusive(address, owner=self.key, is_pairing_needed=channel.is_pairing_needed) as lease:
+async with self._ble.exclusive(address, owner=self.key, is_pairing_needed=channel.is_pairing_needed) as lease:
     async with channel.secure(await lease.connect()) as connection:
         await connection.write(credentials_handle, credentials)
 ```
@@ -127,16 +127,8 @@ async with self._router.exclusive(address, owner=self.key, is_pairing_needed=cha
 | `LESecureConnections()` | the default: pairs ("Just Works") before anything is written, and unpairs when the block ends; `LESecureConnections(is_pairing_kept=True)` keeps the bond. Raises `BLEPairingError` when the link can't be encrypted, so nothing is sent unencrypted |
 | `Unsecured()` | firmware that can't pair at all; chosen explicitly, it logs a warning |
 
-Not every radio can pair: an ESPHome proxy can't. `is_pairing_needed=True` leases one that can.
+Not every radio can pair: a source says it can with `is_pairable`. `is_pairing_needed=True` leases one that can.
 
-## Active scanning in a pairing window
-
-Radios scan passively: they hear every advertisement, but many devices send their name only when asked. While the user is pairing, ask for an active scan:
-
-```python
-async def start_pairing_window(self, duration_sec: int, credentials: ProvidedCredentials | None = None):
-    await self._router.scan_actively(duration_sec)
-```
 
 ## Adding a BLE proxy
 
@@ -147,7 +139,7 @@ If your integration talks to devices that have a Bluetooth radio of their own (l
     ```python
     from collections.abc import Callable
 
-    from majordom_integration_sdk.capabilities import BLEConnection, OnAdvertisement
+    from majordom_integration_sdk.capabilities import BLEConnection, GattService, OnAdvertisement
 
 
     class AcmeBLESource:
@@ -157,8 +149,24 @@ If your integration talks to devices that have a Bluetooth radio of their own (l
 
         async def start(self, on_advertisement: OnAdvertisement): ...  # call on_advertisement(device, advertisement) for each one heard
         async def stop(self): ...
-        async def connect(self, address: str, on_disconnect: Callable[[], None]) -> BLEConnection: ...
+        async def connect(self, address: str, on_disconnect: Callable[[], None]) -> BLEConnection:
+            return AcmeBLEConnection(await self._radio.connect(address), on_disconnect)  # pseudo
+
+
+    class AcmeBLEConnection:
+        """Wraps one GATT connection of the radio: the router hands it to integrations as a `BLEConnection`."""
+
+        mtu: int
+
+        async def services(self) -> list[GattService]: ...
+        async def read(self, handle: int) -> bytes: ...
+        async def write(self, handle: int, data: bytes, is_response_needed: bool = True): ...
+        async def start_notify(self, handle: int, callback: Callable[[bytes], None]): ...
+        async def stop_notify(self, handle: int): ...
+        async def disconnect(self): ...  # call on_disconnect() when the radio reports the link dropped, too
     ```
+
+    A radio whose connections can pair returns `PairableBLEConnection`s (with `pair()` and `unpair()`) and sets `is_pairable = True`.
 
     A source that can stop scanning without letting go of its radio also implements `pause_scanning()` and `resume_scanning()`; one that can switch to active scanning implements `set_scan_mode(is_active)`. The router uses them when they are there.
 
