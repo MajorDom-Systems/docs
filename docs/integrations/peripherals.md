@@ -141,7 +141,31 @@ A format spec renders text by the value: `{x:?text}` renders `text` when `x` isn
 
 The `params` of the endpoints a service provides are templates too: that's how it tells its consumer what it got, e.g. `params={"adapter": "{peripherals.ble.url}"}`.
 
-The service may be recreated or crash at any time. Keep the controller [reconnecting](controller.md#staying-connected). A complete, tested example: [a server and its controller](server-example.md).
+The service may be recreated or crash at any time. Keep the controller [reconnecting](controller.md#staying-connected).
+
+### Testing without the service
+
+Tests don't run Docker. Stand an in-process fake of the server up on a free port and bind the controller's need to it by hand, as in library mode:
+
+```python
+class VirtualServer:
+    """Stands in for the service: records what it receives, and can go away to test reconnecting."""
+
+    async def start(self):
+        self._server = await asyncio.start_server(self._serve, "127.0.0.1", 0)
+        self.port = self._server.sockets[0].getsockname()[1]
+    ...
+
+
+@pytest.fixture
+def controller(platform: Platform, server: VirtualServer, output: RecordingControllerOutput) -> ZwaveController:
+    controller = ZwaveController(platform)
+    controller.peripherals = Peripherals({"zwave": Endpoint("zwave", "zwave-js-ws", f"ws://127.0.0.1:{server.port}")})
+    controller.output = output
+    return controller
+```
+
+Stop and start the fake inside a test to check that the controller reconnects, and that it tells the user only when the server stays away.
 
 ## Needs
 
