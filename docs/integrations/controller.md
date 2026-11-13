@@ -58,14 +58,14 @@ async def pair_device(
 
 The Hub builds `draft` from what the user entered in the app: name, room, icon, category, note. Its `id` is the Hub's own and read-only: never change it. Its `physical_id` holds the discovery's id as a placeholder, and `integration` is your key. When the user picks an existing record to pair onto, the draft carries that record's data instead, its `id`, `physical_id` and `integration_data` included. The integration decides what in it is stale.
 
-You fill in what the device is: `parameters`, `integration_data`, its `physical_id`, `available`, and the rest. Then you return the draft. The Hub saves it, reports the device connected if it is `available`, and calls `fetch`. So, during `pair_device`:
+You establish the device's identity and trust only: its `physical_id`, `integration_data` (keys, addresses), `available`. Then you return the draft. The Hub saves it, reports the device connected if it is `available`, and calls `fetch`, which gives the device its parameters. So, during `pair_device`:
 
 - **Don't use the device repository.** Nothing is saved while pairing.
 - **Report nothing about this device.** No `controller_did_connect_device`, no events. The Hub reports after it saved the draft.
 - **Check the physical id early.** As soon as you know it, call `check_device_id` (below), before anything irreversible: it confirms no other record holds this device already.
 - **Fill `integration_data` before each irreversible step.** A key you are about to set, a node you are about to include: write it to the draft first. It is saved with the device, so you need no storage of your own. If pairing fails, the Hub calls `unpair(draft)` to roll back, and `unpair` can only undo what the draft says ran.
 - **Just raise on failure.** The Hub's `unpair(draft)` undoes the partial pairing.
-- **Don't read values or subscribe.** The Hub calls `fetch` for that right after the save.
+- **Don't map parameters, read values or subscribe.** Leave `parameters` empty: the Hub calls `fetch` for all of that right after the save.
 - **Be idempotent.** The user may retry after a failed or rolled-back attempt, with a fresh draft. Bring the device to a known-good paired state from whatever the last attempt left: check each step and redo only what is missing or stale. A device found already paired is confirmed and returned, not refused.
 - **Raise when you can't pair.** Raise `MissingCredentialsError` before touching the device when the Hub lacks credentials.
 
@@ -78,7 +78,6 @@ async def pair_device(self, discovery, draft, credentials):
     await self.check_device_id(draft.physical_id, draft)                    # before anything irreversible
     draft.integration_data = AcmeDeviceIntegrationData(device_key=new_key)  # before the step it describes
     await self._client.pair(discovery.id, key=new_key)                      # pseudo, irreversible
-    draft.parameters = self._mapper.parameters(await self._client.get_properties(serial))
     draft.available = True
     return draft
 ```
@@ -140,17 +139,17 @@ The app removes a device with `DELETE /device/{id}?mode=...`:
 
 When `unpair` raises `DeviceUnreachableError`, the Hub answers 409 `device_unreachable`: "Device unreachable. Forget it instead? It might need a manual factory reset to pair again."
 
-#### `fetch` brings a device to a known-good state
+#### `fetch` reads the whole device
 
 ```python
-async def fetch(self, device: TDevice): ...
+async def fetch(self, device: TDevice) -> TDeviceState | None: ...
 ```
 
-The Hub calls it after pairing, on a manual refresh, and to revive a device that is unavailable. It is idempotent:
+The Hub calls it right after pairing, on a manual refresh, and to revive a device that is unavailable. It is idempotent:
 
-- Check that the device answers, and read its current values. Report them through the normal events.
+- Read the whole device and return it: `device` with its full `parameters` list (ids from `parameter_uuid`, current values) and `available`. The Hub creates the parameters on the first fetch, then compares each one with what it stored: new and gone parameters, changed values. Report none of it as events: events are for changes the device starts itself.
 - Check its event subscription. Subscribe again only if it is gone. Never create a second one.
-- Finish in bounded time. A sleeping battery device that doesn't answer is not a failure.
+- Finish in bounded time. Return `None` when the device doesn't answer, like a sleeping battery device: it is not a failure, and the Hub keeps what it has.
 
 ### Device → Hub
 

@@ -73,7 +73,7 @@ you implement them. The list below is the reference.
 - [ ] Device schema is properly mapped: device info, parameter list, and each parameter's metadata are translated to MajorDom's domain model
 - [ ] Hub → Device control (`send_command` is implemented)
 - [ ] Device → Hub event subscription (`self.output.controller_did_receive_events` is called on incoming events)
-- [ ] `identify`, `unpair`, and `fetch` are implemented: `unpair` also rolls back a failed or unsaved pairing (any partial state, reverse order, only what blocks a re-pair, no waiting for the user, safe to call again) and raises `DeviceUnreachableError` when the device can't be reached; `pair_device` and `fetch` are idempotent (check the device, re-subscribe only if the subscription is gone, bounded time)
+- [ ] `identify`, `unpair`, and `fetch` are implemented: `unpair` also rolls back a failed or unsaved pairing (any partial state, reverse order, only what blocks a re-pair, no waiting for the user, safe to call again) and raises `DeviceUnreachableError` when the device can't be reached; `pair_device` sets identity only, `fetch` returns the whole device with its parameters (or `None` when it doesn't answer); both are idempotent (check the device, re-subscribe only if the subscription is gone, bounded time)
 - [ ] Paired devices going offline/coming back online *while the Hub is running* (not just on reboot) — set `device.available` accordingly, and clear/set `last_error` to match
 - [ ] Graceful shutdown in `stop`
 - [ ] Everything external declared as a `Need` — radios, `BLE_ROUTER`, `ZEROCONF`, `UPNP_SSDP`, the services it brings; never raw Bluetooth

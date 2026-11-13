@@ -312,7 +312,8 @@ async def main():
     )
     async with controller.platform.device_repository(controller) as repo:
         await repo.save(device)
-    await controller.fetch(device)
+        if read := await controller.fetch(device):  # None: it didn't answer
+            await repo.save(read)
 
     # ... controller.send_command(...), controller.identify(device) ...
 

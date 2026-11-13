@@ -43,12 +43,12 @@ class MyController(AbstractController[MyDevice, MyParameter]):
 
     # ── Pairing ──────────────────────────────────────────────────────────────
     async def start_pairing_window(self, duration_sec: int, credentials=None) -> None: ...  # optional (e.g. Zigbee)
-    async def pair_device(self, discovery, draft, credentials) -> DeviceState: ...  # fill the draft: commission + map schema
+    async def pair_device(self, discovery, draft, credentials) -> DeviceState: ...  # fill the draft: commission, identity only
     async def unpair(self, device: MyDevice) -> None: ...                  # also the rollback of a failed pairing
 
     # ── Control & read  (Hub → Device) ───────────────────────────────────────
     async def send_command(self, command, device, parameter) -> None: ...  # set a value / run command
-    async def fetch(self, device: MyDevice) -> None: ...                    # idempotent health check + re-subscribe
+    async def fetch(self, device: MyDevice) -> DeviceState | None: ...      # read the whole device + re-subscribe
     async def identify(self, device: MyDevice) -> None: ...                 # blink / beep the device
 
     # ── Events  (Device → Hub) ───────────────────────────────────────────────
@@ -225,12 +225,11 @@ Now the irreversible step. Write what it changes to `integration_data` **first**
     draft.integration_data = AcmeDeviceIntegrationData(device_hostname=hostname, session_key=key)
     await self._client.pair(discovery.id, code=credentials.value, session_key=key)  # pseudo, irreversible; a no-op when already paired with this key
 
-    draft.parameters = self._mapper.parameters(self, draft.physical_id, await self._client.get_properties(hostname))  # pseudo
     draft.available = True
     return draft
 ```
 
-Don't call `_subscribe` or `controller_did_connect_device` here. The Hub saves the draft, reports the device connected, and then calls `fetch`, which subscribes.
+Don't map parameters, call `_subscribe` or `controller_did_connect_device` here. The Hub saves the draft, reports the device connected, and then calls `fetch`, which reads the parameters and subscribes.
 
 ### `unpair`: also the rollback
 
@@ -252,14 +251,18 @@ async def unpair(self, device: AcmeDevice):
 
 Thin wrappers over your client: `identify` makes the device blink/beep so the user can find it.
 
-`fetch` brings the device to a known-good state, and it is safe to call any number of times. It checks that the device answers, pulls a fresh snapshot of every parameter and reports them together as a batch of `DeviceParameterChange` events via `controller_did_receive_events`. It checks the subscription and subscribes again only if it is gone, never twice. A sleeping battery device that doesn't answer is not a failure.
+`fetch` reads the whole device, and it is safe to call any number of times. It reads every parameter with its current value and returns the device with them; the Hub stores them and tells the app what changed. It checks the subscription and subscribes again only if it is gone, never twice. A sleeping battery device that doesn't answer returns `None`: not a failure.
 
 ```python
-async def fetch(self, device: AcmeDevice):
-    properties = await asyncio.wait_for(self._client.get_properties(device.integration_data.device_hostname), 10)  # pseudo
-    await self.output.controller_did_receive_events(self, self._mapper.changes(self, device.physical_id, properties))  # pseudo
+async def fetch(self, device: AcmeDevice) -> AcmeDeviceState | None:
+    try:
+        properties = await asyncio.wait_for(self._client.get_properties(device.integration_data.device_hostname), 10)  # pseudo
+    except TimeoutError:
+        return None
     if device.physical_id not in self._subscriptions:
         self._subscribe(device)
+    parameters = self._mapper.parameters(self, device.physical_id, properties)  # pseudo: with their current values
+    return AcmeDeviceState(**device.model_dump(), parameters=parameters, available=True)
 ```
 
 ### `send_command`: Hub → device
