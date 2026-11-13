@@ -81,7 +81,7 @@ class AcmeController(AbstractController[Device, Parameter]):
 If your integration also works without Bluetooth, make the need optional and check for `None`:
 
 ```python
-needs = [dataclasses.replace(BLE_ROUTER, is_required=False)]
+needs = [BLE_ROUTER(is_required=False)]
 
 async def start(self):
     ble = self.peripherals.instance(BLE_ROUTER)  # None on a hub without Bluetooth

@@ -335,7 +335,7 @@ class ZigBeeController(AbstractController[Device, Parameter, "ZigBeeController.S
         ...
 ```
 
-HomeKit, which only uses the network, needs just `ZEROCONF`. Make a typed need optional with `dataclasses.replace(BLE_ROUTER, is_required=False)`. See [Peripherals](peripherals.md) and [Settings](settings.md).
+HomeKit, which only uses the network, needs just `ZEROCONF`. Make a typed need optional with `BLE_ROUTER(is_required=False)`. See [Peripherals](peripherals.md) and [Settings](settings.md).
 
 ### Hooks
 

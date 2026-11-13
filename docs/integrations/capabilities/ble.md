@@ -33,7 +33,7 @@ class AcmeController(AbstractController[Device, Parameter]):
 When the integration also works without Bluetooth, make the need optional. `instance()` then returns `None` on a hub without Bluetooth:
 
 ```python
-needs = [dataclasses.replace(BLE_ROUTER, is_required=False)]
+needs = [BLE_ROUTER(is_required=False)]
 ```
 
 ## Discovering devices
@@ -44,20 +44,17 @@ See [Bluetooth Discovery](../discovery/ble.md): `router.register(listener, match
 
 ## Connecting and using GATT
 
-`connect(address)` opens a GATT connection. Characteristics are addressed by their handle, which you find in `services()`:
+`connect(address)` opens a GATT connection for the block, and closes it when the block ends. Characteristics are addressed by their handle, which you find in `services()`:
 
 ```python
 BATTERY_LEVEL = "00002a19-0000-1000-8000-00805f9b34fb"
 
 
 async def read_battery(self, address: str) -> int:
-    connection = await self._ble.connect(address)
-    try:
+    async with self._ble.connect(address) as connection:
         characteristics = [c for s in await connection.services() for c in s.characteristics]
         battery = next(c for c in characteristics if c.uuid == BATTERY_LEVEL)
         return (await connection.read(battery.handle))[0]
-    finally:
-        await connection.disconnect()
 ```
 
 | `BLEConnection` | Does |
@@ -67,12 +64,16 @@ async def read_battery(self, address: str) -> int:
 | `await connection.write(handle, data, is_response_needed=True)` | writes a characteristic; `False` for "write without response" |
 | `await connection.start_notify(handle, callback)` | calls `callback(data)` on every notification or indication |
 | `await connection.stop_notify(handle)` | stops them |
-| `await connection.disconnect()` | closes the connection |
+| `await connection.disconnect()` | closes the connection before the block ends |
 | `connection.mtu` | the negotiated MTU, to size your packets |
 
-`connect(address, on_disconnect)` calls `on_disconnect()` when the connection drops. It raises `ConnectionError` when no radio can reach the device, and `BLEBusyError` (a `ConnectionError`) when every radio that hears it is leased to someone else.
+| `connect(…)` parameter | Meaning |
+|---|---|
+| `on_disconnect` | called when the connection drops |
+| `busy_timeout` | seconds to reach the device, waiting for a radio leased to someone else (default 10). Then `BLEBusyError` when every radio that hears it is still leased, or `ConnectionError` (which `BLEBusyError` also is) when none reaches it |
+| `max_duration` | seconds after which the connection is closed and the block gets `TimeoutError` (default none) |
 
-Always disconnect when you're done: every Bluetooth radio has only a few connection slots, a proxy fewer still.
+Every Bluetooth radio has only a few connection slots, a proxy fewer still: keep the block short. When a connection must outlive a block, like a subscription kept while the integration runs, `open_connection(…)` takes the same parameters and returns the connection: disconnect it yourself.
 
 ## Locking a radio: `exclusive`
 
@@ -82,17 +83,13 @@ A short exchange (read a value, send a command) just connects. A long, multi-ste
 from majordom_integration_sdk.capabilities import BLEBusyError
 
 try:
-    async with self._ble.exclusive(address, owner=self.key, timeout=60) as lease:
-        connection = await lease.connect()
-        try:
-            await self._provision(connection)  # several reads, writes and notifications
-        finally:
-            await connection.disconnect()  # ending the lease frees the radio, not the connection
+    async with self._ble.exclusive(address, owner=self.key, max_duration=300) as lease, lease.connect() as connection:
+        await self._provision(connection)  # several reads, writes and notifications
 except BLEBusyError:
     ...  # tell the user the Hub's Bluetooth is busy, try again later
 ```
 
-While the block runs, the radio that hears the device best stops scanning and serves only you; the other radios keep working for everyone. When the block ends, the radio goes back to the router. Always connect through `lease.connect()`, not `router.connect()`, inside the block.
+While the block runs, the radio that hears the device best stops scanning and serves only you; the other radios keep working for everyone. When the block ends, the radio goes back to the router. Always connect through `lease.connect()`, not `self._ble.connect()`, inside the block; it takes the same parameters.
 
 | Lock | Don't lock |
 |---|---|
@@ -105,7 +102,8 @@ A lease blocks other integrations from that radio, so hold it no longer than the
 | Parameter | Meaning |
 |---|---|
 | `owner` | who holds it, for the logs: your integration's `key` |
-| `timeout` | seconds to wait for a free radio before `BLEBusyError` (default 30); the lease itself has no time limit |
+| `busy_timeout` | seconds to wait for a free radio before `BLEBusyError` (default 30) |
+| `max_duration` | seconds the lease holds the radio; then the block gets `TimeoutError` and the radio goes back (default 120) |
 | `wait` | seconds to wait for the best radio before trying the next one (default 1) |
 | `is_pairing_needed` | lease only a radio that can pair (see below); `BLEPairingError` when none hears the device |
 
@@ -118,8 +116,8 @@ from majordom_integration_sdk.capabilities import BLEPairingError, LESecureConne
 
 channel = LESecureConnections()
 async with self._ble.exclusive(address, owner=self.key, is_pairing_needed=channel.is_pairing_needed) as lease:
-    async with channel.secure(await lease.connect()) as connection:
-        await connection.write(credentials_handle, credentials)
+    async with lease.connect() as connection, channel.secure(connection) as secured:
+        await secured.write(credentials_handle, credentials)
 ```
 
 | Channel | Use for |
