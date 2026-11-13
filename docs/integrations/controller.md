@@ -62,9 +62,11 @@ You fill in what the device is: `parameters`, `integration_data`, its `physical_
 
 - **Don't use the device repository.** Nothing is saved while pairing.
 - **Report nothing about this device.** No `controller_did_connect_device`, no events. The Hub reports after it saved the draft.
-- **Check the physical id early.** As soon as you know it, call `check_device_id` (below), before anything irreversible.
+- **Check the physical id early.** As soon as you know it, call `check_device_id` (below), before anything irreversible: it confirms no other record holds this device already.
 - **Fill `integration_data` before each irreversible step.** A key you are about to set, a node you are about to include: write it to the draft first. It is saved with the device, so you need no storage of your own. If pairing fails, the Hub calls `unpair(draft)` to roll back, and `unpair` can only undo what the draft says ran.
-- **Be idempotent, like `fetch`.** The user may retry after a failed or rolled-back attempt, with a fresh draft. Bring the device to a known-good paired state from whatever the last attempt left: check each step and redo only what is missing or stale. A device found already paired is confirmed and returned, not refused.
+- **Just raise on failure.** The Hub's `unpair(draft)` undoes the partial pairing.
+- **Don't read values or subscribe.** The Hub calls `fetch` for that right after the save.
+- **Be idempotent.** The user may retry after a failed or rolled-back attempt, with a fresh draft. Bring the device to a known-good paired state from whatever the last attempt left: check each step and redo only what is missing or stale. A device found already paired is confirmed and returned, not refused.
 - **Raise when you can't pair.** Raise `MissingCredentialsError` before touching the device when the Hub lacks credentials.
 
 ```python
@@ -107,7 +109,7 @@ The app uses the record's name and `is_paired` to offer pairing onto that record
 A device has two ids:
 
 - `id` is the Hub's. The Hub assigns it, and you never change it.
-- `physical_id` is yours: what you look the device up by, in the repository (`repo.get(physical_id=...)`), in events and in `controller_did_connect_device(self, physical_id=...)`. Build it with `device_uuid(s)`, where `s` is a string unique to that device: a MAC address or a serial number. A name or an address two devices share gives them the same id, and the second one can't be paired. Never change the `physical_id` of a device that is already paired.
+- `physical_id` is yours: what you look the device up by, in the repository (`repo.get(physical_id=...)`), in events and in `controller_did_connect_device(self, physical_id=...)`. Build it with `device_uuid(s)`, where `s` is a string or bytes unique to that device: a MAC address or a serial number. Build it in one place, a single id-making method, never assembled anew at each call site. A name or an address two devices share gives them the same id, and the second one can't be paired. Never change the `physical_id` of a device that is already paired.
 
 #### `unpair` is also the rollback
 
@@ -117,13 +119,12 @@ async def unpair(self, device: TDevice): ...
 
 The user triggers it to remove a device. The Hub also calls it to roll back, with the draft as `pair_device` left it, at any stage: when `pair_device` raises anything but `DeviceIdTakenError`, and when the Hub fails to save what it returned. So:
 
-- Undo, in the reverse order of pairing, only what would block a clean re-pair once the draft is lost: a key set on the device, a pairing the accessory holds.
-- Leave harmless leftovers alone. A node left on a fabric or network, offered again as a discovery, needs no undo.
+- Undo everything pairing did, in reverse order: a key set on the device, the pairing it holds, its place on the network or fabric.
 - Tolerate any partial state: a placeholder `physical_id`, no `integration_data`, a device already reset.
 - Never wait for the user. Go as far as you can: it is best effort, and the Hub cuts it off after 30 seconds.
 - Make it safe to call again. On a device already unpaired, or never fully paired, it does nothing more.
 
-When the device can't be reached to undo its pairing, forget your own state of it, then raise `DeviceUnreachableError`.
+Talk to the device only: the Hub alone decides whether to delete the record and its `integration_data`. When the device can't be reached, raise `DeviceUnreachableError` and change nothing else.
 
 The user sees the original pairing error, not an error from the rollback. When the rollback can't reach the device, the Hub answers `pairing_failed`: "Pairing failed. The device may need a manual factory reset to pair again."
 

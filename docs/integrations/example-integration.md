@@ -234,14 +234,14 @@ Don't call `_subscribe` or `controller_did_connect_device` here. The Hub saves t
 
 ### `unpair`: also the rollback
 
-`unpair` tells the device to forget the pairing (the Hub removes its own record). It is also what the Hub calls to roll back a failed pairing, or one it failed to save, with the draft as you left it. So it must cope with a draft at any stage (no `integration_data`, a device already reset), undo in reverse order only what would block a clean re-pair, never wait for the user, and be safe to call again. When the device can't be reached, forget your own state of it and raise `DeviceUnreachableError`: the app then offers to forget the device instead.
+`unpair` tells the device to forget the pairing (the Hub removes its own record). It is also what the Hub calls to roll back a failed pairing, or one it failed to save, with the draft as you left it. So it must cope with a draft at any stage (no `integration_data`, a device already reset), undo everything pairing did in reverse order, never wait for the user, and be safe to call again. It talks to the device only: when the device can't be reached, raise `DeviceUnreachableError` and change nothing else. The app then offers the user to forget the device, which only the Hub does.
 
 ```python
 async def unpair(self, device: AcmeDevice):
     data = device.integration_data
     if data is None:  # pair_device failed before the irreversible step: nothing to undo
         return
-    self._unsubscribe(device)  # your own state first
+    self._unsubscribe(device)  # stop listening; a no-op when not subscribed
     try:
         await self._client.forget(data.device_hostname, session_key=data.session_key)  # pseudo; a no-op when already forgotten
     except AcmeError as error:  # pseudo: the device is gone
