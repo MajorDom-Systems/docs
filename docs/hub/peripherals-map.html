@@ -1,0 +1,253 @@
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<title>MajorDom — Peripherals Map</title>
+<style>
+ :root{--bg:#f4f6f8;--surface:#ffffff;--surface-2:#eef1f5;--ink:#151a22;--ink-2:#495162;--ink-3:#6c7686;--line:#dbe1ea;--accent:#0d7a83;--accent-ink:#0a5a61;--in:#2f81f7;--out:#e08a2b;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+ @media (prefers-color-scheme:dark){:root{--bg:#0b0e14;--surface:#121722;--surface-2:#1a202b;--ink:#e8ecf3;--ink-2:#9aa5b6;--ink-3:#727d8d;--line:#232d3c;--accent:#45c8c0;--accent-ink:#82ddd7;--in:#5aa1ff;--out:#f0a53c;}}
+ :root[data-theme="dark"]{--bg:#0b0e14;--surface:#121722;--surface-2:#1a202b;--ink:#e8ecf3;--ink-2:#9aa5b6;--ink-3:#727d8d;--line:#232d3c;--accent:#45c8c0;--accent-ink:#82ddd7;--in:#5aa1ff;--out:#f0a53c;}
+ :root[data-theme="light"]{--bg:#f4f6f8;--surface:#ffffff;--surface-2:#eef1f5;--ink:#151a22;--ink-2:#495162;--ink-3:#6c7686;--line:#dbe1ea;--accent:#0d7a83;--accent-ink:#0a5a61;--in:#2f81f7;--out:#e08a2b;}
+ *{box-sizing:border-box;} body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;}
+ .wrap{max-width:1740px;margin:0 auto;padding:22px 22px 70px;}
+ .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent-ink);display:inline-flex;align-items:center;gap:8px;margin:0 0 8px;}
+ .kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 25%,transparent);}
+ h1{font-size:clamp(23px,3vw,33px);margin:0 0 6px;letter-spacing:-.02em;font-weight:770;} h1 .thin{color:var(--ink-2);font-weight:500;}
+ .lede{font-size:15px;color:var(--ink-2);max-width:102ch;margin:0 0 14px;} .lede code,.lede b{font-family:var(--mono);font-size:.9em;} .lede code{background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:.5px 5px;}
+ .legend{display:flex;flex-wrap:wrap;gap:14px 26px;margin:0 0 12px;padding:12px 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;}
+ .lgroup{display:flex;flex-direction:column;gap:6px;} .lgroup .h{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);}
+ .lrow{display:flex;flex-wrap:wrap;gap:5px 12px;} .li{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--ink-2);}
+ .sw{width:12px;height:12px;border-radius:3px;flex:none;border:1px solid rgba(120,130,145,.55);} .ln{width:20px;height:0;border-top:2.4px solid var(--x);flex:none;} .ln.dash{border-top-style:dashed;}
+ .app{display:flex;gap:16px;align-items:flex-start;}
+ .wire-wrap{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;overflow:auto;}
+ svg#wire{width:100%;min-width:1120px;height:auto;display:block;}
+ .hint{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin:8px 2px 0;}
+ svg#wire.focus .node:not(.sel):not(.nbr) rect{opacity:.18;} svg#wire.focus .node:not(.sel):not(.nbr) circle{opacity:.2;} svg#wire.focus .node:not(.sel):not(.nbr) text{opacity:.72;}
+ svg#wire.focus .hull{opacity:.4;}
+ svg#wire.focus .edge{opacity:.05;}
+ svg#wire.focus .edge.eIn{opacity:1;stroke:var(--in)!important;stroke-width:2.2!important;}
+ svg#wire.focus .edge.eOut{opacity:1;stroke:var(--out)!important;stroke-width:2.2!important;}
+ .node{cursor:pointer;} .node.sel rect{stroke-width:3.2!important;}
+ .side{width:392px;flex:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto;}
+ .side h3{margin:0;padding:14px 40px 4px 16px;font-size:15px;}
+ .side .dm{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding:0 16px;}
+ .side .kind{font-family:var(--mono);font-size:12px;color:var(--ink-2);padding:6px 16px 0;}
+ .side .rel{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);padding:2px 16px;} .side .rel b{color:var(--ink);}
+ .side .sec{margin-top:10px;padding:9px 16px;border-top:1px solid var(--line);}
+ .side .sec h4{margin:0 0 7px;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;}
+ h4.hin{color:var(--in);} h4.hout{color:var(--out);} h4.hdep{color:var(--ink-3);}
+ .side .grp{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin:9px 0 3px;letter-spacing:.03em;}
+ .side .grp .g{color:var(--in);}
+ .side .m{font-family:var(--mono);font-size:11px;color:var(--ink-2);white-space:pre-wrap;padding:2.5px 0;}
+ .side .m.in{border-left:2px solid var(--in);padding-left:9px;margin:2px 0;} .side .m.out{border-left:2px solid var(--out);padding-left:9px;margin:2px 0;} .side .m.dep{border-left:2px solid var(--ink-3);padding-left:9px;margin:2px 0;}
+ .side .close{position:absolute;top:12px;right:12px;cursor:pointer;color:var(--ink-3);font-family:var(--mono);font-size:15px;background:none;border:none;}
+ .side .empty{padding:22px 16px;color:var(--ink-3);font-size:13px;}
+ .lnk{color:var(--accent-ink);cursor:pointer;border-bottom:1px dotted color-mix(in oklab,var(--accent-ink) 55%,transparent);}
+ .lnk:hover{color:var(--accent);}
+ .hulllbl{cursor:pointer;} .hulllbl:hover{text-decoration:underline;}
+ .toolbar{display:flex;gap:10px;align-items:center;margin:0 0 8px;}
+ .toolbar input{font-family:var(--mono);font-size:13px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 11px;width:300px;}
+ .toolbar input:focus{outline:2px solid color-mix(in oklab,var(--accent) 45%,transparent);border-color:var(--accent);}
+ .toolbar .cnt{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);}
+ .toolbar .banner{font-family:var(--mono);font-size:11.5px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:4px 11px;display:none;align-items:center;gap:8px;}
+ .toolbar .banner.on{display:inline-flex;} .toolbar .banner b{color:var(--accent-ink);} .toolbar .banner .x{cursor:pointer;color:var(--ink-3);}
+ /* search dim */
+ svg#wire.searching .node:not(.hit) rect{opacity:.13;} svg#wire.searching .node:not(.hit) text{opacity:.5;} svg#wire.searching .node:not(.hit) circle{opacity:.13;}
+ svg#wire.searching .node.hit rect{stroke-width:3!important;} svg#wire.searching .edge{opacity:.08;}
+ /* isolate domain */
+ svg#wire.iso .node.dout rect{opacity:.12;} svg#wire.iso .node.dout text{opacity:.4;} svg#wire.iso .node.dout circle{opacity:.12;}
+ svg#wire.iso .hull.hout{opacity:.28;} svg#wire.iso .edge.eout{opacity:.04;}
+ .ideas{margin-top:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:0 16px;max-width:1100px;}
+ .ideas summary{cursor:pointer;padding:13px 0;font-family:var(--mono);font-size:12.5px;color:var(--ink);font-weight:600;letter-spacing:.02em;}
+ .ideas summary::marker{color:var(--accent);}
+ .ideas ul{margin:0 0 14px;padding-left:20px;} .ideas li{font-size:13px;color:var(--ink-2);margin:5px 0;} .ideas li b{color:var(--ink);}
+ .ideas .done{color:var(--ink-3);} .ideas .done b{color:var(--ink-3);}
+ @media(max-width:980px){.app{flex-direction:column;} .side{width:100%;position:static;max-height:none;} .toolbar input{width:100%;}}
+</style>
+<div class="wrap">
+ <div class="legend">
+  <div class="lgroup"><span class="h">Relation</span><div class="lrow">
+   <span class="li"><span class="ln" style="--x:#b6bdc8"></span>runs / brings along</span><span class="li"><span class="ln" style="--x:#0d8079"></span>serves a need</span>
+   <span class="li"><span class="ln" style="--x:#b6bdc8;border-top-style:dotted"></span>serves an optional need</span><span class="li"><span class="ln dash" style="--x:#8a6fbf"></span>recognises sticks for</span>
+   <span class="li"><span class="ln" style="--x:#2f81f7"></span><b>input (focus)</b></span><span class="li"><span class="ln" style="--x:#e08a2b"></span><b>output (focus)</b></span>
+  </div></div>
+  <div class="lgroup"><span class="h">Domain</span><div class="lrow"><span class="li"><span class="sw" style="background:#e3e7ee"></span>runtime</span><span class="li"><span class="sw" style="background:#eae7dc"></span>hardware &amp; host</span><span class="li"><span class="sw" style="background:#e9e3f8"></span>USB drivers</span><span class="li"><span class="sw" style="background:#dce9f7"></span>services (Docker)</span><span class="li"><span class="sw" style="background:#dff0f0"></span>in-process capabilities</span><span class="li"><span class="sw" style="background:#e6efd9"></span>Bluetooth radios</span><span class="li"><span class="sw" style="background:#f0e0e0"></span>integrations (examples)</span></div></div>
+ </div>
+ <div class="toolbar">
+  <input id="search" type="text" placeholder="Search entities…  (press /)" autocomplete="off" spellcheck="false">
+  <span class="cnt" id="cnt"></span>
+  <span class="banner" id="banner"></span>
+ </div>
+ <div class="app">
+  <div class="wire-wrap"><svg id="wire" viewBox="196 368 1089 720" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+<defs><marker id="m8b95a4" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b95a4"/></marker><marker id="m3fae86" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3fae86"/></marker><marker id="mb6bdc8" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#b6bdc8"/></marker><marker id="m8a6fbf" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8a6fbf"/></marker><marker id="m5b63c9" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#5b63c9"/></marker><marker id="m0d8079" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0d8079"/></marker><marker id="ma99263" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a99263"/></marker><marker id="mc07d22" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#c07d22"/></marker><marker id="m2f81f7IN" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2f81f7"/></marker><marker id="me08a2bOUT" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#e08a2b"/></marker></defs>
+<g class="hull" data-dom="runtime"><rect x="739" y="654" width="102" height="63" rx="12" fill="#e3e7ee" fill-opacity="0.14" stroke="#8a93a2" stroke-width="1.1" stroke-dasharray="5 4"/><text class="hulllbl" data-dom="runtime" x="747" y="668" font-size="11" font-weight="700" fill="#8a93a2">runtime ⤢</text></g>
+<g class="hull" data-dom="hardware"><rect x="258" y="620" width="324" height="129" rx="12" fill="#eae7dc" fill-opacity="0.14" stroke="#a99e86" stroke-width="1.1" stroke-dasharray="5 4"/><text class="hulllbl" data-dom="hardware" x="266" y="636" font-size="11" font-weight="700" fill="#a99e86">hardware &amp; host ⤢</text></g>
+<g class="hull" data-dom="drivers"><rect x="216" y="938" width="130" height="129" rx="12" fill="#e9e3f8" fill-opacity="0.14" stroke="#8a6fbf" stroke-width="1.1" stroke-dasharray="5 4"/><text class="hulllbl" data-dom="drivers" x="224" y="953" font-size="11" font-weight="700" fill="#8a6fbf">USB drivers ⤢</text></g>
+<g class="hull" data-dom="services"><rect x="708" y="881" width="303" height="129" rx="12" fill="#dce9f7" fill-opacity="0.14" stroke="#5aa9e0" stroke-width="1.1" stroke-dasharray="5 4"/><text class="hulllbl" data-dom="services" x="716" y="896" font-size="11" font-weight="700" fill="#5aa9e0">services (Docker) ⤢</text></g>
+<g class="hull" data-dom="providers"><rect x="695" y="388" width="283" height="63" rx="12" fill="#dff0f0" fill-opacity="0.14" stroke="#3a9a9a" stroke-width="1.1" stroke-dasharray="5 4"/><text class="hulllbl" data-dom="providers" x="703" y="403" font-size="11" font-weight="700" fill="#3a9a9a">in-process capabilities ⤢</text></g>
+<g class="hull" data-dom="ble"><rect x="456" y="400" width="178" height="129" rx="12" fill="#e6efd9" fill-opacity="0.14" stroke="#7fa05a" stroke-width="1.1" stroke-dasharray="5 4"/><text class="hulllbl" data-dom="ble" x="464" y="415" font-size="11" font-weight="700" fill="#7fa05a">Bluetooth radios ⤢</text></g>
+<g class="hull" data-dom="integrations"><rect x="1094" y="588" width="171" height="195" rx="12" fill="#f0e0e0" fill-opacity="0.14" stroke="#c25f5f" stroke-width="1.1" stroke-dasharray="5 4"/><text class="hulllbl" data-dom="integrations" x="1102" y="602" font-size="11" font-weight="700" fill="#c25f5f">integrations (examples) ⤢</text></g>
+<g id="edges">
+<path class="edge" data-s="runtime" data-d="pinned" data-om="url(#mb6bdc8)" d="M753 687 Q565 654 374 659" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="runtime" data-d="board" data-om="url(#mb6bdc8)" d="M753 690 Q581 673 409 690" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="runtime" data-d="usb" data-om="url(#mb6bdc8)" d="M753 693 Q569 688 388 720" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="runtime" data-d="btadapters" data-om="url(#mb6bdc8)" d="M753 686 Q661 666 568 665" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="runtime" data-d="host" data-om="url(#mb6bdc8)" d="M753 690 Q650 680 547 690" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="runtime" data-d="compose" data-om="url(#mb6bdc8)" d="M794 702 Q815 807 856 905" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="runtime" data-d="router" data-om="url(#mb6bdc8)" d="M788 678 Q784 555 755 437" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="runtime" data-d="zeroconf" data-om="url(#mb6bdc8)" d="M793 678 Q834 560 851 437" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="runtime" data-d="ssdp" data-om="url(#mb6bdc8)" d="M797 678 Q876 564 931 437" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="usb" data-d="radio" data-om="url(#mb6bdc8)" d="M388 723 Q427 727 466 723" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="board" data-d="radio" data-om="url(#mb6bdc8)" d="M399 702 Q432 713 466 717" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="btadapters" data-d="bluez" data-om="url(#mb6bdc8)" d="M499 644 Q530 549 542 449" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="radio" data-d="cpchci" data-om="url(#mb6bdc8)" d="M499 710 Q532 598 542 482" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="esphome" data-d="proxy" data-om="url(#mb6bdc8)" d="M1144 710 Q871 588 581 515" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="silabs" data-d="usb" data-om="url(#m8a6fbf)" d="M284 962 Q322 852 337 736" fill="none" stroke="#8a6fbf" stroke-width="1.0" stroke-dasharray="5 4" stroke-opacity="0.8" marker-end="url(#m8a6fbf)"/>
+<path class="edge" data-s="zwavedrv" data-d="usb" data-om="url(#m8a6fbf)" d="M284 995 Q324 868 338 736" fill="none" stroke="#8a6fbf" stroke-width="1.0" stroke-dasharray="5 4" stroke-opacity="0.8" marker-end="url(#m8a6fbf)"/>
+<path class="edge" data-s="zigpydrv" data-d="usb" data-om="url(#m8a6fbf)" d="M283 1028 Q325 885 338 736" fill="none" stroke="#8a6fbf" stroke-width="1.0" stroke-dasharray="5 4" stroke-opacity="0.8" marker-end="url(#m8a6fbf)"/>
+<path class="edge" data-s="radio" data-d="multipan" data-om="url(#m0d8079)" d="M514 736 Q651 852 807 938" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="radio" data-d="otbr" data-om="url(#m0d8079)" d="M521 736 Q713 857 925 938" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="radio" data-d="zjs" data-om="url(#m0d8079)" d="M517 736 Q703 873 912 971" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="radio" data-d="zigbee" data-om="url(#m0d8079)" d="M526 720 Q822 718 1112 664" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="compose" data-d="multipan" data-om="url(#m0d8079)" d="M847 930 Q842 934 838 938" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="compose" data-d="otbr" data-om="url(#m0d8079)" d="M894 930 Q908 937 923 941" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="compose" data-d="mjs" data-om="url(#m0d8079)" d="M846 930 Q821 949 801 971" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="compose" data-d="zjs" data-om="url(#m0d8079)" d="M874 930 Q894 953 919 971" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="host" data-d="mjs" data-om="url(#m0d8079)" d="M509 702 Q628 850 775 971" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="multipan" data-d="zigbee" data-om="url(#m0d8079)" d="M840 938 Q1016 820 1165 670" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="mjs" data-d="matter" data-om="url(#m0d8079)" d="M801 971 Q1000 822 1166 636" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="zjs" data-d="zwave" data-om="url(#m0d8079)" d="M943 971 Q1070 848 1169 702" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="zeroconf" data-d="esphome" data-om="url(#m0d8079)" d="M868 437 Q1003 588 1166 710" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="zeroconf" data-d="homekit" data-om="url(#m0d8079)" d="M866 437 Q1002 605 1168 744" fill="none" stroke="#0d8079" stroke-width="1.5" stroke-opacity="0.8" marker-end="url(#m0d8079)"/>
+<path class="edge" data-s="otbr" data-d="mjs" data-om="url(#mb6bdc8)" d="M923 956 Q885 960 849 971" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-dasharray="1.5 3.5" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="multipan" data-d="mjs" data-om="url(#mb6bdc8)" d="M811 963 Q806 967 802 971" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-dasharray="1.5 3.5" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="otbr" data-d="esphome" data-om="url(#mb6bdc8)" d="M963 938 Q1075 847 1167 736" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-dasharray="1.5 3.5" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="router" data-d="matter" data-om="url(#mb6bdc8)" d="M780 437 Q958 543 1153 612" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-dasharray="1.5 3.5" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="router" data-d="esphome" data-om="url(#mb6bdc8)" d="M771 437 Q953 593 1162 710" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-dasharray="1.5 3.5" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="bluez" data-d="router" data-om="url(#mb6bdc8)" d="M589 434 Q649 436 709 427" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-dasharray="1.5 3.5" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="cpchci" data-d="router" data-om="url(#mb6bdc8)" d="M603 457 Q657 450 709 434" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-dasharray="1.5 3.5" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="proxy" data-d="router" data-om="url(#mb6bdc8)" d="M578 490 Q652 470 720 437" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-dasharray="1.5 3.5" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+<path class="edge" data-s="bluez" data-d="mjs" data-om="url(#mb6bdc8)" d="M550 449 Q642 721 782 971" fill="none" stroke="#b6bdc8" stroke-width="1.0" stroke-dasharray="1.5 3.5" stroke-opacity="0.8" marker-end="url(#mb6bdc8)"/>
+</g><g id="nodes">
+<g class="node" data-id="runtime" tabindex="0"><rect x="753" y="678" width="74" height="25" rx="7" fill="#e3e7ee" stroke="#3b4658" stroke-width="2.4"/>
+<text x="790" y="694" font-size="12" text-anchor="middle" fill="#182231" font-weight="700">Runtime</text></g>
+<g class="node" data-id="pinned" tabindex="0"><rect x="307" y="644" width="67" height="25" rx="7" fill="#eae7dc" stroke="#a99e86" stroke-width="1.1"/>
+<text x="340" y="661" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">Pinned</text></g>
+<g class="node" data-id="board" tabindex="0"><rect x="272" y="678" width="136" height="25" rx="7" fill="#eae7dc" stroke="#a99e86" stroke-width="1.1"/>
+<text x="340" y="694" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">FixedPeripherals</text></g>
+<g class="node" data-id="usb" tabindex="0"><rect x="293" y="710" width="95" height="25" rx="7" fill="#eae7dc" stroke="#a99e86" stroke-width="1.9"/>
+<circle cx="300" cy="718" r="2.6" fill="#a99e86"/>
+<text x="340" y="727" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">UsbScanner</text></g>
+<g class="node" data-id="btadapters" tabindex="0"><rect x="425" y="644" width="143" height="25" rx="7" fill="#eae7dc" stroke="#a99e86" stroke-width="1.1"/>
+<text x="496" y="661" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">BluetoothAdapters</text></g>
+<g class="node" data-id="host" tabindex="0"><rect x="445" y="678" width="102" height="25" rx="7" fill="#eae7dc" stroke="#a99e86" stroke-width="1.1"/>
+<text x="496" y="694" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">HostNetwork</text></g>
+<g class="node" data-id="radio" tabindex="0"><rect x="466" y="710" width="60" height="25" rx="7" fill="#eae7dc" stroke="#a99e86" stroke-width="1.1"/>
+<text x="496" y="727" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">Radio</text></g>
+<g class="node" data-id="silabs" tabindex="0"><rect x="247" y="962" width="67" height="25" rx="7" fill="#e9e3f8" stroke="#8a6fbf" stroke-width="1.1"/>
+<text x="281" y="979" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">Silabs</text></g>
+<g class="node" data-id="zwavedrv" tabindex="0"><rect x="251" y="995" width="60" height="25" rx="7" fill="#e9e3f8" stroke="#8a6fbf" stroke-width="1.1"/>
+<text x="281" y="1012" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">ZWave</text></g>
+<g class="node" data-id="zigpydrv" tabindex="0"><rect x="230" y="1028" width="102" height="25" rx="7" fill="#e9e3f8" stroke="#8a6fbf" stroke-width="1.1"/>
+<text x="281" y="1045" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">ZigpyDriver</text></g>
+<g class="node" data-id="compose" tabindex="0"><rect x="823" y="905" width="74" height="25" rx="7" fill="#dce9f7" stroke="#5aa9e0" stroke-width="1.9"/>
+<circle cx="830" cy="912" r="2.6" fill="#5aa9e0"/>
+<text x="860" y="922" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">Compose</text></g>
+<g class="node" data-id="multipan" tabindex="0"><rect x="743" y="938" width="164" height="25" rx="7" fill="#dce9f7" stroke="#5aa9e0" stroke-width="1.1"/>
+<text x="825" y="955" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">silabs-multiprotocol</text></g>
+<g class="node" data-id="otbr" tabindex="0"><rect x="923" y="938" width="54" height="25" rx="7" fill="#dce9f7" stroke="#5aa9e0" stroke-width="1.1"/>
+<text x="950" y="955" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">otbr</text></g>
+<g class="node" data-id="mjs" tabindex="0"><rect x="722" y="971" width="130" height="25" rx="7" fill="#dce9f7" stroke="#5aa9e0" stroke-width="1.1"/>
+<text x="787" y="988" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">matterjs-server</text></g>
+<g class="node" data-id="zjs" tabindex="0"><rect x="868" y="971" width="130" height="25" rx="7" fill="#dce9f7" stroke="#5aa9e0" stroke-width="1.1"/>
+<text x="933" y="988" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">zwave-js-server</text></g>
+<g class="node" data-id="router" tabindex="0"><rect x="709" y="412" width="88" height="25" rx="7" fill="#dff0f0" stroke="#3a9a9a" stroke-width="2.4"/>
+<text x="753" y="428" font-size="12" text-anchor="middle" fill="#182231" font-weight="700">BLERouter</text></g>
+<g class="node" data-id="zeroconf" tabindex="0"><rect x="814" y="412" width="81" height="25" rx="7" fill="#dff0f0" stroke="#3a9a9a" stroke-width="1.1"/>
+<text x="854" y="428" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">Zeroconf</text></g>
+<g class="node" data-id="ssdp" tabindex="0"><rect x="911" y="412" width="54" height="25" rx="7" fill="#dff0f0" stroke="#3a9a9a" stroke-width="1.1"/>
+<text x="938" y="428" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">SSDP</text></g>
+<g class="node" data-id="bluez" tabindex="0"><rect x="501" y="424" width="88" height="25" rx="7" fill="#e6efd9" stroke="#7fa05a" stroke-width="1.1"/>
+<text x="545" y="440" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">ble/bluez</text></g>
+<g class="node" data-id="cpchci" tabindex="0"><rect x="470" y="457" width="150" height="25" rx="7" fill="#e6efd9" stroke="#7fa05a" stroke-width="1.1"/>
+<text x="545" y="473" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">ble/silabs-cpc-hci</text></g>
+<g class="node" data-id="proxy" tabindex="0"><rect x="504" y="490" width="81" height="25" rx="7" fill="#e6efd9" stroke="#7fa05a" stroke-width="1.1"/>
+<text x="545" y="506" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">BLEProxy</text></g>
+<g class="node" data-id="matter" tabindex="0"><rect x="1112" y="612" width="136" height="25" rx="7" fill="#f0e0e0" stroke="#c25f5f" stroke-width="1.1"/>
+<text x="1180" y="628" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">MatterController</text></g>
+<g class="node" data-id="zigbee" tabindex="0"><rect x="1112" y="644" width="136" height="25" rx="7" fill="#f0e0e0" stroke="#c25f5f" stroke-width="1.1"/>
+<text x="1180" y="661" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">ZigBeeController</text></g>
+<g class="node" data-id="zwave" tabindex="0"><rect x="1115" y="678" width="130" height="25" rx="7" fill="#f0e0e0" stroke="#c25f5f" stroke-width="1.1"/>
+<text x="1180" y="694" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">ZwaveController</text></g>
+<g class="node" data-id="esphome" tabindex="0"><rect x="1108" y="710" width="143" height="25" rx="7" fill="#f0e0e0" stroke="#c25f5f" stroke-width="1.1"/>
+<text x="1180" y="727" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">ESPhomeController</text></g>
+<g class="node" data-id="homekit" tabindex="0"><rect x="1108" y="744" width="143" height="25" rx="7" fill="#f0e0e0" stroke="#c25f5f" stroke-width="1.1"/>
+<text x="1180" y="760" font-size="12" text-anchor="middle" fill="#182231" font-weight="500">HomeKitController</text></g>
+</g></svg>
+   <p class="hint">● = domain boundary · click a node (or a link in the panel) to focus · click a domain's <b>⤢</b> label to isolate it · press <b>/</b> to search · click empty space / Esc to reset</p>
+  </div>
+  <aside class="side" id="side"><button class="close" id="close">✕</button><div id="sidebody"></div></aside>
+ </div>
+</div>
+<script>
+const POSITIONS={"runtime":[-210,4],"pinned":[457,-3],"board":[458,-3],"usb":[457,-3],"btadapters":[457,-3],"host":[457,-3],"radio":[457,-3],"silabs":[496,-53],"zwavedrv":[499,-53],"zigpydrv":[499,-53],"compose":[273,4],"multipan":[273,4],"otbr":[273,4],"mjs":[270,4],"zjs":[263,4],"router":[200,-58],"zeroconf":[-8,-58],"ssdp":[-182,-58],"bluez":[641,-70],"cpchci":[641,-70],"proxy":[642,-70],"matter":[182,4],"zigbee":[182,6],"zwave":[182,4],"esphome":[183,-3],"homekit":[183,2]};  // node id: [dx, dy] from the generated layout (Shift+C on the map copies them)
+const D={"nodes": {"runtime": {"id": "runtime", "label": "Runtime", "domain": "runtime", "kind": "majordom_integration_sdk.runtime \u00b7 binds every need to a provider", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["runs every peripheral below, in the order it is given", "binds each need to the first provider that can serve it"], "deps": [], "pname": null}, "pinned": {"id": "pinned", "label": "Pinned", "domain": "hardware", "kind": "endpoints run elsewhere, preferred over anything found", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["any family: e.g. zigbee/ezsp at socket://\u2026, matter/matter-server at ws://\u2026"], "deps": ["Runtime"], "pname": null}, "board": {"id": "board", "label": "FixedPeripherals", "domain": "hardware", "kind": "radios soldered on the board (the Hub's board profile: FixedRadio)", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["a Radio per soldered radio"], "deps": ["Runtime"], "pname": null}, "usb": {"id": "usb", "label": "UsbScanner", "domain": "hardware", "kind": "USB sticks as they are plugged in, recognised by the USB drivers", "base": "\u2014", "impl": [], "uses": [], "inp": [["needs", ["usb-driver (every driver)"]]], "out": ["a Radio per stick"], "deps": ["Runtime"], "pname": null}, "radio": {"id": "radio", "label": "Radio", "domain": "hardware", "kind": "one stick or soldered radio, per firmware", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["zigbee/ezsp \u00b7 thread/spinel \u00b7 multipan/silabs-cpc \u00b7 zwave/serial-api", "ble/silabs-cpc-hci (multi-PAN firmware with Bluetooth)"], "deps": ["UsbScanner", "FixedPeripherals"], "pname": null}, "btadapters": {"id": "btadapters", "label": "BluetoothAdapters", "domain": "hardware", "kind": "the host's Bluetooth adapters", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["ble/bluez per adapter (hci0, hci1, \u2026)"], "deps": ["Runtime"], "pname": null}, "host": {"id": "host", "label": "HostNetwork", "domain": "hardware", "kind": "the host's network", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["ip (shared)"], "deps": ["Runtime"], "pname": null}, "silabs": {"id": "silabs", "label": "Silabs", "domain": "drivers", "kind": "UsbDriver: Silicon Labs sticks", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["firmwares: zigbee-ncp \u00b7 thread-rcp \u00b7 multipan-rcp"], "deps": ["Runtime (default_usb_drivers)"], "pname": null}, "zwavedrv": {"id": "zwavedrv", "label": "ZWave", "domain": "drivers", "kind": "UsbDriver: Z-Wave sticks", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["firmware: serial-api"], "deps": ["Runtime (default_usb_drivers)"], "pname": null}, "zigpydrv": {"id": "zigpydrv", "label": "ZigpyDriver", "domain": "drivers", "kind": "UsbDriver an integration brings: sticks only zigpy tells apart", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["zigbee/znp \u00b7 deconz \u00b7 xbee \u00b7 zigate \u00b7 \u2026"], "deps": ["ZigBeeController's peripherals()"], "pname": null}, "compose": {"id": "compose", "label": "Compose", "domain": "services", "kind": "runs the services: docker compose project \"majordom\"", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["container/compose: what every Service needs"], "deps": ["Runtime"], "pname": null}, "multipan": {"id": "multipan", "label": "silabs-multiprotocol", "domain": "services", "kind": "SDK Service: one multi-PAN stick as Zigbee and Thread", "base": "\u2014", "impl": [], "uses": [], "inp": [["needs", ["multipan/silabs-cpc", "container/compose"]]], "out": ["zigbee/ezsp at socket://127.0.0.1:{ports.ezsp}", "thread/otbr-rest (shared)"], "deps": ["Runtime"], "pname": null}, "otbr": {"id": "otbr", "label": "otbr", "domain": "services", "kind": "SDK Service: OpenThread Border Router on a Thread RCP", "base": "\u2014", "impl": [], "uses": [], "inp": [["needs", ["thread/spinel", "container/compose"]]], "out": ["thread/otbr-rest (shared)"], "deps": ["Runtime"], "pname": null}, "mjs": {"id": "mjs", "label": "matterjs-server", "domain": "services", "kind": "Service an integration brings", "base": "\u2014", "impl": [], "uses": [], "inp": [["needs", ["ip", "thread/otbr-rest (optional)", "ble/bluez (optional)", "container/compose"]]], "out": ["matter/matter-server"], "deps": ["MatterController's peripherals()"], "pname": null}, "zjs": {"id": "zjs", "label": "zwave-js-server", "domain": "services", "kind": "Service an integration brings", "base": "\u2014", "impl": [], "uses": [], "inp": [["needs", ["zwave/serial-api", "container/compose"]]], "out": ["zwave/zwave-js-ws"], "deps": ["ZwaveController's peripherals()"], "pname": null}, "router": {"id": "router", "label": "BLERouter", "domain": "providers", "kind": "ble/router \u00b7 BLE_ROUTER: discovery, connections, leases", "base": "\u2014", "impl": [], "uses": [], "inp": [["needs", ["ble/bluez \u00b7 ble/silabs-cpc-hci \u00b7 ble/esphome-proxy (every one, optional)"]]], "out": ["ble/router (shared)"], "deps": ["Runtime"], "pname": null}, "zeroconf": {"id": "zeroconf", "label": "Zeroconf", "domain": "providers", "kind": "mdns/zeroconf \u00b7 ZEROCONF: DNS-SD over mDNS", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["mdns/zeroconf (shared)"], "deps": ["Runtime"], "pname": null}, "ssdp": {"id": "ssdp", "label": "SSDP", "domain": "providers", "kind": "upnp/ssdp \u00b7 UPNP_SSDP", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["upnp/ssdp (shared)"], "deps": ["Runtime"], "pname": null}, "bluez": {"id": "bluez", "label": "ble/bluez", "domain": "ble", "kind": "a host adapter", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["raw Bluetooth: the router takes it"], "deps": ["BluetoothAdapters"], "pname": null}, "cpchci": {"id": "cpchci", "label": "ble/silabs-cpc-hci", "domain": "ble", "kind": "the Bluetooth of a multi-PAN stick", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["raw Bluetooth: the router takes it"], "deps": ["Radio"], "pname": null}, "proxy": {"id": "proxy", "label": "BLEProxy", "domain": "ble", "kind": "ble/esphome-proxy: a device's radio lent to the router", "base": "\u2014", "impl": [], "uses": [], "inp": [], "out": ["raw Bluetooth: the router takes it"], "deps": ["ESPhomeController (provides, per node with bluetooth_proxy)"], "pname": null}, "matter": {"id": "matter", "label": "MatterController", "domain": "integrations", "kind": "example: a service, an optional border router, Bluetooth", "base": "\u2014", "impl": [], "uses": [], "inp": [["needs", ["matter/matter-server", "ble/router (optional)"]]], "out": [], "deps": [], "pname": null}, "zigbee": {"id": "zigbee", "label": "ZigBeeController", "domain": "integrations", "kind": "example: a radio, directly", "base": "\u2014", "impl": [], "uses": [], "inp": [["needs", ["zigbee/ezsp \u00b7 znp \u00b7 deconz \u00b7 \u2026"]]], "out": [], "deps": [], "pname": null}, "zwave": {"id": "zwave", "label": "ZwaveController", "domain": "integrations", "kind": "example: a service on the stick", "base": "\u2014", "impl": [], "uses": [], "inp": [["needs", ["zwave/zwave-js-ws"]]], "out": [], "deps": [], "pname": null}, "esphome": {"id": "esphome", "label": "ESPhomeController", "domain": "integrations", "kind": "example: discovery, a border router, Bluetooth proxies", "base": "\u2014", "impl": [], "uses": [], "inp": [["needs", ["mdns/zeroconf", "thread/otbr-rest (optional)", "ble/router (optional)"]]], "out": ["a BLEProxy per node"], "deps": [], "pname": null}, "homekit": {"id": "homekit", "label": "HomeKitController", "domain": "integrations", "kind": "example: discovery only", "base": "\u2014", "impl": [], "uses": [], "inp": [["needs", ["mdns/zeroconf"]]], "out": [], "deps": [], "pname": null}}, "dom": {"runtime": "runtime", "hardware": "hardware & host", "drivers": "USB drivers", "services": "services (Docker)", "providers": "in-process capabilities", "ble": "Bluetooth radios", "integrations": "integrations (examples)"}, "bord": {"runtime": "#8a93a2", "hardware": "#a99e86", "drivers": "#8a6fbf", "services": "#5aa9e0", "providers": "#3a9a9a", "ble": "#7fa05a", "integrations": "#c25f5f"}, "n2i": {"Runtime": "runtime", "Pinned": "pinned", "FixedPeripherals": "board", "UsbScanner": "usb", "Radio": "radio", "BluetoothAdapters": "btadapters", "HostNetwork": "host", "Silabs": "silabs", "ZWave": "zwavedrv", "ZigpyDriver": "zigpydrv", "Compose": "compose", "silabs-multiprotocol": "multipan", "otbr": "otbr", "matterjs-server": "mjs", "zwave-js-server": "zjs", "BLERouter": "router", "Zeroconf": "zeroconf", "SSDP": "ssdp", "ble/bluez": "bluez", "ble/silabs-cpc-hci": "cpchci", "BLEProxy": "proxy", "MatterController": "matter", "ZigBeeController": "zigbee", "ZwaveController": "zwave", "ESPhomeController": "esphome", "HomeKitController": "homekit"}, "super": {}, "lab": {"inp": "Needs \u25c2 capabilities it is bound to", "out": "Provides \u25b8 capabilities others need", "dep": "Run by \u25b9 what brings it along", "noout": "\u2014 nothing: it only consumes \u2014", "empty": "Click any peripheral to see what it needs, what it provides and what runs it."}};
+const svg=document.getElementById('wire'),side=document.getElementById('side'),body=document.getElementById('sidebody');
+const NAMES=Object.keys(D.n2i).sort((a,b)=>b.length-a.length);
+const RE=new RegExp('('+NAMES.map(s=>s.replace(/[.*+?^${}()|[\]\\/]/g,'\\$&')).join('|')+')','g');
+function esc(s){return (s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function L(t){return esc(t).replace(RE,m=>'<span class="lnk" data-go="'+D.n2i[m]+'">'+m+'</span>');}
+const EMPTY='<div class="empty">'+(D.lab.empty||'Click any entity in the map to inspect it — its kind, what it implements / consumes, the methods callers invoke (grouped by where they were declared), its output ports and injected dependencies.')+'</div>';
+function setEmpty(){body.innerHTML=EMPTY;}
+const searchEl=document.getElementById('search'),cntEl=document.getElementById('cnt'),bannerEl=document.getElementById('banner');
+function clearSearch(){svg.classList.remove('searching');svg.querySelectorAll('.node.hit').forEach(n=>n.classList.remove('hit'));cntEl.textContent='';}
+function clearIso(){svg.classList.remove('iso');svg.querySelectorAll('.dout,.hout,.eout').forEach(e=>e.classList.remove('dout','hout','eout'));bannerEl.classList.remove('on');bannerEl.innerHTML='';}
+function reset(){svg.classList.remove('focus');svg.querySelectorAll('.node').forEach(n=>n.classList.remove('sel','nbr'));
+ svg.querySelectorAll('.edge').forEach(p=>{p.classList.remove('eIn','eOut');p.setAttribute('marker-end',p.dataset.om);});clearIso();clearSearch();setEmpty();history.replaceState(null,'','#');}
+function isolate(dom){reset();svg.classList.add('iso');const doms=D.super[dom]||[dom];
+ svg.querySelectorAll('.node').forEach(n=>{const nd=D.nodes[n.dataset.id];if(nd&&!doms.includes(nd.domain))n.classList.add('dout');});
+ svg.querySelectorAll('.hull').forEach(h=>{if(!doms.includes(h.dataset.dom))h.classList.add('hout');});
+ svg.querySelectorAll('.edge').forEach(p=>{const s=D.nodes[p.dataset.s],d=D.nodes[p.dataset.d];if(!((s&&doms.includes(s.domain))||(d&&doms.includes(d.domain))))p.classList.add('eout');});
+ bannerEl.classList.add('on');bannerEl.innerHTML='isolated: <b>'+esc(D.dom[dom])+'</b> <span class="x">✕</span>';}
+function runSearch(q){q=q.trim().toLowerCase();if(!q){clearSearch();return [];}let hits=[];
+ svg.querySelectorAll('.node').forEach(n=>{const nd=D.nodes[n.dataset.id];const m=nd&&(nd.label.toLowerCase().includes(q)||n.dataset.id.includes(q));n.classList.toggle('hit',!!m);if(m)hits.push(n.dataset.id);});
+ svg.classList.add('searching');cntEl.textContent=hits.length+' match'+(hits.length===1?'':'es');return hits;}
+function focus(id){const n=D.nodes[id];if(!n)return;clearIso();clearSearch();svg.classList.add('focus');
+ svg.querySelectorAll('.node').forEach(x=>x.classList.remove('sel','nbr'));
+ svg.querySelector('.node[data-id="'+id+'"]').classList.add('sel');
+ const nbrs=new Set();
+ svg.querySelectorAll('.edge').forEach(p=>{p.classList.remove('eIn','eOut');
+  if(p.dataset.d===id){p.classList.add('eIn');p.setAttribute('marker-end','url(#m2f81f7IN)');nbrs.add(p.dataset.s);}
+  else if(p.dataset.s===id){p.classList.add('eOut');p.setAttribute('marker-end','url(#me08a2bOUT)');nbrs.add(p.dataset.d);}
+  else p.setAttribute('marker-end',p.dataset.om);});
+ nbrs.forEach(x=>{const el=svg.querySelector('.node[data-id="'+x+'"]');if(el)el.classList.add('nbr');});
+ let implementers=[]; if(n.pname) implementers=Object.values(D.nodes).filter(m=>(m.impl||[]).includes(n.pname)).map(m=>m.label);
+ const isProto=n.kind.indexOf('Protocol')>=0;
+ let h='<h3>'+esc(n.label)+'</h3><div class="dm" style="color:'+D.bord[n.domain]+'">'+esc(D.dom[n.domain])+'</div><div class="kind">'+L(n.kind)+'</div>';
+ if(n.base&&n.base!=='—')h+='<div class="rel">subclass of <b>'+L(n.base)+'</b></div>';
+ if(n.impl&&n.impl.length)h+='<div class="rel">implements <b>'+n.impl.map(L).join(', ')+'</b></div>';
+ if(n.uses&&n.uses.length)h+='<div class="rel">consumes <b>'+n.uses.map(L).join(', ')+'</b></div>';
+ if(implementers.length)h+='<div class="rel">implemented by <b>'+implementers.map(L).join(', ')+'</b></div>';
+ h+='<div class="sec"><h4 class="hin">'+(D.lab.inp||'Inputs ◂ '+(isProto?'protocol methods callers invoke':'methods / props called on this'))+'</h4>';
+ if(n.inp&&n.inp.length){n.inp.forEach(g=>{const src=g[0];const lab=src==='own'||src.indexOf('own')===0?'<span style="color:var(--ink-3)">'+esc(src)+'</span>':'from '+L(src);
+   h+='<div class="grp">◂ '+lab+'</div>'+g[1].map(s=>'<div class="m in">'+L(s)+'</div>').join('');});}
+ else h+='<div class="m" style="color:var(--ink-3)">— none —</div>';
+ h+='</div><div class="sec"><h4 class="hout">'+(D.lab.out||'Outputs ▸ delegates it calls to emit results (prop: Type)')+'</h4>';
+ h+=(n.out&&n.out.length)?n.out.map(s=>'<div class="m out">'+L(s)+'</div>').join(''):'<div class="m" style="color:var(--ink-3)">'+(D.lab.noout||'— none (returns values / pure sink) —')+'</div>';
+ h+='</div><div class="sec"><h4 class="hdep">'+(D.lab.dep||'Injected dependencies ▹ collaborators it is given')+'</h4>';
+ h+=(n.deps&&n.deps.length)?n.deps.map(s=>'<div class="m dep">'+L(s)+'</div>').join(''):'<div class="m" style="color:var(--ink-3)">— none —</div>';
+ h+='</div>';
+ body.innerHTML=h;if(location.hash.slice(1)!==id)history.replaceState(null,'','#'+id);}
+svg.querySelectorAll('.node').forEach(nd=>{nd.addEventListener('click',ev=>{ev.stopPropagation();focus(nd.dataset.id);});
+ nd.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();focus(nd.dataset.id);}});});
+svg.addEventListener('click',reset);
+side.addEventListener('click',ev=>{const l=ev.target.closest('.lnk');if(l&&D.nodes[l.dataset.go])focus(l.dataset.go);});
+document.getElementById('close').addEventListener('click',reset);
+svg.querySelectorAll('.hulllbl').forEach(t=>t.addEventListener('click',ev=>{ev.stopPropagation();isolate(t.dataset.dom);}));
+bannerEl.addEventListener('click',ev=>{if(ev.target.classList.contains('x'))reset();});
+searchEl.addEventListener('input',()=>{clearIso();runSearch(searchEl.value);});
+searchEl.addEventListener('keydown',e=>{if(e.key==='Enter'){const h=runSearch(searchEl.value);if(h.length){searchEl.blur();focus(h[0]);}}else if(e.key==='Escape'){searchEl.value='';clearSearch();searchEl.blur();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){reset();}else if(e.key==='/'&&document.activeElement!==searchEl){e.preventDefault();searchEl.focus();}});
+setEmpty();
+if(location.hash.slice(1)&&D.nodes[location.hash.slice(1)])focus(location.hash.slice(1));
+</script>
+<script src="map-drag.js"></script>

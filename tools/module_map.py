@@ -10,13 +10,13 @@ ring layout (no graphviz dependency).
 import math, html, json
 
 FILL={'core':'#e3e7ee','server':'#e1e5fb','automation':'#d7f0e8','devctl':'#f7e7cf',
-'sdk':'#e9e3f8','integrations':'#f0e0e0','providers':'#e6efd9','cloud':'#dce9f7',
+'sdk':'#e9e3f8','peripherals':'#dff0f0','integrations':'#f0e0e0','providers':'#e6efd9','cloud':'#dce9f7',
 'hardware':'#eae7dc','repositories':'#f6ecd0','model':'#ece2f7','utils':'#e3e7ee'}
 BORD={'core':'#8a93a2','server':'#8791e6','automation':'#3fae86','devctl':'#c98a2f',
-'sdk':'#8a6fbf','integrations':'#c25f5f','providers':'#7fa05a','cloud':'#5aa9e0',
+'sdk':'#8a6fbf','peripherals':'#3a9a9a','integrations':'#c25f5f','providers':'#7fa05a','cloud':'#5aa9e0',
 'hardware':'#a99e86','repositories':'#c98a2f','model':'#8a6fbf','utils':'#8a93a2'}
 LABEL={'core':'core','server':'server / api','automation':'automation','devctl':'device control',
-'sdk':'integration SDK','integrations':'integrations','providers':'providers','cloud':'cloud / ws client',
+'sdk':'integration SDK','peripherals':'peripherals (SDK runtime)','integrations':'integrations','providers':'providers','cloud':'cloud / ws client',
 'hardware':'hardware','repositories':'repositories','model':'domain model','utils':'utils'}
 
 # n(): inp = list of (declared_by, [methods]) groups ; out = output-delegate ports ; deps = injected dependencies
@@ -25,7 +25,7 @@ def n(id,label,domain,kind,base='—',impl=None,uses=None,inp=None,out=None,deps
             'inp':inp or [],'out':out or [],'deps':deps or [],'pname':pname}
 N=[
  n('coord','Coordinator','core','class · composition root',impl=['ControllerOutput'],
-   inp=[['ControllerOutput',['controller_did_receive_events(events)','controller_did_receive_discovery / _update_discovery / _lose_discovery','controller_did_connect_device / _lose_device','controller_did_encounter_error / _emit_notification']],
+   inp=[['ControllerOutput',['controller_did_receive_events(events)','controller_did_receive_discovery / _update_discovery / _lose_discovery','controller_did_connect_device / _lose_device','controller_did_encounter_error / _resolve_error / _emit_notification']],
         ['own',['start() / stop()','on_hub_initialized() · factory_reset() · reconnect_cloud()']]],
    out=['ws_sender.send_*: WsMessageSenderRelay   (→ app / cloud)'],
    deps=['controller_service: RelayController','automation_service: AutomationService','service_manager: ServiceManager','event_bus: EventBusImpl','(builds & owns every Service)']),
@@ -90,10 +90,10 @@ N=[
    out=['on_save: Callable   (→ AutomationService.update_automation / update_scene)'],
    deps=['directory: Path   (yaml files)']),
  n('relay','RelayController','devctl','class · domain boundary','—',impl=['ControllerOutput'],uses=['DeviceRepositoryProtocol'],
-   inp=[['ControllerOutput',['controller_did_receive_events(events)   ← from child controllers','controller_did_receive_discovery / _update / _lose_discovery','controller_did_connect_device / _lose_device','controller_did_encounter_error / _emit_notification']],
+   inp=[['ControllerOutput',['controller_did_receive_events(events)   ← from child controllers','controller_did_receive_discovery / _update / _lose_discovery','controller_did_connect_device / _lose_device','controller_did_encounter_error / _resolve_error / _emit_notification']],
         ['own',['send_command(command)   ◂ handlers · WsMessageHandler','pair_device(discovery, credentials) / unpair / identify / fetch','get_discoveries() / get_discovery(id) / ignore_discovery(id)','start_pairing_window(sec) / add_controller(c) / start() / stop()']]],
-   out=['dependencies.output: ControllerOutput   (→ Coordinator)'],
-   deps=['dependencies.make_device_repository(): DeviceRepositoryProtocol   (→ DeviceRepository, scoped)','_controllers: dict[str, AbstractController]   (→ Matter/Zigbee/HomeKit)','_ignored_repo: IgnoredDiscoveryRepository']),
+   out=['platform.output: ControllerOutput   (→ Coordinator)'],
+   deps=['platform.make_device_repository(): DeviceRepositoryProtocol   (→ DeviceRepository, scoped)','runtime: Runtime   (binds needs → controller.peripherals / platform)','_controllers: dict[str, AbstractController]   (→ Matter/Zigbee/HomeKit)','_ignored_repo: IgnoredDiscoveryRepository']),
  n('devprov','DeviceProvider','providers','class · nested Dependencies',
    inp=[['own',['create_device(DeviceCreate) / pair_existing_device(DevicePair)','update_device(id, DevicePatch) / delete_device(id, soft)','get_discoveries(include_ignored) / ignore_discovery(id) / start_pairing_window(sec)']]],
    deps=['dependencies.device_repository: DeviceRepository','dependencies.relay_controller: RelayController']),
@@ -102,35 +102,45 @@ N=[
    deps=['path: Path   (JSON on disk)']),
  n('absctrl','AbstractController','sdk','abstract class · Generic[TDevice, TParameter]','ABC',uses=['ControllerOutput','DeviceRepositoryProtocol'],
    inp=[['own (abstract API)',['@abstractmethod pair_device(discovery, credentials)','@abstractmethod unpair(device) / identify(device) / fetch(device)','@abstractmethod send_command(command, device, parameter)','@abstractproperty discoveries -> dict[UUID, Discovery]','start() / stop() / start_pairing_window(sec)']]],
-   out=['dependencies.output: ControllerOutput   (→ Hub, via controller_did_*)'],
-   deps=['dependencies.make_device_repository(): DeviceRepositoryProtocol','dependencies.zeroconf / ssdp / ble_discovery_service: *DiscoveryService','dependencies.documents_folder: Path','dependencies.hardware_interfaces: list[str]']),
+   out=['output: ControllerOutput   (→ Hub, via controller_did_*)','provides: peripherals it brings along   (e.g. BLEProxy)'],
+   deps=['platform: Platform   (device_repository(self) · documents_folder(self) · region · wifi · thread_dataset)','settings: its Settings model','peripherals: Peripherals   (needs bound by the Runtime: endpoint() / endpoints() / instance())']),
  n('ctrlout','ControllerOutput','sdk','Protocol',pname='ControllerOutput',
-   inp=[['own (protocol)',['controller_did_receive_discovery(controller, discovery)','controller_did_update_discovery / _lose_discovery(id)','controller_did_connect_device(id) / _lose_device(id)','controller_did_receive_events(controller, events)','controller_did_encounter_error(controller, message, still_running)','controller_did_emit_notification(controller, notification)']]]),
- n('dzc','ZeroconfDiscovery','sdk','class ZeroconfDiscoveryService',
+   inp=[['own (protocol)',['controller_did_receive_discovery(controller, discovery)','controller_did_update_discovery / _lose_discovery(id)','controller_did_connect_device(id) / _lose_device(id)','controller_did_receive_events(controller, events)','controller_did_encounter_error(controller, error)','controller_did_resolve_error(controller, error_id)','controller_did_emit_notification(controller, notification)']]]),
+ n('dzc','Zeroconf','peripherals','mdns/zeroconf · runtime provider ZeroconfDiscoveryService',
    inp=[['own',['register(listener, services: set[str]) -> cancel','start() / stop() · async_zeroconf']]],
    out=['listener: ZeroconfDiscoveryListener   (zeroconf_did_discover / _update / _remove_service(ZeroconfDiscoveryInfo))']),
- n('dssdp','SSDPDiscovery','sdk','class SSDPDiscoveryService',
+ n('dssdp','SSDP','peripherals','upnp/ssdp · runtime provider SSDPDiscoveryService',
    inp=[['own',['register(listener, search_target, mcast, port) -> cancel','start() / stop() / perform_scan()']]],
    out=['listener: SSDPDiscoveryListener   (ssdp_did_discover / _update / _remove_service(SSDPDiscoveryInfo))']),
- n('dble','BLEDiscovery','sdk','class BLEDiscoveryService',
-   inp=[['own',['register(listener, service_ids: set[UUID]) -> cancel','start() / stop() / perform_scan()']]],
+ n('dble','BLERouter','peripherals','ble/router · runtime provider BLEService (ble-router)',
+   inp=[['own',['register(listener, matchers: BLEMatcher | UUID) -> cancel','connect(address) / exclusive(address, owner, pairing) -> BLELease','scan_actively(duration) / devices()']]],
    out=['listener: BLEDiscoveryListener   (ble_did_discover / _update / _remove_device(BLEDiscoveryInfo))']),
+ n('runtime','Runtime','peripherals','class · majordom_integration_sdk.runtime',
+   inp=[['own',['start() / stop() / refresh()','peripheral(key) / status(p) / bound(p) / unbound(p)','enable(p) / disable(p) / restart(p)','update_settings(p, values) / update_platform(platform)']]],
+   out=['controller_output: ControllerOutput   (→ RelayController)','output: RuntimeOutput   (→ RelayController: statuses)'],
+   deps=['peripherals: Pinned · FixedPeripherals · default_peripherals() · integrations\' peripherals(platform)','platform: Platform']),
+ n('usbscan','UsbScanner','peripherals','peripheral · hardware',
+   inp=[['own',['provides: a Radio per stick, recognised by the UsbDrivers']]],
+   out=['zigbee/ezsp · thread/spinel · multipan/silabs-cpc · zwave/serial-api']),
+ n('compose','Compose','peripherals','peripheral · container host (container/compose)',
+   inp=[['ServiceHost',['up(service) / down(service)','provided(service) / is_current(service)']]],
+   out=['docker compose project "majordom"   (silabs-multiprotocol, otbr, integrations\' Services)']),
  n('devrepoproto','DeviceRepositoryProtocol','sdk','Protocol (runtime_checkable)',pname='DeviceRepositoryProtocol',
    inp=[['own (protocol)',['get_all(as_) / get(id, as_)','state(id) / get_parameter_state(id, parameter_id)','save(device, previous_id) / save_parameter_state(id, state)']]]),
  n('matter','MatterController','integrations','class : AbstractController','AbstractController',impl=['ZeroconfDiscoveryListener','BLEDiscoveryListener'],uses=['ControllerOutput','DeviceRepositoryProtocol'],
    inp=[['AbstractController (overrides)',['pair_device(discovery, credentials) / unpair / identify','fetch(device) / send_command(command, device, parameter)','discoveries -> dict[UUID, Discovery]']],
         ['ZeroconfDiscoveryListener · BLEDiscoveryListener',['zeroconf_did_discover_service(info) / _update / _remove','ble_did_discover_service(info) / _update / _remove']]],
-   out=['dependencies.output: ControllerOutput   (→ RelayController)'],
-   deps=['make_device_repository(): DeviceRepositoryProtocol','zeroconf / ble_discovery_service   (registers as listener)']),
+   out=['platform.output: ControllerOutput   (→ RelayController)'],
+   deps=['make_device_repository(): DeviceRepositoryProtocol','peripherals: matter/matter-server · ble/router   (registers as listener)']),
  n('zigbee','ZigBeeController','integrations','class : AbstractController','AbstractController',uses=['ControllerOutput','DeviceRepositoryProtocol'],
    inp=[['AbstractController (overrides)',['pair_device / unpair / identify / fetch / send_command','discoveries -> dict[UUID, Discovery]   (via the radio)']]],
-   out=['dependencies.output: ControllerOutput   (→ RelayController)'],
-   deps=['make_device_repository(): DeviceRepositoryProtocol','hardware_interfaces: list[str]   (serial radio — DI)']),
+   out=['platform.output: ControllerOutput   (→ RelayController)'],
+   deps=['make_device_repository(): DeviceRepositoryProtocol','peripherals: zigbee/*   (the radio, bound by the runtime)']),
  n('homekit','HomeKitController','integrations','class : AbstractController','AbstractController',impl=['ZeroconfDiscoveryListener','BLEDiscoveryListener'],uses=['ControllerOutput','DeviceRepositoryProtocol'],
    inp=[['AbstractController (overrides)',['pair_device(discovery, credentials) / unpair / identify','fetch(device) / send_command(command, device, parameter)','discoveries -> dict[UUID, Discovery]']],
         ['ZeroconfDiscoveryListener · BLEDiscoveryListener',['zeroconf_did_discover_service(info) / _update / _remove','ble_did_discover_service(info) / _update / _remove']]],
-   out=['dependencies.output: ControllerOutput   (→ RelayController)'],
-   deps=['make_device_repository(): DeviceRepositoryProtocol','zeroconf / ble_discovery_service   (registers as listener)']),
+   out=['platform.output: ControllerOutput   (→ RelayController)'],
+   deps=['make_device_repository(): DeviceRepositoryProtocol','peripherals: mdns/zeroconf   (aiohomekit browses with its zeroconf)']),
  n('hubprov','HubProvider','providers','class · nested Dependencies',
    inp=[['own',['setup_hub(hub_auth, hub_info, user_info, house_info)']]],
    deps=['dependencies.user / house / hub / credentials_repository']),
@@ -182,8 +192,7 @@ N=[
  n('utils','utils/ auth·db·api·thread','utils','modules',
    inp=[['own',['create_async_session() -> AsyncSession / create_session()','RS256 JWT: BaseToken / User·Hub·DeviceToken / validator(type, role)','api.request() cloud client / local_request()','ServiceThread · coders · factory_reset']]]),
 ]
-NODES={x['id']:x for x in N}
-DOM={x['id']:x['domain'] for x in N}; LAB={x['id']:x['label'] for x in N}
+
 EMPH={'coord','relay','devrepo'}
 BOUNDARY={'relay','cloudsvc','absctrl','serversvc','autosvc'}   # devrepo removed — repositories have no single core-boundary
 # names → node id (for clickable links in the sidebar)
@@ -198,15 +207,15 @@ NAME2ID.update({'AbstractController':'absctrl','ControllerOutput':'ctrlout','Dev
 'GpioService':'gpio','HotspotService':'hotspot','MinuteTickerService':'ticker','schemas':'schemas','models':'models',
 'DeviceParameterChecker':'ckdev','RoomUnitChecker':'ckroom','CronChecker':'ckcron','TimeIntervalChecker':'cktime',
 'DeviceActionHandler':'hdev','FunctionActionHandler':'hfunc','TextActionHandler':'htext',
-'ZeroconfDiscovery':'dzc','SSDPDiscovery':'dssdp','BLEDiscovery':'dble'})
+'Zeroconf':'dzc','SSDP':'dssdp','BLERouter':'dble','Runtime':'runtime','UsbScanner':'usbscan','Compose':'compose'})
 
 SECT={'core':(0,0),'server':(2,1),'automation':(90,1),'devctl':(180,1),'cloud':(-58,1),'hardware':(258,1),
-'providers':(26,2),'repositories':(-20,2),'integrations':(157,2),'sdk':(203,2),'model':(0,3),'utils':(-40,3)}
+'providers':(26,2),'repositories':(-20,2),'integrations':(157,2),'sdk':(203,2),'peripherals':(226,2),'model':(0,3),'utils':(-40,3)}
 RING={0:0,1:335,2:575,3:790}
 E=[
 ('coord','serversvc','own'),('coord','autosvc','own'),('coord','relay','own'),('coord','cloudsvc','own'),
 ('coord','gpio','own'),('coord','hotspot','own'),('coord','ticker','own'),('coord','svcmgr','own'),
-('coord','dzc','own'),('coord','dssdp','own'),('coord','dble','own'),('coord','netprov','own'),('coord','wssender','own'),('coord','config','own'),
+('coord','runtime','own'),('coord','netprov','own'),('coord','wssender','own'),('coord','config','own'),
 ('serversvc','endpoints','use'),('serversvc','deps','use'),('endpoints','wsend','use'),('endpoints','wsdocs','use'),
 ('endpoints','devprov','use'),('endpoints','hubprov','use'),('endpoints','roomman','use'),('endpoints','automan','use'),
 ('endpoints','houserepo','use'),('endpoints','hubrepo','use'),('endpoints','devrepo','use'),
@@ -223,7 +232,8 @@ E=[
 ('relay','ignrepo','repo'),('relay','devrepo','repo'),('relay','matter','use'),('relay','zigbee','use'),('relay','homekit','use'),
 ('relay','coord','sdk'),('matter','absctrl','impl'),('zigbee','absctrl','impl'),('homekit','absctrl','impl'),
 ('absctrl','ctrlout','sdk'),('absctrl','dzc','use'),('absctrl','dssdp','use'),('absctrl','dble','use'),('absctrl','devrepoproto','repo'),
-('relay','ctrlout','impl'),('devrepo','devrepoproto','impl'),
+('relay','ctrlout','impl'),('relay','runtime','use'),('runtime','relay','sdk'),
+('runtime','usbscan','own'),('runtime','compose','own'),('runtime','dzc','own'),('runtime','dssdp','own'),('runtime','dble','own'),('devrepo','devrepoproto','impl'),
 ('dzc','matter','dot'),('dble','matter','dot'),('dzc','homekit','dot'),('dble','homekit','dot'),
 ('cloudsvc','wshandler','use'),('wshandler','relay','cmd'),('wssender','wsconn','use'),('wssender','cloudsvc','use'),
 ('devrepo','models','pers'),('houserepo','models','pers'),('hubrepo','models','pers'),('userrepo','models','pers'),
@@ -232,17 +242,16 @@ E=[
 ]
 ECOL={'own':'#b6bdc8','use':'#8b95a4','cmd':'#0d8079','repo':'#c07d22','impl':'#8a6fbf','sdk':'#5b63c9','pers':'#a99263','obs':'#3fae86','dot':'#b6bdc8'}
 EDASH={'impl','obs'}; EDOT={'dot'}
-EDGES=[{'src':s,'dst':d,'type':t} for (s,d,t) in E]
 
 CW=6.9; PADX=13; NH=25; RG=8; CG=16
-cx,cy=790,690
-# per-domain columns, ordered INNER (main actor, nearest core) -> OUTER; same role shares a column
+
 COLS={
 'core':[['coord'],['svcmgr'],['main','config']],
 'server':[['serversvc'],['deps'],['endpoints','wsend','wsdocs']],
 'automation':[['autosvc','eventbus','ticker'],['ckdev','ckroom','ckcron','cktime'],['hdev','hfunc','htext','automan']],
 'devctl':[['relay','ignrepo']],
-'sdk':[['absctrl'],['ctrlout','devrepoproto'],['dzc','dssdp','dble']],
+'sdk':[['absctrl'],['ctrlout','devrepoproto']],
+'peripherals':[['runtime'],['usbscan','compose'],['dble','dzc','dssdp']],
 'integrations':[['matter','zigbee','homekit']],
 'providers':[['devprov','hubprov'],['roomman','netprov']],
 'cloud':[['cloudsvc'],['wshandler','wssender','wsconn']],
@@ -252,77 +261,9 @@ COLS={
 'utils':[['utils']],
 }
 RADJ={'automation':95,'server':115,'cloud':70,'repositories':30,'providers':20,'hardware':110,'model':100}   # push these out to clear neighbours (devctl/sdk/integrations use ANCHOR)
-def NW(nid): return len(LAB[nid])*CW+2*PADX
-def layout_domain(dom,ax,ay,ux,uy):
-    cols=[c[:] for c in COLS[dom]]; out={}
-    if abs(ux)>=abs(uy):                      # horizontal domain: columns L->R
-        order=cols if ux>=0 else cols[::-1]   # left-of-core: reverse so inner column faces core
-        colw=[max(NW(n) for n in c) for c in order]; totalw=sum(colw)+CG*(len(order)-1); x=ax-totalw/2
-        for i,c in enumerate(order):
-            colh=len(c)*NH+RG*(len(c)-1); y=ay-colh/2
-            for j,nid in enumerate(c): out[nid]=(x+(colw[i]-NW(nid))/2,y+j*(NH+RG),NW(nid),NH)
-            x+=colw[i]+CG
-    else:                                     # vertical domain: columns become rows, inner nearest core
-        order=cols[::-1] if uy<0 else cols
-        totalh=len(order)*NH+RG*(len(order)-1); y=ay-totalh/2
-        for c in order:
-            roww=sum(NW(n) for n in c)+CG*(len(c)-1); x=ax-roww/2
-            for nid in c: out[nid]=(x,y,NW(nid),NH); x+=NW(nid)+CG
-            y+=NH+RG
-    return out
 ANCHOR={'sdk':(285,470),'integrations':(250,620),'devctl':(300,730)}   # device-control sub-clusters, SDK on top
 SUPER={'devctl':['devctl','integrations','sdk']}                        # device control wraps integrations + SDK
-rects={}; hulls=[]
-for dom,(ang,ring) in SECT.items():
-    if dom in ANCHOR: ax,ay=ANCHOR[dom]
-    else: R=RING[ring]+RADJ.get(dom,0); ax=cx+R*math.cos(math.radians(ang)); ay=cy-R*math.sin(math.radians(ang))
-    r=layout_domain(dom,ax,ay,ax-cx,ay-cy); rects.update(r)
-    xs=[v[0] for v in r.values()]; ys=[v[1] for v in r.values()]; xe=[v[0]+v[2] for v in r.values()]; ye=[v[1]+v[3] for v in r.values()]
-    hulls.append((dom,min(xs)-14,min(ys)-24,max(xe)-min(xs)+28,max(ye)-min(ys)+38))
-superhulls=[]   # bigger box around a set of sub-domains (extra top pad for its own label)
-for sup,members in SUPER.items():
-    ns=[nid for nid in rects if DOM[nid] in members]
-    sx=[rects[n][0] for n in ns]; sy=[rects[n][1] for n in ns]; sxe=[rects[n][0]+rects[n][2] for n in ns]; sye=[rects[n][1]+rects[n][3] for n in ns]
-    superhulls.append((sup,min(sx)-22,min(sy)-40,max(sxe)-min(sx)+44,max(sye)-min(sy)+62))
-def esc(s): return html.escape(str(s),quote=True)
-allh=hulls+superhulls
-xs=[r[0] for r in rects.values()]+[h[1] for h in allh]; ys=[r[1] for r in rects.values()]+[h[2] for h in allh]
-xe=[r[0]+r[2] for r in rects.values()]+[h[1]+h[3] for h in allh]; ye=[r[1]+r[3] for r in rects.values()]+[h[2]+h[4] for h in allh]
-minx,miny=min(xs)-20,min(ys)-20; W,H=max(xe)+20-minx,max(ye)+20-miny
-def border(x0,y0,w,h,tx,ty):
-    dcx,dcy=x0+w/2,y0+h/2; dx,dy=tx-dcx,ty-dcy
-    if dx==0 and dy==0: return dcx,dcy
-    s=min(((w/2)/abs(dx)) if dx else 9e9,((h/2)/abs(dy)) if dy else 9e9); return dcx+dx*s,dcy+dy*s
-svg=[f'<svg id="wire" viewBox="{minx:.0f} {miny:.0f} {W:.0f} {H:.0f}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">']
-def mk(c,i=''): return f'<marker id="m{c.strip("#")}{i}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="{c}"/></marker>'
-svg.append('<defs>'+''.join(mk(c) for c in set(ECOL.values()))+mk('#2f81f7','IN')+mk('#e08a2b','OUT')+'</defs>')
-for sup,x,y,w,h in superhulls:   # super-domain box (behind), e.g. device control wrapping integrations + SDK
-    svg.append(f'<g class="hull super" data-dom="{sup}"><rect x="{x:.0f}" y="{y:.0f}" width="{w:.0f}" height="{h:.0f}" rx="16" fill="{FILL[sup]}" fill-opacity="0.07" stroke="{BORD[sup]}" stroke-width="1.5" stroke-dasharray="2 5"/><text class="hulllbl" data-dom="{sup}" x="{x+11:.0f}" y="{y+17:.0f}" font-size="11.5" font-weight="700" fill="{BORD[sup]}">{esc(LABEL[sup])} ⤢</text></g>')
-for dom,x,y,w,h in hulls:
-    if dom=='devctl': continue   # its nodes live directly inside the device-control super-box
-    svg.append(f'<g class="hull" data-dom="{dom}"><rect x="{x:.0f}" y="{y:.0f}" width="{w:.0f}" height="{h:.0f}" rx="12" fill="{FILL[dom]}" fill-opacity="0.14" stroke="{BORD[dom]}" stroke-width="1.1" stroke-dasharray="5 4"/><text class="hulllbl" data-dom="{dom}" x="{x+8:.0f}" y="{y+15:.0f}" font-size="11" font-weight="700" fill="{BORD[dom]}">{esc(LABEL[dom])} ⤢</text></g>')
-svg.append('<g id="edges">')
-for e in EDGES:
-    s,d,t=e['src'],e['dst'],e['type']
-    if s not in rects or d not in rects: continue
-    sx,sy,sw,sh=rects[s]; dx0,dy0,dw,dh=rects[d]
-    x1,y1=border(sx,sy,sw,sh,dx0+dw/2,dy0+dh/2); x2,y2=border(dx0,dy0,dw,dh,sx+sw/2,sy+sh/2)
-    c=ECOL[t]; mid=f'url(#m{c.strip("#")})'
-    da=' stroke-dasharray="5 4"' if t in EDASH else (' stroke-dasharray="1.5 3.5"' if t in EDOT else '')
-    wdt=1.5 if t in('repo','cmd','sdk') else 1.0
-    mx,my=(x1+x2)/2,(y1+y2)/2; nx,ny=-(y2-y1),(x2-x1); ln=math.hypot(nx,ny) or 1; bow=min(26,ln*0.05)
-    svg.append(f'<path class="edge" data-s="{s}" data-d="{d}" data-om="{mid}" d="M{x1:.0f} {y1:.0f} Q{mx+nx/ln*bow:.0f} {my+ny/ln*bow:.0f} {x2:.0f} {y2:.0f}" fill="none" stroke="{c}" stroke-width="{wdt}"{da} stroke-opacity="0.8" marker-end="{mid}"/>')
-svg.append('</g><g id="nodes">')
-for nid,(x,y,w,h) in rects.items():
-    dom=DOM[nid]; emph=nid in EMPH; bnd=nid in BOUNDARY
-    st='#3b4658' if nid=='coord' else '#8a5a12' if nid in('relay','devrepo') else BORD[dom]
-    sw=2.4 if emph else (1.9 if bnd else 1.1)
-    svg.append(f'<g class="node" data-id="{nid}" tabindex="0"><rect x="{x:.0f}" y="{y:.0f}" width="{w:.0f}" height="{h:.0f}" rx="7" fill="{FILL[dom]}" stroke="{st}" stroke-width="{sw}"/>')
-    if bnd: svg.append(f'<circle cx="{x+7:.0f}" cy="{y+7:.0f}" r="2.6" fill="{st}"/>')
-    svg.append(f'<text x="{x+w/2:.0f}" y="{y+h/2+4:.0f}" font-size="12" text-anchor="middle" fill="#182231" font-weight="{700 if emph else 500}">{esc(LAB[nid])}</text></g>')
-svg.append('</g></svg>')
-SVG='\n'.join(svg)
-DATA=json.dumps({'nodes':NODES,'dom':LABEL,'bord':BORD,'n2i':NAME2ID,'super':SUPER})
+
 CSS='''
  :root{--bg:#f4f6f8;--surface:#ffffff;--surface-2:#eef1f5;--ink:#151a22;--ink-2:#495162;--ink-3:#6c7686;--line:#dbe1ea;--accent:#0d7a83;--accent-ink:#0a5a61;--in:#2f81f7;--out:#e08a2b;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
  @media (prefers-color-scheme:dark){:root{--bg:#0b0e14;--surface:#121722;--surface-2:#1a202b;--ink:#e8ecf3;--ink-2:#9aa5b6;--ink-3:#727d8d;--line:#232d3c;--accent:#45c8c0;--accent-ink:#82ddd7;--in:#5aa1ff;--out:#f0a53c;}}
@@ -384,15 +325,14 @@ CSS='''
  .ideas .done{color:var(--ink-3);} .ideas .done b{color:var(--ink-3);}
  @media(max-width:980px){.app{flex-direction:column;} .side{width:100%;position:static;max-height:none;} .toolbar input{width:100%;}}
 '''
-domchips=''.join(f'<span class="li"><span class="sw" style="background:{FILL[k]}"></span>{esc(LABEL[k])}</span>' for k in ['core','server','automation','devctl','sdk','integrations','providers','cloud','hardware','repositories','model'])
-JS=r'''
+JS_TEMPLATE=r'''
 const D=__DATA__;
 const svg=document.getElementById('wire'),side=document.getElementById('side'),body=document.getElementById('sidebody');
 const NAMES=Object.keys(D.n2i).sort((a,b)=>b.length-a.length);
 const RE=new RegExp('('+NAMES.map(s=>s.replace(/[.*+?^${}()|[\]\\/]/g,'\\$&')).join('|')+')','g');
 function esc(s){return (s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function L(t){return esc(t).replace(RE,m=>'<span class="lnk" data-go="'+D.n2i[m]+'">'+m+'</span>');}
-const EMPTY='<div class="empty">Click any entity in the map to inspect it — its kind, what it implements / consumes, the methods callers invoke (grouped by where they were declared), its output ports and injected dependencies.</div>';
+const EMPTY='<div class="empty">'+(D.lab.empty||'Click any entity in the map to inspect it — its kind, what it implements / consumes, the methods callers invoke (grouped by where they were declared), its output ports and injected dependencies.')+'</div>';
 function setEmpty(){body.innerHTML=EMPTY;}
 const searchEl=document.getElementById('search'),cntEl=document.getElementById('cnt'),bannerEl=document.getElementById('banner');
 function clearSearch(){svg.classList.remove('searching');svg.querySelectorAll('.node.hit').forEach(n=>n.classList.remove('hit'));cntEl.textContent='';}
@@ -423,13 +363,13 @@ function focus(id){const n=D.nodes[id];if(!n)return;clearIso();clearSearch();svg
  if(n.impl&&n.impl.length)h+='<div class="rel">implements <b>'+n.impl.map(L).join(', ')+'</b></div>';
  if(n.uses&&n.uses.length)h+='<div class="rel">consumes <b>'+n.uses.map(L).join(', ')+'</b></div>';
  if(implementers.length)h+='<div class="rel">implemented by <b>'+implementers.map(L).join(', ')+'</b></div>';
- h+='<div class="sec"><h4 class="hin">Inputs ◂ '+(isProto?'protocol methods callers invoke':'methods / props called on this')+'</h4>';
+ h+='<div class="sec"><h4 class="hin">'+(D.lab.inp||'Inputs ◂ '+(isProto?'protocol methods callers invoke':'methods / props called on this'))+'</h4>';
  if(n.inp&&n.inp.length){n.inp.forEach(g=>{const src=g[0];const lab=src==='own'||src.indexOf('own')===0?'<span style="color:var(--ink-3)">'+esc(src)+'</span>':'from '+L(src);
    h+='<div class="grp">◂ '+lab+'</div>'+g[1].map(s=>'<div class="m in">'+L(s)+'</div>').join('');});}
  else h+='<div class="m" style="color:var(--ink-3)">— none —</div>';
- h+='</div><div class="sec"><h4 class="hout">Outputs ▸ delegates it calls to emit results (prop: Type)</h4>';
- h+=(n.out&&n.out.length)?n.out.map(s=>'<div class="m out">'+L(s)+'</div>').join(''):'<div class="m" style="color:var(--ink-3)">— none (returns values / pure sink) —</div>';
- h+='</div><div class="sec"><h4 class="hdep">Injected dependencies ▹ collaborators it is given</h4>';
+ h+='</div><div class="sec"><h4 class="hout">'+(D.lab.out||'Outputs ▸ delegates it calls to emit results (prop: Type)')+'</h4>';
+ h+=(n.out&&n.out.length)?n.out.map(s=>'<div class="m out">'+L(s)+'</div>').join(''):'<div class="m" style="color:var(--ink-3)">'+(D.lab.noout||'— none (returns values / pure sink) —')+'</div>';
+ h+='</div><div class="sec"><h4 class="hdep">'+(D.lab.dep||'Injected dependencies ▹ collaborators it is given')+'</h4>';
  h+=(n.deps&&n.deps.length)?n.deps.map(s=>'<div class="m dep">'+L(s)+'</div>').join(''):'<div class="m" style="color:var(--ink-3)">— none —</div>';
  h+='</div>';
  body.innerHTML=h;if(location.hash.slice(1)!==id)history.replaceState(null,'','#'+id);}
@@ -445,19 +385,93 @@ searchEl.addEventListener('keydown',e=>{if(e.key==='Enter'){const h=runSearch(se
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){reset();}else if(e.key==='/'&&document.activeElement!==searchEl){e.preventDefault();searchEl.focus();}});
 setEmpty();
 if(location.hash.slice(1)&&D.nodes[location.hash.slice(1)])focus(location.hash.slice(1));
-'''.replace('__DATA__',DATA)
-PAGE=f'''<meta charset="utf-8">
-<meta name="robots" content="noindex,nofollow">\n<title>MajorDom Hub — Interactive Module Map</title>
+'''
+
+
+def render(out: str, title: str, *, N, E, SECT, RING, COLS, RADJ, ANCHOR, SUPER, EMPH, BOUNDARY, NAME2ID, FILL, BORD, LABEL,
+           DOMAINS, STROKE, relations: str, ideas: str = "", panel: dict | None = None, center=(790,690)):
+    """Lays out one map and writes it to docs/hub/<out>: the Hub's modules here, the peripherals in peripherals_map.py."""
+    NODES={x['id']:x for x in N}
+    DOM={x['id']:x['domain'] for x in N}; LAB={x['id']:x['label'] for x in N}
+    EDGES=[{'src':s,'dst':d,'type':t} for (s,d,t) in E]
+    cx,cy=center
+    def NW(nid): return len(LAB[nid])*CW+2*PADX
+    def layout_domain(dom,ax,ay,ux,uy):
+        cols=[c[:] for c in COLS[dom]]; out={}
+        if abs(ux)>=abs(uy):                      # horizontal domain: columns L->R
+            order=cols if ux>=0 else cols[::-1]   # left-of-core: reverse so inner column faces core
+            colw=[max(NW(n) for n in c) for c in order]; totalw=sum(colw)+CG*(len(order)-1); x=ax-totalw/2
+            for i,c in enumerate(order):
+                colh=len(c)*NH+RG*(len(c)-1); y=ay-colh/2
+                for j,nid in enumerate(c): out[nid]=(x+(colw[i]-NW(nid))/2,y+j*(NH+RG),NW(nid),NH)
+                x+=colw[i]+CG
+        else:                                     # vertical domain: columns become rows, inner nearest core
+            order=cols[::-1] if uy<0 else cols
+            totalh=len(order)*NH+RG*(len(order)-1); y=ay-totalh/2
+            for c in order:
+                roww=sum(NW(n) for n in c)+CG*(len(c)-1); x=ax-roww/2
+                for nid in c: out[nid]=(x,y,NW(nid),NH); x+=NW(nid)+CG
+                y+=NH+RG
+        return out
+    rects={}; hulls=[]
+    for dom,(ang,ring) in SECT.items():
+        if dom in ANCHOR: ax,ay=ANCHOR[dom]
+        else: R=RING[ring]+RADJ.get(dom,0); ax=cx+R*math.cos(math.radians(ang)); ay=cy-R*math.sin(math.radians(ang))
+        r=layout_domain(dom,ax,ay,ax-cx,ay-cy); rects.update(r)
+        xs=[v[0] for v in r.values()]; ys=[v[1] for v in r.values()]; xe=[v[0]+v[2] for v in r.values()]; ye=[v[1]+v[3] for v in r.values()]
+        hulls.append((dom,min(xs)-14,min(ys)-24,max(xe)-min(xs)+28,max(ye)-min(ys)+38))
+    superhulls=[]   # bigger box around a set of sub-domains (extra top pad for its own label)
+    for sup,members in SUPER.items():
+        ns=[nid for nid in rects if DOM[nid] in members]
+        sx=[rects[n][0] for n in ns]; sy=[rects[n][1] for n in ns]; sxe=[rects[n][0]+rects[n][2] for n in ns]; sye=[rects[n][1]+rects[n][3] for n in ns]
+        superhulls.append((sup,min(sx)-22,min(sy)-40,max(sxe)-min(sx)+44,max(sye)-min(sy)+62))
+    def esc(s): return html.escape(str(s),quote=True)
+    allh=hulls+superhulls
+    xs=[r[0] for r in rects.values()]+[h[1] for h in allh]; ys=[r[1] for r in rects.values()]+[h[2] for h in allh]
+    xe=[r[0]+r[2] for r in rects.values()]+[h[1]+h[3] for h in allh]; ye=[r[1]+r[3] for r in rects.values()]+[h[2]+h[4] for h in allh]
+    minx,miny=min(xs)-20,min(ys)-20; W,H=max(xe)+20-minx,max(ye)+20-miny
+    def border(x0,y0,w,h,tx,ty):
+        dcx,dcy=x0+w/2,y0+h/2; dx,dy=tx-dcx,ty-dcy
+        if dx==0 and dy==0: return dcx,dcy
+        s=min(((w/2)/abs(dx)) if dx else 9e9,((h/2)/abs(dy)) if dy else 9e9); return dcx+dx*s,dcy+dy*s
+    svg=[f'<svg id="wire" viewBox="{minx:.0f} {miny:.0f} {W:.0f} {H:.0f}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">']
+    def mk(c,i=''): return f'<marker id="m{c.strip("#")}{i}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="{c}"/></marker>'
+    svg.append('<defs>'+''.join(mk(c) for c in set(ECOL.values()))+mk('#2f81f7','IN')+mk('#e08a2b','OUT')+'</defs>')
+    for sup,x,y,w,h in superhulls:   # super-domain box (behind), e.g. device control wrapping integrations + SDK
+        svg.append(f'<g class="hull super" data-dom="{sup}"><rect x="{x:.0f}" y="{y:.0f}" width="{w:.0f}" height="{h:.0f}" rx="16" fill="{FILL[sup]}" fill-opacity="0.07" stroke="{BORD[sup]}" stroke-width="1.5" stroke-dasharray="2 5"/><text class="hulllbl" data-dom="{sup}" x="{x+11:.0f}" y="{y+17:.0f}" font-size="11.5" font-weight="700" fill="{BORD[sup]}">{esc(LABEL[sup])} ⤢</text></g>')
+    for dom,x,y,w,h in hulls:
+        if dom in SUPER: continue   # its nodes live directly inside its super-box
+        svg.append(f'<g class="hull" data-dom="{dom}"><rect x="{x:.0f}" y="{y:.0f}" width="{w:.0f}" height="{h:.0f}" rx="12" fill="{FILL[dom]}" fill-opacity="0.14" stroke="{BORD[dom]}" stroke-width="1.1" stroke-dasharray="5 4"/><text class="hulllbl" data-dom="{dom}" x="{x+8:.0f}" y="{y+15:.0f}" font-size="11" font-weight="700" fill="{BORD[dom]}">{esc(LABEL[dom])} ⤢</text></g>')
+    svg.append('<g id="edges">')
+    for e in EDGES:
+        s,d,t=e['src'],e['dst'],e['type']
+        if s not in rects or d not in rects: continue
+        sx,sy,sw,sh=rects[s]; dx0,dy0,dw,dh=rects[d]
+        x1,y1=border(sx,sy,sw,sh,dx0+dw/2,dy0+dh/2); x2,y2=border(dx0,dy0,dw,dh,sx+sw/2,sy+sh/2)
+        c=ECOL[t]; mid=f'url(#m{c.strip("#")})'
+        da=' stroke-dasharray="5 4"' if t in EDASH else (' stroke-dasharray="1.5 3.5"' if t in EDOT else '')
+        wdt=1.5 if t in('repo','cmd','sdk') else 1.0
+        mx,my=(x1+x2)/2,(y1+y2)/2; nx,ny=-(y2-y1),(x2-x1); ln=math.hypot(nx,ny) or 1; bow=min(26,ln*0.05)
+        svg.append(f'<path class="edge" data-s="{s}" data-d="{d}" data-om="{mid}" d="M{x1:.0f} {y1:.0f} Q{mx+nx/ln*bow:.0f} {my+ny/ln*bow:.0f} {x2:.0f} {y2:.0f}" fill="none" stroke="{c}" stroke-width="{wdt}"{da} stroke-opacity="0.8" marker-end="{mid}"/>')
+    svg.append('</g><g id="nodes">')
+    for nid,(x,y,w,h) in rects.items():
+        dom=DOM[nid]; emph=nid in EMPH; bnd=nid in BOUNDARY
+        st=STROKE.get(nid,BORD[dom])
+        sw=2.4 if emph else (1.9 if bnd else 1.1)
+        svg.append(f'<g class="node" data-id="{nid}" tabindex="0"><rect x="{x:.0f}" y="{y:.0f}" width="{w:.0f}" height="{h:.0f}" rx="7" fill="{FILL[dom]}" stroke="{st}" stroke-width="{sw}"/>')
+        if bnd: svg.append(f'<circle cx="{x+7:.0f}" cy="{y+7:.0f}" r="2.6" fill="{st}"/>')
+        svg.append(f'<text x="{x+w/2:.0f}" y="{y+h/2+4:.0f}" font-size="12" text-anchor="middle" fill="#182231" font-weight="{700 if emph else 500}">{esc(LAB[nid])}</text></g>')
+    svg.append('</g></svg>')
+    SVG='\n'.join(svg)
+    DATA=json.dumps({'nodes':NODES,'dom':LABEL,'bord':BORD,'n2i':NAME2ID,'super':SUPER,'lab':panel or {}})
+    domchips=''.join(f'<span class="li"><span class="sw" style="background:{FILL[k]}"></span>{esc(LABEL[k])}</span>' for k in DOMAINS)
+    JS=JS_TEMPLATE.replace('__DATA__',DATA)
+    PAGE=f'''<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">\n<title>{title}</title>
 <style>{CSS}</style>
 <div class="wrap">
  <div class="legend">
-  <div class="lgroup"><span class="h">Relation</span><div class="lrow">
-   <span class="li"><span class="ln" style="--x:#b6bdc8"></span>owns</span><span class="li"><span class="ln" style="--x:#8b95a4"></span>uses</span>
-   <span class="li"><span class="ln" style="--x:#0d8079"></span>send_command</span><span class="li"><span class="ln" style="--x:#c07d22"></span>shared repo</span>
-   <span class="li"><span class="ln dash" style="--x:#8a6fbf"></span>subclass/implements</span><span class="li"><span class="ln" style="--x:#5b63c9"></span>SDK callback</span>
-   <span class="li"><span class="ln" style="--x:#a99263"></span>persists&#8594;model</span>
-   <span class="li"><span class="ln" style="--x:#2f81f7"></span><b>input (focus)</b></span><span class="li"><span class="ln" style="--x:#e08a2b"></span><b>output (focus)</b></span>
-  </div></div>
+{relations}  </div></div>
   <div class="lgroup"><span class="h">Domain</span><div class="lrow">{domchips}</div></div>
  </div>
  <div class="toolbar">
@@ -471,21 +485,20 @@ PAGE=f'''<meta charset="utf-8">
   </div>
   <aside class="side" id="side"><button class="close" id="close">✕</button><div id="sidebody"></div></aside>
  </div>
- <details class="ideas">
-  <summary>💡 Ideas &amp; roadmap — parked for later</summary>
-  <ul>
-   <li><b>Transitive focus</b> — shift-click to light the full downstream / upstream chain ("what breaks if I change this").</li>
-   <li><b>Relation-type filters</b> — turn the legend chips into toggles (show only <i>implements</i>, hide <i>owns</i>).</li>
-   <li><b>Split endpoints</b> — optionally break <code>endpoints /api/v1</code> into its 7 resource routers.</li>
-   <li><b>AST-generated metadata</b> — derive the node/edge dicts from an AST pass over the repo so the map can't drift from code.</li>
-   <li><b>Coupling heatmap</b> — colour domains by cross-domain edge count; surface the most-coupled seams.</li>
-   <li><b>Export focused subgraph</b> — copy a node's neighbourhood as text or an image.</li>
-   <li class="done"><b>Done:</b> click-to-focus &amp; mute · input/output colour split · inputs grouped by declarer · outputs vs injected deps · clickable cross-links · always-on sidebar · deep-linking · role-column layout · search · isolate-domain · split checkers/handlers/discovery.</li>
-  </ul>
- </details>
-</div>
+{ideas}</div>
 <script>{JS}</script>'''
-_HERE=__import__("pathlib").Path(__file__).resolve().parent
-_OUT=_HERE.parent/"docs"/"hub"
-(_OUT/"module-map.html").write_text(PAGE)
-print("ok nodes",len(rects),"edges",len(EDGES),"viewBox %.0fx%.0f"%(W,H))
+    _HERE=__import__("pathlib").Path(__file__).resolve().parent
+    _OUT=_HERE.parent/"docs"/"hub"
+    (_OUT/out).write_text(PAGE)
+    print(out,"nodes",len(rects),"edges",len(EDGES),"viewBox %.0fx%.0f"%(W,H))
+
+
+HUB_RELATIONS='  <div class="lgroup"><span class="h">Relation</span><div class="lrow">\n   <span class="li"><span class="ln" style="--x:#b6bdc8"></span>owns</span><span class="li"><span class="ln" style="--x:#8b95a4"></span>uses</span>\n   <span class="li"><span class="ln" style="--x:#0d8079"></span>send_command</span><span class="li"><span class="ln" style="--x:#c07d22"></span>shared repo</span>\n   <span class="li"><span class="ln dash" style="--x:#8a6fbf"></span>subclass/implements</span><span class="li"><span class="ln" style="--x:#5b63c9"></span>SDK callback</span>\n   <span class="li"><span class="ln" style="--x:#a99263"></span>persists&#8594;model</span>\n   <span class="li"><span class="ln" style="--x:#2f81f7"></span><b>input (focus)</b></span><span class="li"><span class="ln" style="--x:#e08a2b"></span><b>output (focus)</b></span>\n'
+HUB_IDEAS=' <details class="ideas">\n  <summary>💡 Ideas &amp; roadmap — parked for later</summary>\n  <ul>\n   <li><b>Transitive focus</b> — shift-click to light the full downstream / upstream chain ("what breaks if I change this").</li>\n   <li><b>Relation-type filters</b> — turn the legend chips into toggles (show only <i>implements</i>, hide <i>owns</i>).</li>\n   <li><b>Split endpoints</b> — optionally break <code>endpoints /api/v1</code> into its 7 resource routers.</li>\n   <li><b>AST-generated metadata</b> — derive the node/edge dicts from an AST pass over the repo so the map can\'t drift from code.</li>\n   <li><b>Coupling heatmap</b> — colour domains by cross-domain edge count; surface the most-coupled seams.</li>\n   <li><b>Export focused subgraph</b> — copy a node\'s neighbourhood as text or an image.</li>\n   <li class="done"><b>Done:</b> click-to-focus &amp; mute · input/output colour split · inputs grouped by declarer · outputs vs injected deps · clickable cross-links · always-on sidebar · deep-linking · role-column layout · search · isolate-domain · split checkers/handlers/discovery.</li>\n  </ul>\n </details>\n'
+
+
+if __name__ == "__main__":
+    render("module-map.html", "MajorDom Hub — Interactive Module Map", N=N, E=E, SECT=SECT, RING=RING, COLS=COLS, RADJ=RADJ,
+           ANCHOR=ANCHOR, SUPER=SUPER, EMPH=EMPH, BOUNDARY=BOUNDARY, NAME2ID=NAME2ID, FILL=FILL, BORD=BORD, LABEL=LABEL,
+           DOMAINS=['core','server','automation','devctl','sdk','peripherals','integrations','providers','cloud','hardware','repositories','model'],
+           STROKE={'coord':'#3b4658','relay':'#8a5a12','devrepo':'#8a5a12'}, relations=HUB_RELATIONS, ideas=HUB_IDEAS)
