@@ -251,7 +251,7 @@ async def unpair(self, device: AcmeDevice):
 
 Thin wrappers over your client: `identify` makes the device blink/beep so the user can find it.
 
-`fetch` reads the whole device, and it is safe to call any number of times. It reads every parameter with its current value and returns the device with them, without saving them: the Hub stores them and tells the app what changed. It checks the subscription and subscribes again only if it is gone, never twice. A sleeping battery device that doesn't answer returns `None`: not a failure.
+`fetch` reads the whole device, and it is safe to call any number of times. It reads every parameter with its current value and returns the device with them: the Hub saves them and tells the app what changed. It checks the subscription and subscribes again only if it is gone, never twice. A sleeping battery device that doesn't answer returns `None`: not a failure.
 
 ```python
 async def fetch(self, device: AcmeDevice) -> AcmeDeviceState | None:
