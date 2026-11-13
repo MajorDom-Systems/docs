@@ -290,7 +290,8 @@ def integration_uuid(self) -> UUID: ...
 # Stable UUID for this integration, derived from key
 
 def device_uuid(self, device_id: str) -> UUID: ...
-# Stable UUID for a device given any unique string (MAC, serial, etc.)
+# Stable UUID for a device given a string unique to that device (MAC, serial, etc.).
+# A name or an address two devices can share gives them the same id: the second one can't be paired.
 
 def parameter_uuid(self, device_uuid: UUID, parameter_id: str) -> UUID: ...
 # Stable UUID for a parameter scoped to its device
