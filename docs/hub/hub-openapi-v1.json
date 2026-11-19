@@ -1,10 +1,10 @@
 {
   "components": {
     "schemas": {
-      "Automation": {
+      "Automation-Input": {
         "properties": {
           "condition": {
-            "$ref": "#/components/schemas/_Condition"
+            "$ref": "#/components/schemas/_Condition-Input"
           },
           "delay_seconds": {
             "default": 0,
@@ -13,7 +13,7 @@
           },
           "executables": {
             "items": {
-              "$ref": "#/components/schemas/_Executable"
+              "$ref": "#/components/schemas/_Executable-Input"
             },
             "title": "Executables",
             "type": "array"
@@ -22,7 +22,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/_Executable"
+                  "$ref": "#/components/schemas/_Executable-Input"
                 },
                 "type": "array"
               },
@@ -35,6 +35,17 @@
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
           },
           "name": {
             "title": "Name",
@@ -59,6 +70,10 @@
           "name"
         ],
         "title": "Automation",
+        "type": "object"
+      },
+      "Automation-Output": {
+        "additionalProperties": true,
         "type": "object"
       },
       "Base": {
@@ -150,7 +165,7 @@
       "CreateAutomation": {
         "properties": {
           "condition": {
-            "$ref": "#/components/schemas/_Condition"
+            "$ref": "#/components/schemas/_Condition-Input"
           },
           "delay_seconds": {
             "default": 0,
@@ -159,7 +174,7 @@
           },
           "executables": {
             "items": {
-              "$ref": "#/components/schemas/_Executable"
+              "$ref": "#/components/schemas/_Executable-Input"
             },
             "title": "Executables",
             "type": "array"
@@ -168,7 +183,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/_Executable"
+                  "$ref": "#/components/schemas/_Executable-Input"
                 },
                 "type": "array"
               },
@@ -177,6 +192,17 @@
               }
             ],
             "title": "Executables Otherwise"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
           },
           "name": {
             "title": "Name",
@@ -206,7 +232,7 @@
         "properties": {
           "executables": {
             "items": {
-              "$ref": "#/components/schemas/_Executable"
+              "$ref": "#/components/schemas/_Executable-Input"
             },
             "title": "Executables",
             "type": "array"
@@ -2324,11 +2350,11 @@
         "title": "RoomPatch",
         "type": "object"
       },
-      "Scene": {
+      "Scene-Input": {
         "properties": {
           "executables": {
             "items": {
-              "$ref": "#/components/schemas/_Executable"
+              "$ref": "#/components/schemas/_Executable-Input"
             },
             "title": "Executables",
             "type": "array"
@@ -2348,6 +2374,10 @@
           "id"
         ],
         "title": "Scene",
+        "type": "object"
+      },
+      "Scene-Output": {
+        "additionalProperties": true,
         "type": "object"
       },
       "ServiceStatusResponse": {
@@ -2604,8 +2634,19 @@
         "title": "WifiConnection",
         "type": "object"
       },
-      "_Condition": {
+      "_Condition-Input": {
         "properties": {
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
           "type": {
             "description": "The type of model.",
             "title": "Type",
@@ -2618,12 +2659,27 @@
         "title": "_Condition",
         "type": "object"
       },
-      "_Executable": {
+      "_Condition-Output": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_Executable-Input": {
         "properties": {
           "delay_seconds": {
             "default": 0,
             "title": "Delay Seconds",
             "type": "number"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
           },
           "type": {
             "description": "The type of model.",
@@ -2635,6 +2691,10 @@
           "type"
         ],
         "title": "_Executable",
+        "type": "object"
+      },
+      "_Executable-Output": {
+        "additionalProperties": true,
         "type": "object"
       }
     }
@@ -2655,7 +2715,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/Automation"
+                    "$ref": "#/components/schemas/Automation-Output"
                   },
                   "title": "Response Get All Automations Api Automation Get",
                   "type": "array"
@@ -2687,7 +2747,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Automation"
+                  "$ref": "#/components/schemas/Automation-Output"
                 }
               }
             },
@@ -2767,7 +2827,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Automation"
+                  "$ref": "#/components/schemas/Automation-Output"
                 }
               }
             },
@@ -2806,7 +2866,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Automation"
+                "$ref": "#/components/schemas/Automation-Input"
               }
             }
           },
@@ -2833,6 +2893,48 @@
           }
         },
         "summary": "Patch Automation",
+        "tags": [
+          "automation"
+        ]
+      }
+    },
+    "/api/automation/{id}/validate": {
+      "post": {
+        "operationId": "validate_automation_api_automation__id__validate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation-Output"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Validate Automation",
         "tags": [
           "automation"
         ]
@@ -4460,7 +4562,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/Scene"
+                    "$ref": "#/components/schemas/Scene-Output"
                   },
                   "title": "Response Get All Scenes Api Scene Get",
                   "type": "array"
@@ -4492,7 +4594,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Scene"
+                  "$ref": "#/components/schemas/Scene-Output"
                 }
               }
             },
@@ -4572,7 +4674,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Scene"
+                  "$ref": "#/components/schemas/Scene-Output"
                 }
               }
             },
@@ -4611,7 +4713,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Scene"
+                "$ref": "#/components/schemas/Scene-Input"
               }
             }
           },
@@ -4678,6 +4780,48 @@
           }
         },
         "summary": "Run Scene",
+        "tags": [
+          "scene"
+        ]
+      }
+    },
+    "/api/scene/{id}/validate": {
+      "post": {
+        "operationId": "validate_scene_api_scene__id__validate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scene-Output"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Validate Scene",
         "tags": [
           "scene"
         ]
