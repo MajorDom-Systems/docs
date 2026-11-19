@@ -309,6 +309,14 @@
         "title": "DeleteMode",
         "type": "string"
       },
+      "DependentKind": {
+        "enum": [
+          "automation",
+          "scene"
+        ],
+        "title": "DependentKind",
+        "type": "string"
+      },
       "Device": {
         "description": "A device with what its integration keeps about it, ``integration_data``, typed as ``TData``: a bare ``Device``\nholds any (a dict once read back), ``class HueDevice(Device[HueData])`` its own model. Unset, it is ``TData``\nvalidated from ``{}`` (the Hub creates a device before its integration pairs it), and stays unset: a save keeps\nthe stored one. For ``Device[HueData | None]`` that ``{}``, unset or stored, is None.",
         "properties": {
@@ -578,6 +586,39 @@
           "discovery_id"
         ],
         "title": "DeviceCreate",
+        "type": "object"
+      },
+      "DeviceDependent": {
+        "description": "An automation or scene referring to a device, with how many of its actions and conditions do.",
+        "properties": {
+          "actions": {
+            "title": "Actions",
+            "type": "integer"
+          },
+          "conditions": {
+            "title": "Conditions",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DependentKind"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "actions",
+          "conditions"
+        ],
+        "title": "DeviceDependent",
         "type": "object"
       },
       "DeviceDisconnectedMessage": {
@@ -3617,6 +3658,54 @@
           }
         },
         "summary": "Pair Existing Device",
+        "tags": [
+          "device"
+        ]
+      }
+    },
+    "/api/device/{id}/dependents": {
+      "get": {
+        "description": "The automations and scenes that deleting the device changes: its actions are dropped silently, its\nconditions are kept with `last_error` \"Device not found\" for the user to remove. Only `delete` and `forget` do, `unpair` keeps them.",
+        "operationId": "get_device_dependents_api_device__id__dependents_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceDependent"
+                  },
+                  "title": "Response Get Device Dependents Api Device  Id  Dependents Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Device Dependents",
         "tags": [
           "device"
         ]
