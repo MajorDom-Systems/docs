@@ -1,0 +1,68 @@
+# Storing Data
+
+## integration_data
+
+MajorDom's Device and Parameter schemas expose an `integration_data` field for storing protocol-specific state (pairing tokens, internal IDs, etc.). By default it is an untyped dict persisted as JSON.
+
+Integrations can subclass Device/DeviceState and Parameter/ParameterState to declare a typed schema for that field — Hub will then handle (de-)serialization automatically before passing Device instance to Controller's methods or when saving to the database.
+
+```python
+# majordom_myintegration/models.py
+from majordom_integration_sdk.schemas.base import Base
+from majordom_integration_sdk.schemas.device import Device, DeviceState
+from majordom_integration_sdk.schemas.parameter import Parameter, ParameterState
+
+class MyDeviceIntegrationData(Base):
+    pairing_token: str | None = None
+
+class MyDevice(Device):
+    integration_data: MyDeviceIntegrationData
+
+class MyParameterState(ParameterState):
+    integration_data: MyParameterIntegrationData
+```
+
+To make the Hub use these custom types, the integration's Controller must override `device_type` and `parameter_type`:
+
+```python
+@property
+def device_type(self) -> type[MyDevice]:
+    return MyDevice
+
+@property
+def parameter_type(self) -> type[MyParameter]:
+    return MyParameter
+```
+
+The Hub will deserialize objects into these types before passing them to your implemented methods.
+
+The draft that `pair_device` fills is a `DeviceState`. To give it your own `integration_data` schema, subclass `DeviceState` and override `device_state_type` the same way. The Hub validates the draft into it:
+
+```python
+@property
+def device_state_type(self) -> type[MyDeviceState]:
+    return MyDeviceState
+```
+
+### Repository
+
+Use `self.platform.device_repository(self)`, scoped to your integration's key, to read or persist devices. Not in `pair_device`: it fills the draft and returns it, and the Hub saves it (see [Pairing](https://docs.majordom.io/integrations/controller/#pairing)). Use the repository everywhere else, for example to update a paired device later:
+
+```python
+async with self.platform.device_repository(self) as repo:
+    device = await repo.get(physical_id=physical_id, as_=MyDevice) # `as_=MyDevice` is optional but provides hassle-free deserialization
+
+async with self.platform.device_repository(self) as repo:
+    device.integration_data.some_field = new_value # assuming `MyDevice.integration_data` uses custom class with `some_field` present
+    await repo.save(device)
+```
+
+## File Storage (`documents_folder`)
+
+For files that cannot be stored in the database (e.g. a protocol's own SQLite DB, certificates, binary blobs), use `self.platform.documents_folder(self)`:
+
+```python
+path = self.platform.documents_folder(self) / "zigbee.db"
+```
+
+Resolves to a directory for this integration's key under the Hub's data root, created on use. For JSON files, `majordom_integration_sdk.files.read_json` / `write_json` write whole or not at all, readable by the owner only (0600): use them for anything holding secrets.

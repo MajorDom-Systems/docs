@@ -1,0 +1,45 @@
+# MajorDom Docs
+
+> MajorDom documentation
+
+MajorDom is a self-hosted smart-home hub. This documentation covers building device
+integrations (Matter, Zigbee, HomeKit, etc.) and the Hub/Bridge/Cloud HTTP/WebSocket APIs.
+
+
+## Device Integration
+
+- [Overview](https://docs.majordom.io/integrations/index.md)
+- [Implementing a Controller](https://docs.majordom.io/integrations/controller/index.md)
+- [Peripherals](https://docs.majordom.io/integrations/peripherals/index.md)
+- [Settings](https://docs.majordom.io/integrations/settings/index.md)
+- [Storing Data](https://docs.majordom.io/integrations/storing_data/index.md)
+- [Data Models](https://docs.majordom.io/integrations/data_models/index.md)
+- [Example Integration](https://docs.majordom.io/integrations/example-integration/index.md)
+- [Overview](https://docs.majordom.io/integrations/discovery/index.md)
+- [Bluetooth](https://docs.majordom.io/integrations/discovery/ble/index.md)
+- [SSDP / UPnP](https://docs.majordom.io/integrations/discovery/ssdp/index.md)
+- [Zeroconf / mDNS](https://docs.majordom.io/integrations/discovery/zeroconf/index.md)
+- [Bluetooth LE](https://docs.majordom.io/integrations/capabilities/ble/index.md)
+
+## API
+
+- [Hub API](https://docs.majordom.io/api/hub/index.md)
+- [Bridge API](https://docs.majordom.io/api/bridge/index.md)
+- [Cloud API](https://docs.majordom.io/api/cloud/index.md)
+
+
+## Hub API (OpenAPI)
+
+- [Hub REST API OpenAPI spec (JSON)](https://docs.majordom.io/hub/hub-openapi-v1.json)
+
+## Example Integrations (full source)
+
+Complete source of each example integration — load one to write your own:
+
+- [Integration SDK (with its runtime — radios, firmware, services, the Bluetooth router) — full source](https://docs.majordom.io/llms/integration-sdk.txt)
+- [Integration template (scaffold) — full source](https://docs.majordom.io/llms/integration-template.txt)
+- [Matter integration (example) — full source](https://docs.majordom.io/llms/integration-matter.txt)
+- [Zigbee integration (example) — full source](https://docs.majordom.io/llms/integration-zigbee.txt)
+- [HomeKit integration (example) — full source](https://docs.majordom.io/llms/integration-homekit.txt)
+- [ESPHome integration (example) — full source](https://docs.majordom.io/llms/integration-esphome.txt)
+- [Z-Wave integration (example) — full source](https://docs.majordom.io/llms/integration-zwave.txt)
