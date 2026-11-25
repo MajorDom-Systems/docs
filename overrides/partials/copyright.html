@@ -1,0 +1,8 @@
+{#- Material's copyright partial: {year} in `copyright` set to the build year, no "Made with" line -#}
+<div class="md-copyright">
+  {% if config.copyright %}
+    <div class="md-copyright__highlight">
+      {{ config.copyright | replace("{year}", build_date_utc.year | string) }}
+    </div>
+  {% endif %}
+</div>

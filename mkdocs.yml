@@ -8,7 +8,7 @@ hooks:
 site_author: Mark Parker
 site_description: MajorDom documentation
 
-copyright: Copyright &copy; 2024 Parker Industries Inc. All rights reserved.
+copyright: Copyright &copy; {year} Parker Industries Inc. All rights reserved.
 
 nav:
   - MajorDom Docs: "index.md"
