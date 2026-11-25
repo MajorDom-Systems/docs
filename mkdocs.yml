@@ -30,6 +30,9 @@ nav:
       - Standalone Mode: "integrations/standalone.md"
       - Example Integration: "integrations/example-integration.md"
       - Quality Checklist: "integrations/quality.md"
+  - ESPHome:
+      - Overview: "esphome/index.md"
+      - Thread Provisioning: "esphome/thread-provisioning.md"
   - Hub:
       - API Reference: "hub/api.md"
       - Peripherals Map: "hub/peripherals-map.md"
@@ -180,6 +183,8 @@ plugins:
           - integrations/example-integration.md
           - integrations/discovery/*.md
           - integrations/capabilities/*.md
+        ESPHome:
+          - esphome/*.md
         API:
           - api/hub.md
           - api/bridge.md
