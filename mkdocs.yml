@@ -144,6 +144,26 @@ plugins:
       enable_creation_date: true
       # enable_git_follow: false
       type: timeago
+  - redirects:
+      # Old URLs still linked from READMEs, PyPI metadata and code: integrations moved, ESPHome lost -components
+      redirect_maps:
+        "device-integration/capabilities/ble.md": "integrations/capabilities/ble.md"
+        "device-integration/controller.md": "integrations/controller.md"
+        "device-integration/data_models.md": "integrations/data_models.md"
+        "device-integration/discovery/ble.md": "integrations/discovery/ble.md"
+        "device-integration/discovery/index.md": "integrations/discovery/index.md"
+        "device-integration/discovery/ssdp.md": "integrations/discovery/ssdp.md"
+        "device-integration/discovery/zeroconf.md": "integrations/discovery/zeroconf.md"
+        "device-integration/example-integration.md": "integrations/example-integration.md"
+        "device-integration/index.md": "integrations/index.md"
+        "device-integration/parameter-ux.md": "integrations/parameter-ux.md"
+        "device-integration/peripherals.md": "integrations/peripherals.md"
+        "device-integration/quality.md": "integrations/quality.md"
+        "device-integration/settings.md": "integrations/settings.md"
+        "device-integration/standalone.md": "integrations/standalone.md"
+        "device-integration/storing_data.md": "integrations/storing_data.md"
+        "esphome-components/index.md": "https://docs.majordom.io/esphome/"
+        "esphome-components/thread-provisioning.md": "https://docs.majordom.io/esphome/thread-provisioning/"
   - llmstxt:
       markdown_description: |
         MajorDom is a self-hosted smart-home hub. This documentation covers building device
