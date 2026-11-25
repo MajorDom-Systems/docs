@@ -20,6 +20,8 @@ Objects you call directly. Need them by the SDK's typed needs, from `majordom_in
 
 USB sticks the Hub recognises, and radios soldered on the Hub's board. You get a serial path (`/dev/serial/by-id/…`) and its serial settings in `params` (`baud`, `flow_control`).
 
+Which boards the Hub recognises, and the firmware each radio can run, come from the [Peripherals Firmware](../firmware/index.md) channel.
+
 | Capability | Radio |
 |---|---|
 | `zigbee/ezsp` | Silicon Labs stick with Zigbee firmware |

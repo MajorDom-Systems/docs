@@ -33,6 +33,7 @@ nav:
   - ESPHome:
       - Overview: "esphome/index.md"
       - Thread Provisioning: "esphome/thread-provisioning.md"
+  - Peripherals Firmware: "firmware/index.md"
   - Hub:
       - API Reference: "hub/api.md"
       - Peripherals Map: "hub/peripherals-map.md"
@@ -185,6 +186,8 @@ plugins:
           - integrations/capabilities/*.md
         ESPHome:
           - esphome/*.md
+        Peripherals Firmware:
+          - firmware/index.md
         API:
           - api/hub.md
           - api/bridge.md
