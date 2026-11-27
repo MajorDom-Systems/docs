@@ -78,5 +78,12 @@ Some settings belong to the whole Hub. They reach you as facts on `self.platform
 | `platform.region` | where the Hub is used, for sub-GHz radios, named as Z-Wave JS names them: `Europe`, `USA`, … |
 | `platform.wifi` | the Wi-Fi network to set new devices up on (`ssid`, `password`), or `None` |
 | `platform.thread_dataset` | the active dataset of the Hub's Thread network, hex; learned from the border router, not set by the user |
+| `platform.thread_channel` | the channel of that network, read from the dataset, or `None` |
+| `platform.thread_origin` | `"own"` when a border router of the Hub formed the network, `"imported"` when the user brought it (other ecosystems' devices may be on it) |
+| `platform.factory_reset` | the Hub was factory reset: a network a radio keeps in its own memory belongs to the Hub before it |
+
+After a factory reset, `platform.forgets_network(self)` is `True` until your peripheral starts a new network on its radio and calls `platform.network_forgotten(self)`.
+
+Moving an imported Thread network takes the user's consent: `await platform.adopt_thread_network()` makes it the Hub's own, typically from an [error action](controller.md#controller_did_encounter_error).
 
 When they change, your controller gets [`platform_facts_did_change(before)`](controller.md#hooks). Read `self.platform` each time you need a fact: a platform object you kept holds the old values.

@@ -214,7 +214,7 @@ ZigBeeController            needs zigbee/ezsp | znp | deconz | …
 └── or another stick        recognised by the integration's own UsbDriver, e.g. zigbee/znp
 ```
 
-The controller reads `self.peripherals.endpoint("zigbee")` and opens whatever it gets: a serial path or a TCP socket, in the dialect it names. Switching from a Zigbee stick to a multi-PAN one needs no change in its code.
+The controller reads `self.peripherals.endpoint("zigbee")` and opens whatever it gets: a serial path or a TCP socket, in the dialect it names. Switching from a Zigbee stick to a multi-PAN one needs no change in its code. The multi-PAN endpoint adds two params: `multipan` (Zigbee shares the radio's channel with Thread) and `control` (the address to form or restore a network on, since the EZSP socket drops frames under those).
 
 ## Without the Hub
 
