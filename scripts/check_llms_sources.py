@@ -57,7 +57,8 @@ def main() -> None:
         return
 
     print("Changed source repos:\n" + "\n".join(changed))
-    subprocess.run(["gh", "workflow", "run", "publish.yml"], check=True)
+    # the released docs: without --ref it runs on the default branch, develop
+    subprocess.run(["gh", "workflow", "run", "publish.yml", "--ref", "master"], check=True)
     print("Triggered publish.yml — the docs will be re-packed and redeployed.")
 
 
